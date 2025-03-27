@@ -924,7 +924,7 @@
  end subroutine microphysics_from_MPAS
 
 !=================================================================================================================
- subroutine microphysics_to_MPAS(configs,mesh,state,time_lev,diag,diag_physics,tend_physics,tend,its,ite)
+ subroutine microphysics_to_MPAS(configs,mesh,state,time_lev,diag,diag_physics,tend_physics,tend,sfc_input,its,ite)
 !=================================================================================================================
 
 !input variables:
@@ -940,7 +940,7 @@
  type(mpas_pool_type),intent(inout):: tend
  type(mpas_pool_type),intent(inout):: diag_physics
  type(mpas_pool_type),intent(inout):: tend_physics
-
+ type(mpas_pool_type),intent(in):: sfc_input
 
 !local pointers:
  character(len=StrKIND),pointer:: mp_scheme
