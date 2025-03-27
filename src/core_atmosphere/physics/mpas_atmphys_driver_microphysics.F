@@ -430,7 +430,7 @@
  end subroutine init_microphysics
 
 !=================================================================================================================
- subroutine driver_microphysics(configs,mesh,state,time_lev,diag,diag_physics,tend_physics,tend,itimestep,its,ite)
+ subroutine driver_microphysics(configs,mesh,state,time_lev,diag,diag_physics,tend_physics,tend,sfc_input,itimestep,its,ite)
 !=================================================================================================================
 
  use mpas_constants, only : rvord
@@ -438,6 +438,7 @@
 !input arguments:
  type(mpas_pool_type),intent(in):: configs
  type(mpas_pool_type),intent(in):: mesh
+ type(mpas_pool_type),intent(in):: sfc_input
 
  integer,intent(in):: time_lev
  integer,intent(in):: itimestep
@@ -686,7 +687,7 @@
  real(kind=RKIND),dimension(:,:),pointer :: DBZM,ZDR,KDP,LDR,RHV ! for tcwa2 radar
 
 !local variables and arrays:
- integer:: i,j
+ integer:: i,j,k
 
 !-----------------------------------------------------------------------------------------------------------------
 
