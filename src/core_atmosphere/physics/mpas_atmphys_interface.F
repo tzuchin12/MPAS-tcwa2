@@ -964,6 +964,7 @@
  real(kind=RKIND),dimension(:,:),pointer  :: nifa,nwfa
  real(kind=RKIND),dimension(:,:),pointer  :: rainprod,evapprod,refl10cm
  real(kind=RKIND),dimension(:,:),pointer  :: re_cloud,re_ice,re_snow
+ real(kind=RKIND),dimension(:,:),pointer  :: DBZM,ZDR,KDP,RHV,LDR  ! tcwa2
  real(kind=RKIND),dimension(:,:),pointer  :: rthmpten,rqvmpten,rqcmpten,rqrmpten,rqimpten,rqsmpten,rqgmpten
  real(kind=RKIND),dimension(:,:),pointer  :: rncmpten,rnimpten,rnrmpten,rnsmpten,rngmpten,rnifampten,rnwfampten
  real(kind=RKIND),dimension(:,:,:),pointer:: scalars
