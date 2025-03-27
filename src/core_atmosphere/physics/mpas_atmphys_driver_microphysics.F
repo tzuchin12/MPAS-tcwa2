@@ -482,7 +482,7 @@
  call precip_from_MPAS(configs,diag_physics,its,ite)
 
 !... initialization of soundings for non-hydrostatic dynamical cores.
- call microphysics_from_MPAS(configs,mesh,state,time_lev,diag,diag_physics,tend_physics,its,ite)
+ call microphysics_from_MPAS(configs,mesh,state,time_lev,diag,diag_physics,tend_physics,sfc_input,its,ite)
 
 ! Note that array limits are set in mpas_atmphys_manager.F as
 ! ims=1   ; ime = nCellsSolve
@@ -683,6 +683,7 @@
  character(len=StrKIND),pointer:: microp_scheme
  integer,pointer:: nCellsSolve
  real,dimension(:),pointer:: graupelncv,rainncv,snowncv,sr,hailncv
+ real(kind=RKIND),dimension(:,:),pointer :: DBZM,ZDR,KDP,LDR,RHV ! for tcwa2 radar
 
 !local variables and arrays:
  integer:: i,j
@@ -902,7 +903,7 @@
 
 !local variables and arrays:
  integer:: i,j,k,kp
- real(kind=RKIND),dimension(:),allocatable:: qv1d,qc1d,qr1d,qs1d,qg1d,t1d,p1d,nr1d,dBZ1d,zp
+ real(kind=RKIND),dimension(:),allocatable:: qv1d,qc1d,qr1d,qs1d,qg1d,t1d,p1d,nr1d,dBZ1d,zp,rho1d
  real(kind=RKIND):: w1,w2
 
 !-----------------------------------------------------------------------------------------------------------------
