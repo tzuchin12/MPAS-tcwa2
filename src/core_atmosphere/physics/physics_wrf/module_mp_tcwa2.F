@@ -1303,12 +1303,12 @@
             EFRS1D(K) = 10.E-6
          ENDDO
 
-!         CALL NTU_MICRO(TK1D,QV1D,DZ1D,P1D,W1D,XLAND(I,J),SR(I,J),     &
-!              ICENCV(I,J),CLODNCV(I,J),RAINNC(I,J),RAINNCV(I,J),       &
-!              SNOWNC(I,J),SNOWNCV(I,J),GRAPNC(I,J),GRAPNCV(I,J),DT,    &
-!              DTMN,QC1D,QR1D,QI1D,QS1D,QG1D,NC1D,NR1D,NI1D,NS1D,NG1D,  &
-!              KTS,KTE,DBZM1D,ZDR1D,KDP1D,LDR1D,RHV1D,EFRC1D,EFRI1D,    &
-!              EFRS1D)
+         CALL NTU_MICRO(TK1D,QV1D,DZ1D,P1D,W1D,XLAND(I,J),SR(I,J),     &
+              ICENCV(I,J),CLODNCV(I,J),RAINNC(I,J),RAINNCV(I,J),       &
+              SNOWNC(I,J),SNOWNCV(I,J),GRAPNC(I,J),GRAPNCV(I,J),DT,    &
+              DTMN,QC1D,QR1D,QI1D,QS1D,QG1D,NC1D,NR1D,NI1D,NS1D,NG1D,  &
+              KTS,KTE,DBZM1D,ZDR1D,KDP1D,LDR1D,RHV1D,EFRC1D,EFRI1D,    &
+              EFRS1D)
 
          DO K = KTS,KTE
             NK = KME-K
