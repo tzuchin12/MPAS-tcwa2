@@ -298,7 +298,11 @@
     recloud_p,        &!
     reice_p,          &!
     resnow_p,         &!
-    refl10cm_p,ZDR_p,KDP_p,LDR_p,RHV_p
+    refl10cm_p         !
+
+!... added for tcwa2 microphysics:
+ real(kind=RKIND),dimension(:,:,:),allocatable:: &
+    DBZM_p,ZDR_p,KDP_p,LDR_p,RHV_p
 
 !... for Thompson cloud microphysics parameterization, including aerosol-aware option:
  real(kind=RKIND),dimension(:,:),allocatable:: &

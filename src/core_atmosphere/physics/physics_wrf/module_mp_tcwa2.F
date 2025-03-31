@@ -1264,13 +1264,15 @@
       INTEGER :: I,K,J,NK,ITF,JTF
       REAL :: DT,DTMN
       REAL, DIMENSION(KTS:KTE) :: TK1D,P1D,Z1D,W1D,DZ1D,QV1D,QC1D,QR1D,&
-            QI1D,QS1D,QG1D,NC1D,NR1D,NI1D,NS1D,NG1D,DBZM1D,ZDR1D,KDP1D,&
-            LDR1D,RHV1D,EFRC1D,EFRI1D,EFRS1D
+            QI1D,QS1D,QG1D,NC1D,NR1D,NI1D,NS1D,NG1D,MVDR1D,VTQR1D,     &
+            SMLF1D,GMLF1D,DBZM1D,ZDR1D,KDP1D,LDR1D,RHV1D
       REAL, DIMENSION(ITS:ITE,JTS:JTE) :: CLODNCV,ICENCV
       REAL, DIMENSION(ITS:ITE,KTS:KTE,JTS:JTE) :: TK
+
       REAL, DIMENSION(IMS:IME,KMS:KME,JMS:JME), INTENT(INOUT) ::       &
             re_cloud,re_ice,re_snow
       INTEGER, INTENT(IN) :: has_reqc,has_reqi,has_reqs
+      REAL, DIMENSION(KTS:KTE) :: re_qc1d,re_qi1d,re_qs1d
 
       DT = DT_MP
       DTMN = DT_MP/60.
@@ -1298,17 +1300,15 @@
             NI1D(K) = NI(I,NK,J)
             NS1D(K) = NS(I,NK,J)
             NG1D(K) = NG(I,NK,J)
-            EFRC1D(K) = 2.5E-6
-            EFRI1D(K) = 5.E-6
-            EFRS1D(K) = 10.E-6
+            MVDR1D(K) = 0.; VTQR1D(K) = 0.; SMLF1D(K) = 0.
+            GMLF1D(K) = 0.
          ENDDO
 
          CALL NTU_MICRO(TK1D,QV1D,DZ1D,P1D,W1D,XLAND(I,J),SR(I,J),     &
               ICENCV(I,J),CLODNCV(I,J),RAINNC(I,J),RAINNCV(I,J),       &
               SNOWNC(I,J),SNOWNCV(I,J),GRAPNC(I,J),GRAPNCV(I,J),DT,    &
               DTMN,QC1D,QR1D,QI1D,QS1D,QG1D,NC1D,NR1D,NI1D,NS1D,NG1D,  &
-              KTS,KTE,DBZM1D,ZDR1D,KDP1D,LDR1D,RHV1D,EFRC1D,EFRI1D,    &
-              EFRS1D)
+              KTS,KTE,DBZM1D,ZDR1D,KDP1D,LDR1D,RHV1D)
 
          DO K = KTS,KTE
             NK = KME-K
@@ -1329,11 +1329,22 @@
             KDP(I,NK,J)  = KDP1D(K)
             LDR(I,NK,J)  = LDR1D(K)
             RHV(I,NK,J)  = RHV1D(K)
-            re_cloud(I,NK,J) = MAX(2.5E-6, MIN(EFRC1D(K),50.E-6))
-            re_ice(I,NK,J)   = MAX(5.E-6, MIN(EFRI1D(K),500.E-6))
-            re_snow(I,NK,J)  = MAX(10.E-6, MIN(EFRS1D(K),2000.E-6))
          ENDDO
 
+         IF (has_reqc.ne.0.and.has_reqi.ne.0.and.has_reqs.ne.0) THEN
+            DO K = KTS,KTE
+               re_qc1d(k) = 2.49E-6
+               re_qi1d(k) = 4.99E-6
+               re_qs1d(k) = 9.99E-6
+            ENDDO
+!            CALL calc_effectRad(t1d,p1d,qv1d,qc1d,nc1d,qi1d,ni1d,qs1d, &
+!                                re_qc1d,re_qi1d,re_qs1d,kts,kte)
+            DO K = KTS,KTE
+               re_cloud(i,k,j) = MAX(2.49E-6, MIN(re_qc1d(k), 50.E-6))
+               re_ice(i,k,j)   = MAX(4.99E-6, MIN(re_qi1d(k), 125.E-6))
+               re_snow(i,k,j)  = MAX(9.99E-6, MIN(re_qs1d(k), 999.E-6))
+            ENDDO
+         ENDIF
       ENDDO
       ENDDO
 
@@ -1344,7 +1355,7 @@
       SUBROUTINE NTU_MICRO(TK3D,QV3D,DZ3D,P3D,W3D,LAND,SR,ICENCV,      &
                  CLODNCV,RAINNC,RAINNCV,SNOWNC,SNOWNCV,GRAPNC,GRAPNCV, &
                  DT,DTMN,QC3D,QR3D,QI3D,QS3D,QG3D,NC3D,NR3D,NI3D,NS3D, &
-                 NG3D,KTS,KTE,DBZM,ZDR,KDP,LDR,RHV,EFRC,EFRI,EFRS)
+                 NG3D,KTS,KTE,DBZM,ZDR,KDP,LDR,RHV)
 !======================================================================
       IMPLICIT NONE 
       INTEGER, INTENT(IN) :: KTS,KTE
@@ -1367,7 +1378,7 @@
             VTNR,VTNI,VTNS,VTNG,RASPR,IASPR,SASPR,GASPR,alf,Tcb,A1,A2, &
             A3,RACT,CND,DEP,ABW,ABI,QVS,RSUB,Y1,Y2,Y4,Y5,LMDI,LROI,    &
             LROI2,LROI3,LMDS,LROS,LMDG,LROG,LLMI2,LLMI3,LAI22,LAI23,   &
-            LMDI2,LMDI3,ZETA3,LAR22,LAR23,LLMR2,LLMR3,EFRI,EFRS
+            LMDI2,LMDI3,ZETA3,LAR22,LAR23,LLMR2,LLMR3
       REAL, DIMENSION(KTS:KTE) :: DBZM,DBZ1,DBZR,DBZI,DBZS,DBZG,ZDR,   &
             ZDRR,ZDRI,ZDRS,ZDRG,KDP,KDPR,KDPI,KDPS,KDPG,LDR,LDRR,LDRI, &
             LDRS,LDRG,RHV,RHVR,RHVI,RHVS,RHVG,SCAKW,SCAW0,SCAW1,SCAWA, &
@@ -1981,11 +1992,8 @@
          IF (QC3D(K).GE.QSMALL.AND.NC3D(K).GE.NSMALL) THEN
             CALL SOLVE_AFAC(TK3D(K),RHO(K),QC3D(K),NC3D(K),LAMC(K),    &
                  MVDC(K),AFAC(K),AVC(K),BVC(K))
-            MVRC(K) = (QC3D(K)/NC3D(K)/C4PI3W)**THRD
-            MVRC(K) = MIN(MAX(MVRC(K),RCMIN),RCMAX)
-            EFRC(K) = EXP(EFC1+EFC2*LOG(NC3D(K))+EFC3*LOG(MVRC(K)))
          ELSE
-            QC3D(K) = 0.; NC3D(K) = 0.; EFRC(K) = 0.
+            QC3D(K) = 0.; NC3D(K) = 0.
          ENDIF
          IF (QR3D(K).GE.QSMALL.AND.NR3D(K).GE.NSMALL) THEN
             CALL SOLVE_AFAR(TK3D(K),RHO(K),QR3D(K),NR3D(K),LAMR(K),    &
@@ -2087,7 +2095,6 @@
             CALL SOLVE_AFAI(TK3D(K),P3D(K),RHO(K),QV3D(K),QI3D(K),     &
                  NI3D(K),ADAGR(K),ZETA(K),LAMI(K),AFAI(K),MVDI(K),     &
                  RHOI(K),AMI(K),BMI(K),AVI(K),BVI(K))
-            EFRI(K) = (AFAI(K)+3.)/LAMI(K)
             IF (QI3D(K).GE.QSMAL1) THEN
                LLMI(K) = LOG(LAMI(K))
                LAI2(K) = LOG(AFAI(K)+2.)
@@ -2286,13 +2293,12 @@
                LDRI(K) = 10.*LOG10(MIN(1.,LDR2(K)))
             ENDIF
          ELSE
-            QI3D(K) = 0.;  NI3D(K) = 0.;  EFRI(K) = 0.
+            QI3D(K) = 0.;  NI3D(K) = 0.
          ENDIF
          IF (QS3D(K).GE.QSMALL.AND.NS3D(K).GE.NSMALL) THEN
             CALL SOLVE_AFAS(TK3D(K),RHO(K),QS3D(K),QC3D(K),NS3D(K),    &
                  AFAS(K),LAMS(K),MVDS(K),RHOS(K),SASPR(K),AMS(K),      &
                  AVS(K),BVS(K))
-            EFRS(K) = (AFAS(K)+3.)/LAMS(K)
             IF (QS3D(K).GE.QSMAL1) THEN
                IF (SMLF(K).GE.MLIMIT) THEN
                   ORA0(K) = 10.*SMLF(K)+(1.-SMLF(K))*40.
@@ -2385,7 +2391,7 @@
                ENDIF
             ENDIF        
          ELSE
-            QS3D(K) = 0.; NS3D(K) = 0.; EFRS(K) = 0.
+            QS3D(K) = 0.; NS3D(K) = 0.
          ENDIF
          IF (QG3D(K).GE.QSMALL.AND.NG3D(K).GE.NSMALL) THEN
             CALL SOLVE_AFAG(TK3D(K),RHO(K),QG3D(K),QC3D(K),QR3D(K),    &

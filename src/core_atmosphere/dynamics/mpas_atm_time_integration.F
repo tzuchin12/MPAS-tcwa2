@@ -512,7 +512,7 @@ module atm_time_integration
       type (mpas_pool_type), pointer :: tend
       type (mpas_pool_type), pointer :: tend_physics => null()
       type (mpas_pool_type), pointer :: lbc  ! regional_MPAS addition
-      type (mpas_pool_type), pointer :: sfc_input ! for tcwa2
+      type (mpas_pool_type), pointer :: sfc_input  ! tcwa2
 
       real (kind=RKIND), dimension(:,:), pointer :: w
       real (kind=RKIND), dimension(:,:), pointer :: u, uReconstructZonal, uReconstructMeridional, uReconstructX, uReconstructY, uReconstructZ
@@ -557,7 +557,7 @@ module atm_time_integration
       call mpas_pool_get_subpool(block % structs, 'diag', diag)
       call mpas_pool_get_subpool(block % structs, 'tend', tend)
       call mpas_pool_get_subpool(block % structs, 'tend_physics', tend_physics)
-      call mpas_pool_get_subpool(block % structs, 'sfc_input', sfc_input)
+      call mpas_pool_get_subpool(block % structs, 'sfc_input', sfc_input)  ! tcwa2
 #ifdef DO_PHYSICS
       call mpas_pool_get_subpool(block % structs, 'diag_physics', diag_physics)
 #endif
