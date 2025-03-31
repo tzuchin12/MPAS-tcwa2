@@ -686,7 +686,7 @@
  real(kind=RKIND),dimension(:,:),pointer  :: DBZM,ZDR,KDP,LDR,RHV  !for tcwa2
 
 !local variables and arrays:
- integer:: i,j
+ integer:: i,j,k
 
 !-----------------------------------------------------------------------------------------------------------------
 
@@ -772,6 +772,8 @@
           enddo
           enddo
 
+       case default
+    end select microp2_select
     case default
  end select microp_select
 
