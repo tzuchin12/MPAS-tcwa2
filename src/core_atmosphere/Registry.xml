@@ -626,7 +626,6 @@
 			<var name="re_cloud"/>
 			<var name="re_ice"/>
 			<var name="re_snow"/>
-                        <var name="DBZM"/>
                         <var name="ZDR"/>
                         <var name="KDP"/>
                         <var name="LDR"/>
@@ -2597,10 +2596,6 @@
                 <var name="re_snow" type="real" dimensions="nVertLevels nCells Time"  units="m"
                      description="effective radius of snow crystals"
                      packages="mp_thompson_in;mp_thompson_aers_in;mp_wsm6_in;mp_tcwa2_in;mp_nssl2m_in"/>
-
-                <var name="DBZM" type="real" dimensions="nVertLevels nCells Time" units="dBZ"
-                     description="Radar reflectivity"
-                     packages="mp_tcwa2_in"/>
 
                 <var name="ZDR" type="real" dimensions="nVertLevels nCells Time" units="dB"
                      description="Differential reflectivity"

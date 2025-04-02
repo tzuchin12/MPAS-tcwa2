@@ -591,7 +591,7 @@
  real(kind=RKIND),dimension(:,:),pointer  :: volg,volh,zrw,zgw,zhw
  real(kind=RKIND),dimension(:,:),pointer  :: rainprod,evapprod,refl10cm
  real(kind=RKIND),dimension(:,:),pointer  :: re_cloud,re_ice,re_snow
- real(kind=RKIND),dimension(:,:),pointer  :: DBZM,ZDR,KDP,LDR,RHV  !for tcwa2
+ real(kind=RKIND),dimension(:,:),pointer  :: ZDR,KDP,LDR,RHV  !for tcwa2
  real(kind=RKIND),dimension(:,:),pointer  :: rthmpten,rqvmpten,rqcmpten,rqrmpten,rqimpten,rqsmpten,rqgmpten
  real(kind=RKIND),dimension(:,:),pointer  :: rncmpten,rnimpten,rnrmpten,rnsmpten,rngmpten,rnifampten,rnwfampten
  real(kind=RKIND),dimension(:,:,:),pointer:: scalars
@@ -736,7 +736,7 @@
              call mpas_pool_get_dimension(state,'index_ni',index_ni)
              call mpas_pool_get_dimension(state,'index_ns',index_ns)
              call mpas_pool_get_dimension(state,'index_ng',index_ng)
-             call mpas_pool_get_array(diag_physics,'DBZM' ,DBZM )
+             call mpas_pool_get_array(diag_physics,'refl10cm',refl10cm )
              call mpas_pool_get_array(diag_physics,'ZDR' ,ZDR )
              call mpas_pool_get_array(diag_physics,'KDP' ,KDP )
              call mpas_pool_get_array(diag_physics,'LDR' ,LDR )
@@ -760,7 +760,7 @@
                 ni_p(i,k,j) = ni(k,i)
                 ns_p(i,k,j) = ns(k,i)
                 ng_p(i,k,j) = ng(k,i)
-                DBZM_p(i,k,j) = DBZM(k,i)
+                refl10cm_p(i,k,j) = refl10cm(k,i)
                 ZDR_p(i,k,j) = ZDR(k,i)
                 KDP_p(i,k,j) = KDP(k,i)
                 LDR_p(i,k,j) = LDR(k,i)
@@ -965,7 +965,7 @@
  real(kind=RKIND),dimension(:,:),pointer  :: nifa,nwfa
  real(kind=RKIND),dimension(:,:),pointer  :: rainprod,evapprod,refl10cm
  real(kind=RKIND),dimension(:,:),pointer  :: re_cloud,re_ice,re_snow
- real(kind=RKIND),dimension(:,:),pointer  :: DBZM,ZDR,KDP,LDR,RHV  !for tcwa2
+ real(kind=RKIND),dimension(:,:),pointer  :: ZDR,KDP,LDR,RHV  !for tcwa2
  real(kind=RKIND),dimension(:,:),pointer  :: rthmpten,rqvmpten,rqcmpten,rqrmpten,rqimpten,rqsmpten,rqgmpten
  real(kind=RKIND),dimension(:,:),pointer  :: rncmpten,rnimpten,rnrmpten,rnsmpten,rngmpten,rnifampten,rnwfampten
  real(kind=RKIND),dimension(:,:,:),pointer:: scalars
@@ -1146,7 +1146,7 @@
              call mpas_pool_get_dimension(state,'index_ni',index_ni)
              call mpas_pool_get_dimension(state,'index_ns',index_ns)
              call mpas_pool_get_dimension(state,'index_ng',index_ng)
-             call mpas_pool_get_array(diag_physics,'DBZM' ,DBZM )
+             call mpas_pool_get_array(diag_physics,'refl10cm',refl10cm )
              call mpas_pool_get_array(diag_physics,'ZDR' ,ZDR )
              call mpas_pool_get_array(diag_physics,'KDP' ,KDP )
              call mpas_pool_get_array(diag_physics,'LDR' ,LDR )
@@ -1164,7 +1164,7 @@
                 ni(k,i) = ni_p(i,k,j)
                 ns(k,i) = ns_p(i,k,j)
                 ng(k,i) = ng_p(i,k,j)
-                DBZM(k,i) = DBZM_p(i,k,j)
+                refl10cm(k,i) = refl10cm_p(i,k,j)
                 ZDR(k,i) = ZDR_p(i,k,j)
                 KDP(k,i) = KDP_p(i,k,j)
                 LDR(k,i) = LDR_p(i,k,j)

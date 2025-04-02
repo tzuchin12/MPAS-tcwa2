@@ -185,7 +185,6 @@
           !height above sea level (terrain height) and land-ocean mask
           if(.not.allocated(xland_p)) allocate(xland_p(ims:ime,jms:jme))
 
-          if(.not.allocated(DBZM_p)) allocate(DBZM_p(ims:ime,kms:kme,jms:jme))
           if(.not.allocated(ZDR_p)) allocate(ZDR_p(ims:ime,kms:kme,jms:jme))
           if(.not.allocated(KDP_p)) allocate(KDP_p(ims:ime,kms:kme,jms:jme))
           if(.not.allocated(LDR_p)) allocate(LDR_p(ims:ime,kms:kme,jms:jme))
@@ -310,7 +309,6 @@
           !height above sea level (terrain height) and land-ocean mask
           if(allocated(xland_p)) deallocate(xland_p)
 
-          if(allocated(DBZM_p))  deallocate(DBZM_p)
           if(allocated(ZDR_p))  deallocate(ZDR_p)
           if(allocated(KDP_p))  deallocate(KDP_p)
           if(allocated(LDR_p))  deallocate(LDR_p)
@@ -591,7 +589,7 @@
                      QG = qg_p, NC = nc_p, NR = nr_p, NI = ni_p, NS = ns_p, NG = ng_p,        &
                      SR = sr_p, RAINNC = rainnc_p, RAINNCV = rainncv_p, SNOWNC = snownc_p,    &
                      SNOWNCV = snowncv_p, GRAPNC = graupelnc_p, GRAPNCV = graupelncv_p,       &
-                     DBZM = DBZM_p, ZDR = ZDR_p, KDP = KDP_p, LDR = LDR_p, RHV = RHV_p,       &
+                     DBZM = refl10cm_p, ZDR = ZDR_p, KDP = KDP_p, LDR = LDR_p, RHV = RHV_p,   &
                      re_cloud = recloud_p, re_ice = reice_p, re_snow = resnow_p,              &
                      has_reqc = has_reqc, has_reqi = has_reqi, has_reqs = has_reqs,           &
                      IDS = ids, IDE = ide, JDS = jds, JDE = jde, KDS = kds, KDE = kde,        &
@@ -683,7 +681,7 @@
  character(len=StrKIND),pointer:: microp_scheme
  integer,pointer:: nCellsSolve
  real,dimension(:),pointer:: graupelncv,rainncv,snowncv,sr,hailncv
- real(kind=RKIND),dimension(:,:),pointer  :: DBZM,ZDR,KDP,LDR,RHV  !for tcwa2
+ real(kind=RKIND),dimension(:,:),pointer  :: ZDR,KDP,LDR,RHV  !for tcwa2
 
 !local variables and arrays:
  integer:: i,j,k
@@ -696,7 +694,6 @@
  call mpas_pool_get_array(diag_physics,'rainncv'   ,rainncv   )
  call mpas_pool_get_array(diag_physics,'snowncv'   ,snowncv   )
  call mpas_pool_get_array(diag_physics,'sr'        ,sr        )
- call mpas_pool_get_array(diag_physics,'DBZM' ,DBZM )
  call mpas_pool_get_array(diag_physics,'ZDR' ,ZDR )
  call mpas_pool_get_array(diag_physics,'KDP' ,KDP )
  call mpas_pool_get_array(diag_physics,'LDR' ,LDR )
@@ -753,7 +750,6 @@
        case("mp_tcwa2")
           do i = its, ite
           do k = kts, kte
-             DBZM(k,i) = -99.
              ZDR(k,i) = 0._RKIND
              KDP(k,i) = 0._RKIND
              LDR(k,i) = -99.
@@ -763,7 +759,6 @@
           do j = jts, jte
           do k = kts, kte
           do i = its, ite
-             DBZM_p(i,k,j) = -99.
              ZDR_p(i,k,j) = 0._RKIND
              KDP_p(i,k,j) = 0._RKIND
              LDR_p(i,k,j) = -99.
@@ -917,7 +912,7 @@
     case ("mp_kessler")
        call physics_error_fatal('--- calculation of radar reflectivity is not available' // &
                                  'with kessler cloud microphysics')
-    case ("mp_nssl2m")
+    case ("mp_tcwa2","mp_nssl2m")
 
        ! Reflectivity is already computed in 3D in the refl10cm_p array, so just read out the values
        if(.not.allocated(dBz1d)) allocate(dBZ1d(kts:kte))
@@ -1050,53 +1045,6 @@
        if(allocated(nr1d) ) deallocate(nr1d )
        if(allocated(dBz1d)) deallocate(dBZ1d)
        if(allocated(zp)   ) deallocate(zp   )
-
-    case ("mp_tcwa2")
-       if(.not.allocated(qc1d)  ) allocate(qc1d(kts:kte)  )
-       if(.not.allocated(qr1d)  ) allocate(qr1d(kts:kte)  )
-       if(.not.allocated(qs1d)  ) allocate(qs1d(kts:kte)  )
-       if(.not.allocated(qg1d)  ) allocate(qg1d(kts:kte)  )
-       if(.not.allocated(t1d)   ) allocate(t1d(kts:kte)   )  !tk1d
-       if(.not.allocated(rho1d) ) allocate(rho1d(kts:kte) )
-       if(.not.allocated(dBz1d) ) allocate(dBZ1d(kts:kte) )
-       if(.not.allocated(zp)   )  allocate(zp(kts:kte)    )
-
-       do j = jts,jte
-       do i = its,ite
-          do k = kts,kte
-             qc1d(k)  = qc_p(i,k,j)
-             qr1d(k)  = qr_p(i,k,j)
-             qs1d(k)  = qs_p(i,k,j)
-             qg1d(k)  = qg_p(i,k,j)
-             t1d(k) = th_p(i,k,j) * pi_p(i,k,j)
-             rho1d(k)  = rho_p(i,k,j)
-             dBZ1d(k) = -35._RKIND
-             zp(k) = z_p(i,k,j) - z_p(i,1,j)+0.5*dz_p(i,1,j) ! height AGL
-          enddo
-
-          call refl10cm_tcwa(qc1d,qr1d,qs1d,qg1d,t1d,rho1d,dBZ1d,kts,kte)
-
-          kp = 1
-          do k = kts,kte
-             dBZ1d(k) = max(-35._RKIND,dBZ1d(k))
-             if(zp(k) .lt. 1000.) kp = k
-          enddo
-          refl10cm_max(i) = maxval(dBZ1d(:))
-          w1 = (zp(kp+1)-1000.)/(zp(kp+1)-zp(kp))
-          w2 = 1.0 - w1
-          refl10cm_1km(i) = w1*dBZ1d(kp) + w2*dBZ1d(kp+1)
-          refl10cm_1km_max(i) = max(refl10cm_1km_max(i),refl10cm_1km(i))
-       enddo
-       enddo
-
-       if(allocated(qc1d)  ) deallocate(qc1d  )
-       if(allocated(qr1d)  ) deallocate(qr1d  )
-       if(allocated(qs1d)  ) deallocate(qs1d  )
-       if(allocated(qg1d)  ) deallocate(qg1d  )
-       if(allocated(t1d)   ) deallocate(t1d   )
-       if(allocated(rho1d) ) deallocate(rho1d )
-       if(allocated(dBz1d) ) deallocate(dBZ1d )
-       if(allocated(zp)    ) deallocate(zp    )
 
     case default
  end select microp_select
