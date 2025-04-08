@@ -28,8 +28,8 @@
       INTEGER, PRIVATE, PARAMETER :: AFAS_3M = 1                        ! 0. FIXED; 1. VARIABLE AFAS PARAMETER
       INTEGER, PRIVATE, PARAMETER :: AFAG_3M = 1                        ! 0. FIXED; 1. VARIABLE AFAG PARAMETER
       INTEGER, PRIVATE, PARAMETER :: NMODE = 3
-      INTEGER, PRIVATE, PARAMETER :: SSAT = 0                           ! 0. ADJUST QC; 1. ADJUST QC+QI; 2. PREDICTION SATURATION
-      INTEGER, PRIVATE, PARAMETER :: SATW = 0                           ! 0.WITHOUT; 1.WITH W EFFECT ON SATURATION
+      INTEGER, PRIVATE, PARAMETER :: SSAT = 2                           ! 0. ADJUST QC; 1. ADJUST QC+QI; 2. PREDICTION SATURATION
+      INTEGER, PRIVATE, PARAMETER :: SATW = 1                           ! 0.WITHOUT; 1.WITH W EFFECT ON SATURATION
       INTEGER, PRIVATE, PARAMETER :: IACT = 1                           ! 1. RY89; 2. WC20-power law
 !----------------- FOR MICROPHYSICAL PROCESSES -------------------------
       REAL, PRIVATE, PARAMETER :: PI = 3.1415926535897932384626434
@@ -486,10 +486,10 @@
          AFAR = AFAR0
       ELSEIF (AFAR_3M.EQ.1) THEN
          MVRR = MIN(RRMAX,MAX(RRMIN,(QR1D/NR1D/C4PI3W)**THRD))
-!         EFRR = EXP(EFR1+EFR2*LOG(NR1D)+EFR3*LOG(MVRR))
-         EFRR = EXP(0.60248802-5.9285673E-2*LOG(NR1D)+1.0385685*       &
-                LOG(MVRR)+1.4000158E-3*LOG(NR1D)**2.+4.1927565E-4*     &
-                LOG(MVRR)**2.-2.2498841E-3*LOG(NR1D)*LOG(MVRR))
+         EFRR = EXP(EFR1+EFR2*LOG(NR1D)+EFR3*LOG(MVRR))
+!         EFRR = EXP(0.60248802-5.9285673E-2*LOG(NR1D)+1.0385685*       &
+!                LOG(MVRR)+1.4000158E-3*LOG(NR1D)**2.+4.1927565E-4*     &
+!                LOG(MVRR)**2.-2.2498841E-3*LOG(NR1D)*LOG(MVRR))
          KDX  = MAX(KCRMIN,MIN(KCRMAX,(MVRR/EFRR)**3.))
          AFAR = (6.*KDX-3.+SQRT(8.*KDX+1.))/(2.-2.*KDX)
          AFAR = MIN(MAX(AFAR,AFAMIN),AFAMAX)
@@ -1240,7 +1240,7 @@
 
       END SUBROUTINE cal_A1AdA2
 !============================================================================
-!      
+!
 !=======================================================================
       SUBROUTINE mp_tcwa2(TH,P,DZ,W,PII,DT_MP,XLAND,QV,QC,QR,QI,QS,QG, &
                  NC,NR,NI,NS,NG,SR,RAINNC,RAINNCV,SNOWNC,SNOWNCV,      &
@@ -1860,93 +1860,97 @@
       CALL FLFLUX(NG3D(1),VT_NG(1),RHO(1),DZ3D(1),KTE,DT)
 !----------------------------------------------------------------------
       DO K = KTS,KTE
-      IF (SSAT.EQ.0) THEN
-         ESW(K)  = MIN(0.99*P3D(K),POLYSVP(TK3D(K),0))
-         QVSW(K) = 0.622*ESW(K)/(P3D(K)-ESW(K))
-         XXLV(K) = 3.1484E6-2370.*TK3D(K)
-         CPM(K)  = CP*(1.+0.887*QV3D(K))
-         CND(K)  = (QV3D(K)-QVSW(K))/(1.+XXLV(K)**2.*QVSW(K)/(CPM(K)*  &
-                   RV*TK3D(K)**2.))
-         CND(K)  = MAX(-QC3D(K),CND(K))
-         QV3D(K) = MAX(0.,QV3D(K)-CND(K))
-         TK3D(K) = TK3D(K)+CND(K)*XXLV(K)/CPM(K)
-         QC3D(K) = MAX(0.,QC3D(K)+CND(K))
-         IF (QC3D(K).GE.QSMALL.AND.NC3D(K).LT.NSMALL) THEN
-            LTK(K)  = LOG(TK3D(K))
-            LQC(K)  = -1.*LOG(QC3D(K))
-            MDC(K)  = EXP(MDC1+MDC2*LTK(K)+MDC3*LQC(K)+MDC4*LTK(K)*    &
-                      LTK(K)+MDC5*LQC(K)*LQC(K)+MDC6*LTK(K)*LQC(K))/1.E3
-            NC3D(K) = 1.E9*QC3D(K)*V2M3/RHOW/MDC(K)**3.
-         ENDIF
-      ELSEIF (SSAT.EQ.1) THEN
-         ESW(K)  = MIN(0.99*P3D(K),POLYSVP(TK3D(K),0))
-         ESI(K)  = MIN(0.99*P3D(K),POLYSVP(TK3D(K),1))
-         IF (ESI(K).GT.ESW(K)) ESI(K) = ESW(K)
-         QVSW(K) = 0.622*ESW(K)/(P3D(K)-ESW(K))
-         QVSI(K) = 0.622*ESI(K)/(P3D(K)-ESI(K))
-         CND(K)  = (TK3D(K)-238.15)/(TK0C-238.15)
-         DEP(K)  = (TK0C-TK3D(K))/(TK0C-238.15)
-         XXLV(K) = 3.1484E6-2370.*TK3D(K)
-         XXLS(K) = 3.15E6-2370.*TK3D(K)+0.3337E6
-         CPM(K)  = CP*(1.+0.887*QV3D(K))
-         ABW(K)  = XXLV(K)/(RV*TK3D(K)**2.)
-         ABI(K)  = XXLS(K)/(RV*TK3D(K)**2.)
-         IF (QC3D(K).LT.QSMALL) QC3D(K) = QSMALL
-         IF (QI3D(K).LT.QSMALL) QI3D(K) = QSMALL
-         IF (TK3D(K).GE.TK0C) THEN
-            DEP(K) = 0.
-            CND(K) = 1.
-            QI3D(K) = 0.
-         ENDIF
-         IF (TK3D(K).LT.238.15) THEN
-            CND(K) = 0.
-            DEP(K) = 1.
-            QC3D(K) = 0.
-         ENDIF
-         Y5(K)   = CND(K)*XXLV(K)/CPM(K)+DEP(K)*XXLS(K)/CPM(K)
-         Y1(K)   = QC3D(K)*QVSW(K)/(QC3D(K)+QI3D(K))
-         Y2(K)   = QI3D(K)*QVSI(K)/(QC3D(K)+QI3D(K))
-         Y4(K)   = ABW(K)*Y1(K)+ABI(K)*Y2(K)
-         QVS(K)  = Y1(K)+Y2(K)
-         RSUB(K) = (QV3D(K)-QVS(K))/(1.+Y4(K)*Y5(K))
-         CND(K)  = CND(K)*RSUB(K)
-         DEP(K)  = DEP(K)*RSUB(K)
-         IF (QC3D(K).LT.QSMALL) QC3D(K) = 0.
-         IF (QI3D(K).LT.QSMALL) QI3D(K) = 0.
-         CND(K)  = MAX(-QC3D(K),CND(K))
-         DEP(K)  = MAX(-QI3D(K),DEP(K))
-         TK3D(K) = TK3D(K)+CND(K)*XXLV(K)/CPM(K)+DEP(K)*XXLS(K)/CPM(K)
-         QV3D(K) = MAX(0.,QV3D(K)-CND(K)-DEP(K))
-         QC3D(K) = MAX(0.,QC3D(K)+CND(K))
-         QI3D(K) = MAX(0.,QI3D(K)+DEP(K))
-         IF (QC3D(K).GE.QSMALL.AND.NC3D(K).LT.NSMALL) THEN
-            LTK(K)  = LOG(TK3D(K))
-            LQC(K)  = -1.*LOG(QC3D(K))
-            MDC(K)  = EXP(MDC1+MDC2*LTK(K)+MDC3*LQC(K)+MDC4*LTK(K)*    &
-                      LTK(K)+MDC5*LQC(K)*LQC(K)+MDC6*LTK(K)*LQC(K))/1.E3
-            NC3D(K) = 1.E9*QC3D(K)*V2M3/RHOW/MDC(K)**3.
-         ENDIF
-         IF (QI3D(K).GE.QSMALL.AND.NI3D(K).LT.NSMALL) THEN
-            IF (ICE_RHOI.EQ.0) THEN
-               RHOI(K)  = RHOI0
-            ELSEIF (ICE_RHOI.EQ.1) THEN
-               TC3D(K)  = TK3D(K)-TK0C
-               ESW(K)   = MIN(0.99*P3D(K),POLYSVP(TK3D(K),0))
-               ESI(K)   = MIN(0.99*P3D(K),POLYSVP(TK3D(K),1))
-               IF (ESI(K).GT.ESW(K)) ESI(K) = ESW(K)
-               HID(K)   = MAX(MIN(NINT(ABS(TC3D(K))/0.25),120),0)
-               QVSI(K)  = 0.622*ESI(K)/(P3D(K)-ESI(K))
-               INHGR(K) = ITBLE(HID(K))
-               RHOI(K)  = RHOI0*EXP(-3.*MAX((QV3D(K)-QVSI(K))-5.E-5,   &
-                          0.)/INHGR(K))
+         IF (SSAT.EQ.0) THEN
+            ESW(K)  = MIN(0.99*P3D(K),POLYSVP(TK3D(K),0))
+            QVSW(K) = 0.622*ESW(K)/(P3D(K)-ESW(K))
+            XXLV(K) = 3.1484E6-2370.*TK3D(K)
+            CPM(K)  = CP*(1.+0.887*QV3D(K))
+            CND(K)  = (QV3D(K)-QVSW(K))/(1.+XXLV(K)**2.*QVSW(K)/(      &
+                      CPM(K)*RV*TK3D(K)**2.))
+            CND(K)  = MAX(-QC3D(K),CND(K))
+            QV3D(K) = MAX(0.,QV3D(K)-CND(K))
+            TK3D(K) = TK3D(K)+CND(K)*XXLV(K)/CPM(K)
+            QC3D(K) = MAX(0.,QC3D(K)+CND(K))
+            IF (QC3D(K).GE.QSMALL.AND.NC3D(K).LT.NSMALL) THEN
+               LTK(K)  = LOG(TK3D(K))
+               LQC(K)  = -1.*LOG(QC3D(K))
+               MDC(K)  = EXP(MDC1+MDC2*LTK(K)+MDC3*LQC(K)+MDC4*LTK(K)* &
+                         LTK(K)+MDC5*LQC(K)*LQC(K)+MDC6*LTK(K)*        &
+                         LQC(K))/1.E3
+               NC3D(K) = 1.E9*QC3D(K)*V2M3/RHOW/MDC(K)**3.
             ENDIF
-            LTK(K) = LOG(TK3D(K))
-            LQI(K) = -1.*LOG(QI3D(K))
-            MDI(K) = EXP(MDI1+MDI2*LTK(K)+MDI3*LQI(K)+MDI4*LTK(K)**2.+ &
-                     MDI5*LQI(K)**2.+MDI6*LTK(K)*LQI(K))/1.E3
-            NI3D(K) = 1.E9*QI3D(K)*V2M3/RHOI(K)/MDI(K)**3.
-         ENDIF
-      ENDIF
+         ELSEIF (SSAT.EQ.1) THEN
+            ESW(K)  = MIN(0.99*P3D(K),POLYSVP(TK3D(K),0))
+            ESI(K)  = MIN(0.99*P3D(K),POLYSVP(TK3D(K),1))
+            IF (ESI(K).GT.ESW(K)) ESI(K) = ESW(K)
+            QVSW(K) = 0.622*ESW(K)/(P3D(K)-ESW(K))
+            QVSI(K) = 0.622*ESI(K)/(P3D(K)-ESI(K))
+            CND(K)  = (TK3D(K)-238.15)/(TK0C-238.15)
+            DEP(K)  = (TK0C-TK3D(K))/(TK0C-238.15)
+            XXLV(K) = 3.1484E6-2370.*TK3D(K)
+            XXLS(K) = 3.15E6-2370.*TK3D(K)+0.3337E6
+            CPM(K)  = CP*(1.+0.887*QV3D(K))
+            ABW(K)  = XXLV(K)/(RV*TK3D(K)**2.)
+            ABI(K)  = XXLS(K)/(RV*TK3D(K)**2.)
+            IF (QC3D(K).LT.QSMALL) QC3D(K) = QSMALL
+            IF (QI3D(K).LT.QSMALL) QI3D(K) = QSMALL
+            IF (TK3D(K).GE.TK0C) THEN
+               DEP(K) = 0.
+               CND(K) = 1.
+               QI3D(K) = 0.
+            ENDIF
+            IF (TK3D(K).LT.238.15) THEN
+               CND(K) = 0.
+               DEP(K) = 1.
+               QC3D(K) = 0.
+            ENDIF
+            Y5(K)   = CND(K)*XXLV(K)/CPM(K)+DEP(K)*XXLS(K)/CPM(K)
+            Y1(K)   = QC3D(K)*QVSW(K)/(QC3D(K)+QI3D(K))
+            Y2(K)   = QI3D(K)*QVSI(K)/(QC3D(K)+QI3D(K))
+            Y4(K)   = ABW(K)*Y1(K)+ABI(K)*Y2(K)
+            QVS(K)  = Y1(K)+Y2(K)
+            RSUB(K) = (QV3D(K)-QVS(K))/(1.+Y4(K)*Y5(K))
+            CND(K)  = CND(K)*RSUB(K)
+            DEP(K)  = DEP(K)*RSUB(K)
+            IF (QC3D(K).LT.QSMALL) QC3D(K) = 0.
+            IF (QI3D(K).LT.QSMALL) QI3D(K) = 0.
+            CND(K)  = MAX(-QC3D(K),CND(K))
+            DEP(K)  = MAX(-QI3D(K),DEP(K))
+            TK3D(K) = TK3D(K)+CND(K)*XXLV(K)/CPM(K)+DEP(K)*XXLS(K)/    &
+                      CPM(K)
+            QV3D(K) = MAX(0.,QV3D(K)-CND(K)-DEP(K))
+            QC3D(K) = MAX(0.,QC3D(K)+CND(K))
+            QI3D(K) = MAX(0.,QI3D(K)+DEP(K))
+            IF (QC3D(K).GE.QSMALL.AND.NC3D(K).LT.NSMALL) THEN
+               LTK(K)  = LOG(TK3D(K))
+               LQC(K)  = -1.*LOG(QC3D(K))
+               MDC(K)  = EXP(MDC1+MDC2*LTK(K)+MDC3*LQC(K)+MDC4*LTK(K)* &
+                         LTK(K)+MDC5*LQC(K)*LQC(K)+MDC6*LTK(K)*        &
+                         LQC(K))/1.E3
+               NC3D(K) = 1.E9*QC3D(K)*V2M3/RHOW/MDC(K)**3.
+            ENDIF
+            IF (QI3D(K).GE.QSMALL.AND.NI3D(K).LT.NSMALL) THEN
+               IF (ICE_RHOI.EQ.0) THEN
+                  RHOI(K)  = RHOI0
+               ELSEIF (ICE_RHOI.EQ.1) THEN
+                  TC3D(K)  = TK3D(K)-TK0C
+                  ESW(K)   = MIN(0.99*P3D(K),POLYSVP(TK3D(K),0))
+                  ESI(K)   = MIN(0.99*P3D(K),POLYSVP(TK3D(K),1))
+                  IF (ESI(K).GT.ESW(K)) ESI(K) = ESW(K)
+                  HID(K)   = MAX(MIN(NINT(ABS(TC3D(K))/0.25),120),0)
+                  QVSI(K)  = 0.622*ESI(K)/(P3D(K)-ESI(K))
+                  INHGR(K) = ITBLE(HID(K))
+                  RHOI(K)  = RHOI0*EXP(-3.*MAX((QV3D(K)-QVSI(K))-5.E-5,&
+                             0.)/INHGR(K))
+               ENDIF
+               LTK(K) = LOG(TK3D(K))
+               LQI(K) = -1.*LOG(QI3D(K))
+               MDI(K) = EXP(MDI1+MDI2*LTK(K)+MDI3*LQI(K)+MDI4*         &
+                        LTK(K)**2.+MDI5*LQI(K)**2.+MDI6*LTK(K)*        &
+                        LQI(K))/1.E3
+               NI3D(K) = 1.E9*QI3D(K)*V2M3/RHOI(K)/MDI(K)**3.
+            ENDIF
+         ENDIF   ! SAT
          ZZHR(K) = ZXMIN1;  ZZHI(K) = ZXMIN1;  ZZHS(K) = ZXMIN1
          ZZHG(K) = ZXMIN1;  ZZVR(K) = ZXMIN1;  ZZVI(K) = ZXMIN1
          ZZVS(K) = ZXMIN1;  ZZVG(K) = ZXMIN1;  ZZHVR(K) = ZXMIN1
@@ -1954,6 +1958,7 @@
          LDR1(K) = ZXMIN2;  LDR2(K) = ZXMIN2;  LDR3(K) = ZXMIN2
          LDR4(K) = ZXMIN2;  RADS(K) = 0.; RADG(K) = 0.; LDR(K) = -99.
          DBZM(K) = -60.; ZDR(K) = 0.; KDP(K) = 0.; RHV(K) = 1.
+         KDPR(K) = 0.; KDPI(K) = 0.; KDPS(K) = 0.; KDPG(K) = 0.
          TC3D(K)  = TK3D(K)-TK0C
          EPSIN(K) = 5.27137+2.16474E-2*TC3D(K)-1.31198E-3*TC3D(K)**2.
          EPSS(K)  = 78.54*(1.-4.579E-3*(TC3D(K)-25.)+1.19E-5*(TC3D(K)- &
@@ -2281,7 +2286,7 @@
                LDRI(K) = 10.*LOG10(MIN(1.,LDR2(K)))
             ENDIF
          ELSE
-            QI3D(K) = 0.;  NI3D(K) = 0.; EFRI(K) = 0.
+            QI3D(K) = 0.; NI3D(K) = 0.; EFRI(K) = 0.
          ENDIF
          IF (QS3D(K).GE.QSMALL.AND.NS3D(K).GE.NSMALL) THEN
             CALL SOLVE_AFAS(TK3D(K),RHO(K),QS3D(K),QC3D(K),NS3D(K),    &
