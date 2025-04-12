@@ -486,10 +486,10 @@
          AFAR = AFAR0
       ELSEIF (AFAR_3M.EQ.1) THEN
          MVRR = MIN(RRMAX,MAX(RRMIN,(QR1D/NR1D/C4PI3W)**THRD))
-         EFRR = EXP(EFR1+EFR2*LOG(NR1D)+EFR3*LOG(MVRR))
-!         EFRR = EXP(0.60248802-5.9285673E-2*LOG(NR1D)+1.0385685*       &
-!                LOG(MVRR)+1.4000158E-3*LOG(NR1D)**2.+4.1927565E-4*     &
-!                LOG(MVRR)**2.-2.2498841E-3*LOG(NR1D)*LOG(MVRR))
+!         EFRR = EXP(EFR1+EFR2*LOG(NR1D)+EFR3*LOG(MVRR))
+         EFRR = EXP(0.60248802-5.9285673E-2*LOG(NR1D)+1.0385685*       &
+                LOG(MVRR)+1.4000158E-3*LOG(NR1D)**2.+4.1927565E-4*     &
+                LOG(MVRR)**2.-2.2498841E-3*LOG(NR1D)*LOG(MVRR))
          KDX  = MAX(KCRMIN,MIN(KCRMAX,(MVRR/EFRR)**3.))
          AFAR = (6.*KDX-3.+SQRT(8.*KDX+1.))/(2.-2.*KDX)
          AFAR = MIN(MAX(AFAR,AFAMIN),AFAMAX)
@@ -1427,7 +1427,11 @@
             ELSEIF (AFAR_3M.EQ.1) THEN
                MVRR(K) = (QR3D(K)/NR3D(K)/C4PI3W)**THRD
                MVRR(K) = MIN(RRMAX,MAX(RRMIN,MVRR(K)))
-               EFRR(K) = EXP(EFR1+EFR2*LOG(NR3D(K))+EFR3*LOG(MVRR(K)))
+!               EFRR(K) = EXP(EFR1+EFR2*LOG(NR3D(K))+EFR3*LOG(MVRR(K)))
+               EFRR = EXP(0.60248802-5.9285673E-2*LOG(NR3D(K))+        &
+                      1.0385685*LOG(MVRR(K))+1.4000158E-3*             &
+                      LOG(NR3D(K))**2.+4.1927565E-4*LOG(MVRR(K))**2.-  &
+                      2.2498841E-3*LOG(NR3D(K))*LOG(MVRR(K)))
                KDX(K)  = MAX(KCRMIN,MIN(KCRMAX,(MVRR(K)/EFRR(K))**3.))
                KDX(K)  = MIN(KCRMAX,MAX(KCRMIN,KDX(K)))
                AFAR(K) = (6.*KDX(K)-3.+SQRT(8.*KDX(K)+1.))/(2.-2.*     &
