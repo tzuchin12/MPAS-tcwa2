@@ -57,12 +57,12 @@
 CONTAINS
 
 !=======================================================================
-      SUBROUTINE tcwa1(th,qv,qc,qr,qi,qs,qg,rho,pii,p,w,dt_in,z,ht,    &
-                       dz8w,xland,DBZM,re_cloud,re_ice,re_snow,        &
-                       has_reqc,has_reqi,has_reqs,sr,rainnc,rainncv,   &
-                       snownc,snowncv,graupelnc,graupelncv,ids,ide,jds,&
-                       jde,kds,kde,ims,ime,jms,jme,kms,kme,its,ite,jts,&
-                       jte,kts,kte)
+      SUBROUTINE mp_tcwa1(th,qv,qc,qr,qi,qs,qg,rho,pii,p,w,dt_in,z,ht, &
+                          dz8w,xland,DBZM,re_cloud,re_ice,re_snow,     &
+                          has_reqc,has_reqi,has_reqs,sr,rainnc,rainncv,&
+                          snownc,snowncv,graupelnc,graupelncv,ids,ide, &
+                          jds,jde,kds,kde,ims,ime,jms,jme,kms,kme,its, &
+                          ite,jts,jte,kts,kte)
 !=======================================================================
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: ids,ide,jds,jde,kds,kde,ims,ime,jms,jme,  &
@@ -89,7 +89,7 @@ CONTAINS
                      pii,SMLF,GMLF,xland,re_cloud,re_ice,re_snow,DBZM, &
                      ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte)
 
-      END SUBROUTINE tcwa1
+      END SUBROUTINE mp_tcwa1
 !=======================================================================
 !
 !=======================================================================
