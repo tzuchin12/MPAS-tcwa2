@@ -4,8 +4,6 @@
 !==========================================================================
       MODULE module_mp_tcwa1
 
-      USE module_wrf_error
-
       REAL, PRIVATE, PARAMETER :: PI = 3.141592654
       REAL, PRIVATE, PARAMETER :: THRD = 1./3.
       REAL, PRIVATE, PARAMETER :: KMIN = 0.2222, KMAX = 0.8396          ! KMAX = 0.9441; KMAX =0.8396 for 15
