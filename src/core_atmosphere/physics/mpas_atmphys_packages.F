@@ -39,7 +39,7 @@
  character(len=StrKIND),pointer:: config_convection_scheme
  character(len=StrKIND),pointer:: config_pbl_scheme
  character(len=StrKIND),pointer:: config_lsm_scheme
- logical,pointer:: mp_kessler_in,mp_thompson_in,mp_thompson_aers_in,mp_wsm6_in,mp_tcwa2_in,mp_nssl2m_in,nssl3m_in,nssl_hail_in,nssl3m_hail_in,nssl_ccn_in
+ logical,pointer:: mp_kessler_in,mp_thompson_in,mp_thompson_aers_in,mp_wsm6_in,mp_tcwa1_in,mp_tcwa2_in,mp_nssl2m_in,nssl3m_in,nssl_hail_in,nssl3m_hail_in,nssl_ccn_in
  logical,pointer:: cu_grell_freitas_in,cu_kain_fritsch_in,cu_ntiedtke_in
  logical,pointer:: bl_mynn_in,bl_ysu_in
  logical,pointer:: sf_noahmp_in
@@ -75,6 +75,9 @@
  nullify(mp_wsm6_in)
  call mpas_pool_get_package(packages,'mp_wsm6_inActive',mp_wsm6_in)
 
+ nullify(mp_tcwa1_in)
+ call mpas_pool_get_package(packages,'mp_tcwa1_inActive',mp_tcwa1_in)
+
  nullify(mp_tcwa2_in)
  call mpas_pool_get_package(packages,'mp_tcwa2_inActive',mp_tcwa2_in)
 
@@ -96,6 +99,7 @@
  if(.not.associated(mp_kessler_in)       .or. &
     .not.associated(mp_thompson_in)      .or. &
     .not.associated(mp_thompson_aers_in) .or. &
+    .not.associated(mp_tcwa1_in)  .or. &
     .not.associated(mp_tcwa2_in)  .or. &
     .not.associated(mp_nssl2m_in) .or. &
     .not.associated(mp_wsm6_in)) then
@@ -110,6 +114,7 @@
  mp_thompson_in      = .false.
  mp_thompson_aers_in = .false.
  mp_wsm6_in          = .false.
+ mp_tcwa1_in         = .false.
  mp_tcwa2_in         = .false.
  mp_nssl2m_in        = .false.
  nssl3m_in           = .false.
@@ -125,6 +130,8 @@
     mp_thompson_aers_in = .true.
  elseif(config_microp_scheme == 'mp_wsm6') then
     mp_wsm6_in = .true.
+ elseif(config_microp_scheme == 'mp_tcwa1') then
+    mp_tcwa1_in = .true.
  elseif(config_microp_scheme == 'mp_tcwa2') then
     mp_tcwa2_in = .true.
  elseif(config_microp_scheme == 'mp_nssl2m') then
@@ -151,6 +158,7 @@
  call mpas_log_write('    mp_thompson_in          = $l', logicArgs=(/mp_thompson_in/))
  call mpas_log_write('    mp_thompson_aers_in     = $l', logicArgs=(/mp_thompson_aers_in/))
  call mpas_log_write('    mp_wsm6_in              = $l', logicArgs=(/mp_wsm6_in/))
+ call mpas_log_write('    mp_tcwa1_in             = $l', logicArgs=(/mp_tcwa1_in/))
  call mpas_log_write('    mp_tcwa2_in             = $l', logicArgs=(/mp_tcwa2_in/))
  call mpas_log_write('    mp_nssl2m_in            = $l', logicArgs=(/mp_nssl2m_in/))
  call mpas_log_write('    nssl_hail_in            = $l', logicArgs=(/nssl_hail_in/))

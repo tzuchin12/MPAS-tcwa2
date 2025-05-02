@@ -20,6 +20,7 @@
 !wrf physics:
  use module_mp_kessler
  use module_mp_thompson
+ use module_mp_tcwa1
  use module_mp_tcwa2
  use module_mp_nssl_2mom, only : nssl_2mom_driver
  use mp_nssl, only: mp_nssl_init
@@ -132,7 +133,7 @@
  if(.not.allocated(rainncv_p)) allocate(rainncv_p(ims:ime,jms:jme))
 
  microp_select: select case(trim(microp_scheme))
-    case ("mp_thompson","mp_thompson_aerosols","mp_wsm6","mp_tcwa2","mp_nssl2m")
+    case ("mp_thompson","mp_thompson_aerosols","mp_wsm6","mp_tcwa1","mp_tcwa2","mp_nssl2m")
        !mass mixing ratios:
        if(.not.allocated(qi_p)) allocate(qi_p(ims:ime,kms:kme,jms:jme))
        if(.not.allocated(qs_p)) allocate(qs_p(ims:ime,kms:kme,jms:jme))
@@ -174,6 +175,10 @@
 
              case default
           end select microp3_select
+
+       case("mp_tcwa1")
+          if(.not.allocated(xland_p)) allocate(xland_p(ims:ime,jms:jme))
+          if(.not.allocated(zmid_p)) allocate(zmid_p(ims:ime,kms:kme,jms:jme))
 
        case("mp_tcwa2")
           if(.not.allocated(nc_p) ) allocate(nc_p(ims:ime,kms:kme,jms:jme))
@@ -256,7 +261,7 @@
  if(allocated(rainncv_p)) deallocate(rainncv_p)
 
  microp_select: select case(trim(microp_scheme))
-    case ("mp_thompson","mp_thompson_aerosols","mp_wsm6","mp_tcwa2","mp_nssl2m")
+    case ("mp_thompson","mp_thompson_aerosols","mp_wsm6","mp_tcwa1","mp_tcwa2","mp_nssl2m")
        !mass mixing ratios:
        if(allocated(qi_p)) deallocate(qi_p)
        if(allocated(qs_p)) deallocate(qs_p)
@@ -298,6 +303,10 @@
 
              case default
           end select microp3_select
+
+       case("mp_tcwa1")
+          if(allocated(xland_p)) deallocate(xland_p)
+          if(.not.allocated(zmid_p)) allocate(zmid_p(ims:ime,kms:kme,jms:jme))
 
        case("mp_tcwa2")
           if(allocated(nc_p) ) deallocate(nc_p )
@@ -582,6 +591,21 @@
                )
        call mpas_timer_stop('mp_wsm6')
 
+    case ("mp_tcwa1")
+       call mpas_timer_start('mp_tcwa1')
+       call mp_tcwa1(th = th_p, qv = qv_p, qc = qc_p, qr = qr_p, qi = qi_p, qs = qs_p,        &
+                     qg = qg_p, rho = rho_p, pii = pi_p, p = pres_p, w = w_p,                 &
+                     dt_in = dt_microp, z = zmid_p, ht = z_p(:,1,:), dz8w = dz_p,             &
+                     xland = xland_p, DBZM = refl10cm_p, re_cloud = recloud_p,                &
+                     re_ice = reice_p, re_snow = resnow_p, has_reqc = has_reqc,               &
+                     has_reqi = has_reqi, has_reqs = has_reqs, sr = sr_p, rainnc = rainnc_p,  &
+                     rainncv = rainncv_p, snownc = snownc_p, snowncv = snowncv_p,             &
+                     graupelnc = graupelnc_p, graupelncv = graupelncv_p,                      &
+                     IDS = ids, IDE = ide, JDS = jds, JDE = jde, KDS = kds, KDE = kde,        &
+                     IMS = ims, IME = ime, JMS = jms, JME = jme, KMS = kms, KME = kme,        &
+                     ITS = its, ITE = ite, JTS = jts, JTE = jte, KTS = kts, KTE = kte)
+       call mpas_timer_stop('mp_tcwa1')
+
     case ("mp_tcwa2")
        call mpas_timer_start('mp_tcwa2')
        call mp_tcwa2(TH = th_p, P = pres_p, DZ = dz_p, W = w_p, PII = pi_p, DT_MP = dt_microp,&
@@ -635,6 +659,7 @@
     if(trim(microp_scheme) == "mp_wsm6"              .or. &
        trim(microp_scheme) == "mp_thompson"          .or. &
        trim(microp_scheme) == "mp_thompson_aerosols" .or. &
+       trim(microp_scheme) == "mp_tcwa1"   .or. &
        trim(microp_scheme) == "mp_tcwa2"   .or. &
        trim(microp_scheme) == "mp_nssl2m"   ) then
        call compute_radar_reflectivity(configs,diag_physics,its,ite)
@@ -717,7 +742,7 @@
 
 !variables specific to different cloud microphysics schemes:
  microp_select: select case(trim(microp_scheme))
-    case ("mp_thompson","mp_thompson_aerosols","mp_wsm6","mp_tcwa2","mp_nssl2m")
+    case ("mp_thompson","mp_thompson_aerosols","mp_wsm6","mp_tcwa1","mp_tcwa2","mp_nssl2m")
        do j = jts, jte
        do i = its, ite
           snowncv_p(i,j)    = 0._RKIND
@@ -849,7 +874,7 @@
 
 !variables specific to different cloud microphysics schemes:
  microp_select: select case(trim(microp_scheme))
-    case ("mp_thompson","mp_thompson_aerosols","mp_wsm6","mp_tcwa2","mp_nssl2m")
+    case ("mp_thompson","mp_thompson_aerosols","mp_wsm6","mp_tcwa1","mp_tcwa2","mp_nssl2m")
        do j = jts,jte
        do i = its,ite
           !time-step precipitation:
@@ -912,7 +937,7 @@
     case ("mp_kessler")
        call physics_error_fatal('--- calculation of radar reflectivity is not available' // &
                                  'with kessler cloud microphysics')
-    case ("mp_tcwa2","mp_nssl2m")
+    case ("mp_tcwa1","mp_tcwa2","mp_nssl2m")
 
        ! Reflectivity is already computed in 3D in the refl10cm_p array, so just read out the values
        if(.not.allocated(dBz1d)) allocate(dBZ1d(kts:kte))

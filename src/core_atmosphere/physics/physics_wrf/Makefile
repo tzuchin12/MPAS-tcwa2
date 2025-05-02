@@ -25,6 +25,7 @@ OBJS = \
 	module_mp_thompson_aerosols.o  \
 	module_mp_thompson_cldfra3.o   \
 	module_mp_wsm6.o               \
+	module_mp_tcwa1.o              \
 	module_mp_tcwa2.o              \
 	mp_nssl.o                      \
 	module_mp_nssl_2mom.o          \
