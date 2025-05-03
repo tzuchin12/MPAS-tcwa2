@@ -84,10 +84,10 @@ CONTAINS
                      ht,xland,ids,ide,jds,jde,kds,kde,ims,ime,jms,jme, &
                      kms,kme,its,ite,jts,jte,kts,kte)
 
-      CALL fall_flux(dt_in,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,ht,sr,rainnc,&
-                     rainncv,snownc,snowncv,graupelnc,graupelncv,th,   &
-                     pii,SMLF,GMLF,xland,re_cloud,re_ice,re_snow,DBZM, &
-                     ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte)
+!      CALL fall_flux(dt_in,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,ht,sr,rainnc,&
+!                     rainncv,snownc,snowncv,graupelnc,graupelncv,th,   &
+!                     pii,SMLF,GMLF,xland,re_cloud,re_ice,re_snow,DBZM, &
+!                     ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte)
 
       END SUBROUTINE mp_tcwa1
 !=======================================================================
