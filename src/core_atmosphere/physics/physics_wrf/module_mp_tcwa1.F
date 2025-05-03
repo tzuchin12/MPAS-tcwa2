@@ -251,8 +251,8 @@ CONTAINS
             LQR2(k) = LQR(k)*LQR(k)
             MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*LTK2(k)+   &
                       MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
-            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
-                      MVDR(k)
+!            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
+!                      MVDR(k)
             LMDR(k) = LOG(MVDR(k))
             EFDR(k) = EXP(EFD1+EFD2*LMDR(k)+EFD3*6.90775528+EFD4*      &
                       LMDR(k)**2.+EFD5*47.717083+EFD6*LMDR(k)*         &
@@ -778,8 +778,8 @@ CONTAINS
             LQR2(k) = LQR(k)*LQR(k)
             MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*LTK2(k)+   &
                       MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
-            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
-                      MVDR(k)
+!            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
+!                      MVDR(k)
             LMDR(k) = LOG(MVDR(k))
             EFDR(k) = EXP(EFD1+EFD2*LMDR(k)+EFD3*6.90775528+EFD4*      &
                       LMDR(k)**2.+EFD5*47.717083+EFD6*LMDR(k)*         &
@@ -1593,29 +1593,29 @@ CONTAINS
             qi(k) = MAX(0.,qi(k)+dep(k))
             tair(k) = pt(k)*pi0(k)
          endif
-         esw(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),0))
-         qsw(k) = 0.622*esw(k)/(p0(k)/10.-esw(k))
-         if (qv(k).gt.qsw(k)) then
-            xlv(k)  = 3.1484E6-2370.*tair(k)
-            cpm1(k) = 1005.46*(1.+0.887*qv(k))
-            abw(k) = 1.+xlv(k)**2.*qsw(k)/cpm1(k)/(RV*tair(k)**2.)
-            cnd(k) = MAX(0.,(qv(k)-qsw(k))/abw(k))
-            pt(k) = pt(k)+cnd(k)*xlv(k)*pii(k)/cpm1(k)
-            qv(k) = MAX(0.,qv(k)-cnd(k))
-            qc(k) = MAX(0.,qc(k)+cnd(k))
-            tair(k) = pt(k)*pi0(k)
-         endif
-         esi(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),1))
-         qsi(k) = 0.622*esi(k)/(p0(k)/10.-esi(k))
-         if (qv(k).gt.qsi(k)) then
-            xls(k)  = 3.4837E6-2370.*tair(k)
-            cpm1(k) = 1005.46*(1.+0.887*qv(k))
-            abi(k) = 1.+xls(k)**2.*qsi(k)/cpm1(k)/(RV*tair(k)**2.)
-            dep(k) = MAX(0.,(qv(k)-qsi(k))/abi(k))
-            pt(k) = pt(k)+dep(k)*xls(k)*pii(k)/cpm1(k)
-            qv(k) = MAX(0.,qv(k)-dep(k))
-            qi(k) = MAX(0.,qi(k)+dep(k))
-         endif
+!         esw(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),0))
+!         qsw(k) = 0.622*esw(k)/(p0(k)/10.-esw(k))
+!         if (qv(k).gt.qsw(k)) then
+!            xlv(k)  = 3.1484E6-2370.*tair(k)
+!            cpm1(k) = 1005.46*(1.+0.887*qv(k))
+!            abw(k) = 1.+xlv(k)**2.*qsw(k)/cpm1(k)/(RV*tair(k)**2.)
+!            cnd(k) = MAX(0.,(qv(k)-qsw(k))/abw(k))
+!            pt(k) = pt(k)+cnd(k)*xlv(k)*pii(k)/cpm1(k)
+!            qv(k) = MAX(0.,qv(k)-cnd(k))
+!            qc(k) = MAX(0.,qc(k)+cnd(k))
+!            tair(k) = pt(k)*pi0(k)
+!         endif
+!         esi(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),1))
+!         qsi(k) = 0.622*esi(k)/(p0(k)/10.-esi(k))
+!         if (qv(k).gt.qsi(k)) then
+!            xls(k)  = 3.4837E6-2370.*tair(k)
+!            cpm1(k) = 1005.46*(1.+0.887*qv(k))
+!            abi(k) = 1.+xls(k)**2.*qsi(k)/cpm1(k)/(RV*tair(k)**2.)
+!            dep(k) = MAX(0.,(qv(k)-qsi(k))/abi(k))
+!            pt(k) = pt(k)+dep(k)*xls(k)*pii(k)/cpm1(k)
+!            qv(k) = MAX(0.,qv(k)-dep(k))
+!            qi(k) = MAX(0.,qi(k)+dep(k))
+!         endif
 !=========================================================================
          if (qc(k).lt.cmin1) qc(k) = 0.
          if (qr(k).lt.cmin1) qr(k) = 0.
