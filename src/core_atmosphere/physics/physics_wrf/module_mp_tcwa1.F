@@ -84,10 +84,10 @@ CONTAINS
                      ht,xland,ids,ide,jds,jde,kds,kde,ims,ime,jms,jme, &
                      kms,kme,its,ite,jts,jte,kts,kte)
 
-!      CALL fall_flux(dt_in,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,ht,sr,rainnc,&
-!                     rainncv,snownc,snowncv,graupelnc,graupelncv,th,   &
-!                     pii,SMLF,GMLF,xland,re_cloud,re_ice,re_snow,DBZM, &
-!                     ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte)
+      CALL fall_flux(dt_in,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,ht,sr,rainnc,&
+                     rainncv,snownc,snowncv,graupelnc,graupelncv,th,   &
+                     pii,SMLF,GMLF,xland,re_cloud,re_ice,re_snow,DBZM, &
+                     ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte)
 
       END SUBROUTINE mp_tcwa1
 !=======================================================================
@@ -1590,7 +1590,31 @@ CONTAINS
             dep(k) = MAX(-qi(k),(qv(k)-qsi(k))/abi(k))
             pt(k) = pt(k)+dep(k)*xls(k)*pii(k)/cpm1(k)
             qv(k) = MAX(0.,qv(k)-dep(k))
-            qi(k) = MAX(0.,qi(k)+dep(k))
+            qi(k) = MAX(0.,qi(k)+dep(k)
+            tair(k) = pt(k)*pi0(k)
+         endif
+         esw(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),0))
+         qsw(k) = 0.622*esw(k)/(p0(k)/10.-esw(k))
+         if (qv(k).gt.qsw(k)) then
+            xlv(k)  = 3.1484E6-2370.*tair(k)
+            cpm1(k) = 1005.46*(1.+0.887*qv(k))
+            abw(k) = 1.+xlv(k)**2.*qsw(k)/cpm1(k)/(RV*tair(k)**2.)
+            cnd(k) = MAX(0.,(qv(k)-qsw(k))/abw(k))
+            pt(k) = pt(k)+cnd(k)*xlv(k)*pii(k)/cpm1(k)
+            qv(k) = MAX(0.,qv(k)-cnd(k))
+            qc(k) = MAX(0.,qc(k)+cnd(k))
+            tair(k) = pt(k)*pi0(k)
+         endif
+         esi(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),1))
+         qsi(k) = 0.622*esi(k)/(p0(k)/10.-esi(k))
+         if (qv(k).gt.qsi(k)) then
+            xls(k)  = 3.4837E6-2370.*tair(k)
+            cpm1(k) = 1005.46*(1.+0.887*qv(k))
+            abi(k) = 1.+xls(k)**2.*qsi(k)/cpm1(k)/(RV*tair(k)**2.)
+            dep(k) = MAX(0.,(qv(k)-qsi(k))/abi(k))
+            pt(k) = pt(k)+dep(k)*xls(k)*pii(k)/cpm1(k)
+            qv(k) = MAX(0.,qv(k)-dep(k))
+            qi(k) = MAX(0.,qi(k)+dep(k)
          endif
 !=========================================================================
          if (qc(k).lt.cmin1) qc(k) = 0.
