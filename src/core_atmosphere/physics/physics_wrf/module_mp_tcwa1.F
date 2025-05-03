@@ -1590,7 +1590,7 @@ CONTAINS
             dep(k) = MAX(-qi(k),(qv(k)-qsi(k))/abi(k))
             pt(k) = pt(k)+dep(k)*xls(k)*pii(k)/cpm1(k)
             qv(k) = MAX(0.,qv(k)-dep(k))
-            qi(k) = MAX(0.,qi(k)+dep(k)
+            qi(k) = MAX(0.,qi(k)+dep(k))
             tair(k) = pt(k)*pi0(k)
          endif
          esw(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),0))
@@ -1614,7 +1614,7 @@ CONTAINS
             dep(k) = MAX(0.,(qv(k)-qsi(k))/abi(k))
             pt(k) = pt(k)+dep(k)*xls(k)*pii(k)/cpm1(k)
             qv(k) = MAX(0.,qv(k)-dep(k))
-            qi(k) = MAX(0.,qi(k)+dep(k)
+            qi(k) = MAX(0.,qi(k)+dep(k))
          endif
 !=========================================================================
          if (qc(k).lt.cmin1) qc(k) = 0.
