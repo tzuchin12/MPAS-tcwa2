@@ -837,7 +837,8 @@
               AMG,AVG,BVG,LAMGMIN,LAMGMAX,KDX,MVDG,BDG,FDG,MVDC,MVDR,  &
               MVDL,TC1D,VTQR,VTQG,VTQL,VTQ0,VTQGL,DNRG,LTK,LQG,MDG,    &
               LBDG,LLMG,LLMG2,LMDG,LMDG2,LROG,LROG2,LAG2,LAG22,RHOX,   &
-              KINV,BEST0,BEST,C1X2,VTB1,VTA1,GG1,MVG0,DSLL,GMLF
+              KINV,BEST0,BEST,C1X2,VTB1,VTA1,GG1,MVG0,DSLL,GMLF,LAG5,  &
+              LAG52
 
       IHAIL = 0
       IF (ICE_RHOG.EQ.0) THEN
@@ -909,11 +910,24 @@
       IF (GRAP_SHAPE.EQ.0) THEN
          GASPR = 1.
       ELSEIF (GRAP_SHAPE.EQ.1) THEN
-         LTK   = LOG(TK1D)
-         LBDG  = LOG(MVDG*1.E6)
-         GASPR = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*LTK+        &
-                 5.1416616*LBDG+1.0361366*LTK**2.+0.017687308*         &
-                 LBDG**2.-0.9649671*LTK*LBDG))
+!         LTK   = LOG(TK1D)
+!         LBDG  = LOG(MVDG*1.E6)
+!         GASPR = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*LTK+        &
+!                 5.1416616*LBDG+1.0361366*LTK**2.+0.017687308*         &
+!                 LBDG**2.-0.9649671*LTK*LBDG))
+         LLMG  = LOG(LAMG)
+         LLMG2 = LLMG*LLMG
+         LAG5  = LOG(AFAG+5.)
+         LAG52 = LAG5*LAG5
+         GASPR = MIN(1.,((5.6387098+1.5626893*LAG5-1.5481826*LLMG+     &
+                 0.12481435*LAG52+0.11244742*LLMG2-0.2336531*LAG5*     &
+                 LLMG)/(1.+0.28272803*LAG5-0.2780308*LLMG+2.1750225E-2*&
+                 LAG52+1.9960971E-2*LLMG2-4.1317594E-2*LAG5*LLMG))/10.)
+!         GASPR = MIN(1.,((3.6146589+1.0100719*LAG5-1.000754*LLMG+      &
+!                 8.3736643E-2*LAG52+7.430473E-2*LLMG2-0.15526109*LAG5* &
+!                 LLMG)/(1.+0.28678099*LAG5-0.28082725*LLMG+            &
+!                 2.2040684E-2*LAG52+2.0241217E-2*LLMG2-4.1950941E-2*   &
+!                 LAG5*LLMG))/10.)
       ENDIF
 
       IF (ICE_VTG.EQ.0) THEN

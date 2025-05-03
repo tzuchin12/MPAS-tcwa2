@@ -251,8 +251,8 @@ CONTAINS
             LQR2(k) = LQR(k)*LQR(k)
             MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*LTK2(k)+   &
                       MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
-!            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
-!                      MVDR(k)
+            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
+                      MVDR(k)
             LMDR(k) = LOG(MVDR(k))
             EFDR(k) = EXP(EFD1+EFD2*LMDR(k)+EFD3*6.90775528+EFD4*      &
                       LMDR(k)**2.+EFD5*47.717083+EFD6*LMDR(k)*         &
@@ -668,12 +668,12 @@ CONTAINS
             egi,w1d,xlv,xls,cpm1,qcmax,qimax,nice,abw,abi,esw,dv1,tau, &
             tauc,taui,atem,mvri,rho,lan1D,ncloud
       real, dimension (kts:kte) :: RHOS,RHOG,MVDC,MVDR,MVDI,MVDG,MVDS, &
-            MVDH,EFDC,EFDR,EFDI,EFDS,EFDG,EFDH,KDXR,KDXS,KDXG,KDXH,    &
-            AVR,BVR,LTK,LTK2,LQC,LQC2,LQR,LQR2,LQI,LQI2,LQS,LQS2,LQG,  &
-            LQG2,AFAR,AFAS,AFAG,DSLL,LZR,LZS,LZG,GR1,GR2,GR3,GR4,GR5,  &
-            GR6,GR7,GBR3,GBR4,GBR6,GBR25,GS1,GS2,GS3,GS4,GS5,GS6,GBS3, &
-            GBS4,GBS25,GG1,GG2,GG3,GG4,GBG3,GBG4,GBG25,MVG0,LAMR,LMDR, &
-            LROS,LMDS,LMDH,LMDG,LROG,LMDC
+            MVDH,EFDR,EFDS,EFDG,EFDH,KDXR,KDXS,KDXG,KDXH,AVR,BVR,LTK,  &
+            LTK2,LQC,LQC2,LQR,LQR2,LQI,LQI2,LQS,LQS2,LQG,LQG2,AFAR,    &
+            AFAS,AFAG,DSLL,LZR,LZS,LZG,GR1,GR2,GR3,GR4,GR5,GR6,GR7,    &
+            GBR3,GBR4,GBR6,GBR25,GS1,GS2,GS3,GS4,GS5,GS6,GBS3,GBS4,    &
+            GBS25,GG1,GG2,GG3,GG4,GBG3,GBG4,GBG25,MVG0,LAMR,LMDR,LROS, &
+            LMDS,LMDH,LMDG,LROG
       real, dimension (kts:kte) :: SMLF1D,GMLF1D
       real, dimension(ims:ime,jms:jme) :: xland,topo
       real, dimension(ims:ime,kms:kme,jms:jme) :: ptwrf,qvwrf,qlwrf,   &
@@ -778,8 +778,8 @@ CONTAINS
             LQR2(k) = LQR(k)*LQR(k)
             MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*LTK2(k)+   &
                       MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
-!            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
-!                      MVDR(k)
+            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
+                      MVDR(k)
             LMDR(k) = LOG(MVDR(k))
             EFDR(k) = EXP(EFD1+EFD2*LMDR(k)+EFD3*6.90775528+EFD4*      &
                       LMDR(k)**2.+EFD5*47.717083+EFD6*LMDR(k)*         &
@@ -1510,10 +1510,6 @@ CONTAINS
                             LQC(k)+6.1389254*LTK2(k)+5.5915321E-3*     &
                             LQC2(k)-0.12488698*LTK(k)*LQC(k))
                endif
-               LMDC(k) = LOG(MVDC(k))
-               EFDC(k) = EXP(EFD1+EFD2*LMDC(k)+EFD3*6.90775528+EFD4*   &
-                         LMDC(k)**2.+EFD5*47.717083+EFD6*LMDC(k)*      &
-                         6.9077553)
                mvrc(k) = MAX(5.E-7,MIN(5.E-5,MVDC(k)/2.E6))
                ncloud(k) = qc(k)*rho(k)/(4188.790267*mvrc(k)**3.)
                ncloud(k) = min(1.e9,max(0.1,ncloud(k)))
@@ -1527,19 +1523,13 @@ CONTAINS
                LTK2(k) = LTK(k)*LTK(k)
                LQI2(k) = LQI(k)*LQI(k)
                if (lan1D(k).eq.1) then     ! land
-                  MVDI(k) = EXP(154.88767-0.25772005*LQI(k)+3.75543E-4*&
+                  MVDI(k) = EXP(152.58509-0.25772005*LQI(k)+3.75543E-4*&
                             LQI2(k)-54.560357*LTK(k)+5.1248879*LTK2(k))
-                  EFDI(k) = EXP(161.47584-0.26232591*LQI(k)+           &
-                            4.3393883E-4*LQI2(k)-57.057846*LTK(k)+     &
-                            5.3668153*LTK2(k))/10.
                else                         ! ocean
-                  MVDI(k) = EXP(155.33396-0.25772005*LQI(k)+3.75543E-4*&
+                  MVDI(k) = EXP(153.03137-0.25772005*LQI(k)+3.75543E-4*&
                             LQI2(k)-54.560357*LTK(k)+5.1248879*LTK2(k))
-                  EFDI(k) = EXP(161.92213-0.26232591*LQI(k)+           &
-                            4.3393883E-4*LQI2(k)-57.057846*LTK(k)+     &
-                            5.3668153*LTK2(k))/10.
                endif
-               mvri(k) = MIN(5.E-4,MAX(3.E-6,MVDI(k)/2.E7))
+               mvri(k) = MIN(5.E-4,MAX(3.E-6,MVDI(k)/2.E6))
                nice(k) = qi(k)*rho(k)/(3769.910667*mvri(k)**3.)
                nice(k) = MIN(1.E7,MAX(0.1,nice(k)))
                taui(k) = 1./(4.*PI*dv1(k)*nice(k)*mvri(k))
