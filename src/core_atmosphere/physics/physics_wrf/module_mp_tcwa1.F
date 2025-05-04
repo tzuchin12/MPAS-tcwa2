@@ -107,7 +107,7 @@ CONTAINS
 
       ! microphysics in GCE
       CALL SATICEL_S(dt_in,ihail,ice2,th,qv,qc,qr,qi,qs,qg,rho,pii,p,  &
-                     SMLF,GMLF,xland,ids,ide,jds,jde,kds,kde,&
+                     w,SMLF,GMLF,xland,ids,ide,jds,jde,kds,kde,&
                      ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte) 
 
       CALL fall_flux(dt_in,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,ht,sr,rainnc,&
@@ -746,7 +746,7 @@ CONTAINS
 !
 !======================================================================
       SUBROUTINE saticel_s(dt,ihail,ice2,ptwrf,qvwrf,qlwrf,qrwrf,qiwrf,&
-                           qswrf,qgwrf,rho_mks,pi_mks,p0_mks,&
+                           qswrf,qgwrf,rho_mks,pi_mks,p0_mks,w_mks,    &
                            SMLF,GMLF,xland,ids,ide,jds,jde,kds,kde,ims,&
                            ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte)
 !-----------------------------------------------------------------------
@@ -789,30 +789,33 @@ CONTAINS
                  jms,jme,kms,kme,its,ite,jts,jte,kts,kte
       integer :: i,j,k,ihail2=-1
       real :: a1,a2,ami,ami50,del,ee1,r2ice,rt0,dt,d2t,r2is,r2ig,erw,  &
-              eri,esr,egr,rn10,rn17,idt
+              eri,esr,egr,rn10,rn17,idt,C1,K1
       real :: cpi,cpi2,cpi4,ga3d,ag,bg,eiw,ui50,ri50
       real, dimension (ims:ime,kms:kme,jms:jme), intent(inout) :: SMLF,GMLF
       real, dimension (kts:kte) :: SMLF1D,GMLF1D,rp0,pi0,pii,pr0,r00,  &
             rr0,rrq,fv0,tns,tnw,roqs,roqg,p0,RHOS,RHOG,esi1,esi2,rhois,&
             tng,cpm,MVDS,MVDH,EFDS,EFDG,EFDH,KDXR,KDXS,KDXG,KDXH,MVDR, &
-            EFDR,N0R,N0S,N0G,N0H,LAMR,MVDM,AVR,BVR,rho,KINV,     &
+            EFDR,N0R,N0S,N0G,N0H,LAMR,MVDM,MVDC,MVDI,AVR,BVR,rho,KINV,     &
             BEST0,BEST,C1X2,VTB1,VTA1,LTK,LTK2,LQR,LQR2,LQS,LQS2,LQG,  &
             LQG2,AFAR,AFAS,AFAG,LAMG,MVDG,DSLL,LZR,LZS,LZG,GR1,GR2,GR3,&
             GR4,GR5,GR6,GR7,GBR3,GBR4,GBR6,GBR25,GS1,GS2,GS3,GS4,GS5,  &
             GS6,GBS3,GBS4,GBS25,GG1,GG2,GG3,GG4,GBG3,GBG4,GBG25,ff,ecs,&
-            ecg,mvrc,egi,MVG0,lan1D,ncloud,LLMR,LAR4
+            ecg,mvrc,egi,MVG0,lan1D,ncloud,LLMR,LAR4,w1d,tauc,taui,tau,&
+            atem
       real, dimension(ims:ime,jms:jme) :: xland
       real, dimension(ims:ime,kms:kme,jms:jme) :: ptwrf,qvwrf,qlwrf,   &
-            qrwrf,qiwrf,qswrf,qgwrf,rho_mks,pi_mks,p0_mks
+            qrwrf,qiwrf,qswrf,qgwrf,rho_mks,pi_mks,p0_mks,w_mks
       real, dimension(kts:kte) :: pt,qv,qc,qr,qi,qs,qg,tair,tairc,egs, &
             rtair,dep,dd,dd1,qvs,dm,rsub1,cnd,dlt2,dlt3,zr,vr,zs,vs,vg,&
             zg,pg,qsi,ssi,esi,qsw,ssw,y1,y2,y3,y4,y5,y6,y7,r_nci,dwv,  &
-            qcsink,qisink,qrsoce,qrsink,qssoce,qssink,qgsoce,scv,tca
+            qcsink,qisink,qrsoce,qrsink,qssoce,qssink,qgsoce,scv,tca,  &
+            xlv,xls,cpm1,esw,esi,nice,abw,abi,qcmax,qimax,dv1
       real, dimension(kts:kte) :: praut,pracw,dgacs,dgacw,dgaci,dgacr, &
             pgacs,wgacs,qgacw,wgaci,qgacr,pgwet,pgdry,pgaut,pracs,     &
             psacr,qsacr,pgfr,psmlt,pgmlt,psdep,piacr,pevrv,pwacs,wgacr,&
             pidep,pint,pihom,pifr,piim,pimlt,psaut,qracs,psaci,psacw,  &
-            piacw,qsacw,praci,pmlts,pmltg,pssub,pgsub,nraut
+            piacw,qsacw,praci,pmlts,pmltg,pssub,pgsub,nraut,pact,nact
+      REAL, PARAMETER :: RV = 4.61495E2
 !+---+-----------------------------------------------------------------+
       !YCR add, 20221202
       DO j = jts,jte   ! j_loop
@@ -860,6 +863,7 @@ CONTAINS
          p0(k)  = p0_mks(i,k,j)*10.
          pi0(k) = pi_mks(i,k,j)
          rp0(k) = 3.799052e3/p0(k)
+         w1d(k) = w_mks(i,k,j)*100.
          pii(k) = 1./pi0(k)
          pr0(k) = 1./p0(k)
          rr0(k) = 1./r00(k)
@@ -1660,42 +1664,6 @@ CONTAINS
 !     CALCULATION OF PINT USES DIFFERENT VALUES OF THE INTERCEPT AND SLOPE FOR
 !     THE FLETCHER EQUATION. ALSO, ONLY INITIATE MORE ICE IF THE NEW NUMBER
 !     CONCENTRATION EXCEEDS THAT ALREADY PRESENT.
-!* 31 * pint  : initiation of qi                                  **31**
-!* 32 * pidep : deposition of qi                                  **32**
-         pint(k) = 0.
-         pidep(k) = 0.
-         tair(k) = pt(k)*pi0(k)
-         if (tair(k).lt.t0) then
-            if (qi(k).lt.cmin1) qi(k) = 0.
-            tairc(k) = tair(k)-t0
-            rtair(k) = 1./(tair(k)-c76)
-            y2(k) = EXP(c218-c580*rtair(k))
-            qsi(k) = rp0(k)*y2(k)
-            esi(k) = c610*y2(k)
-            ssi(k) = qv(k)/qsi(k)-1.
-            r_nci(k) = 1.E-4
-            if (ssi(k).ge.1.E-5) then
-              r_nci(k) = MIN(1.E-3*EXP(12.96*ssi(k)-0.639),1.)
-            endif
-            if (qi(k).ge.cmin1) then
-               y1(k) = 1./tair(k)
-               rn10 = 8.314E7/(.226*18.016)
-               dd(k) = y1(k)*(als*als/rw*y1(k)-alv/2.43E3)+rn10*       &
-                       tair(k)/esi(k)
-               pidep(k) = MAX(4.*51.545E-4*dt*SQRT(rr0(k))*ssi(k)*     &
-                          r_nci(k)*SQRT(qi(k))/dd(k),0.)
-            endif
-            ami50 = 3.76E-8
-            dd(k) = MAX(1.E-9*r_nci(k)/r00(k)-qi(k)*1.E-9/ami50,0.)
-            dm(k) = MAX((qv(k)-qsi(k)),0.)
-            rsub1(k) = c580*asc*qsi(k)*rtair(k)*rtair(k)
-            dep(k) = dm(k)/(1.+rsub1(k))
-            pint(k) = MAX(MIN(dd(k),dm(k)),0.)
-            pint(k) = MIN(pint(k)+pidep(k),dep(k))
-            pt(k) = pt(k)+pint(k)*als*pii(k)/cpm(k)
-            qv(k) = MAX(0.,qv(k)-pint(k))
-            qi(k) = MAX(0.,qi(k)+pint(k))
-         endif
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !* 10 * PSDEP : DEPOSITION OR SUBLIMATION OF QS                   **10**
 !* 20 * PGSUB : SUBLIMATION OF QG                                 **20**
@@ -1774,46 +1742,149 @@ CONTAINS
             qv(k) = MAX(0.,qv(k)+pevrv(k))
             qr(k) = MAX(0.,qr(k)-pevrv(k))
          endif
-!*****   TAO ET AL (1989) SATURATION TECHNIQUE  ***********************
+! pact : initiation of qc
+         pact(k) = 0.
          tair(k) = pt(k)*pi0(k)
-         cnd(k) = rt0*(tair(k)-t00)
-         dep(k) = rt0*(t0-tair(k))
-         y1(k) = 1./(tair(k)-c358)
-         y2(k) = 1./(tair(k)-c76)
-         qsw(k) = rp0(k)*EXP(c172-c409*y1(k))
-         qsi(k) = rp0(k)*EXP(c218-c580*y2(k))
-         dd(k) = c409*pi0(k)*y1(k)*y1(k)
-         dd1(k) = c580*pi0(k)*y2(k)*y2(k)
-         if (qc(k).lt.cmin1) qc(k) = cmin1
-         if (qi(k).lt.cmin1) qi(k) = cmin1
-         if (tair(k).ge.t0) then
-            dep(k) = 0.
-            cnd(k) = 1.
-            qi(k) = 0.
+         esw(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),0))
+         qsw(k) = 0.622*esw(k)/(p0(k)/10.-esw(k))
+         if (qv(k).GT.qsw(k).AND.w1d(k).GT.1.E-3) then
+            xlv(k)  = 3.1484E6-2370.*tair(k)
+            cpm1(k) = 1005.46*(1.+0.887*qv(k))
+            if (lan1D(k).eq.1) then     ! land
+               C1 = 1000.; K1 = 0.5
+            else                         ! ocean
+               C1 = 120.; K1 = 0.4
+            endif
+            ncloud(k) = MIN(1.E9,8.8E5*C1**(2./(K1+2.))*(7.E-2*        &
+                        w1d(k)**1.5)**(K1/(K1+2.)))
+            nact(k) = MAX(0.,ncloud(k)/rho(k)-qc(k)/5.236E-13)          ! CONVERT FROM CM-3 TO M-3 and 5 microm in radius
+            abw(k) = 1.+xlv(k)**2.*qsw(k)/cpm1(k)/(RV*tair(k)**2.)
+            qcmax(k) = MAX((qv(k)-qsw(k)),0.)/abw(k)
+            pact(k) = MIN(nact(k)*1.414E-14,qcmax(k))                   ! 1.5 micron in radius
+            pt(k) = pt(k)+pact(k)*xlv(k)*pii(k)/cpm1(k)
+            qv(k) = MAX(0.,qv(k)-pact(k))
+            qc(k) = MAX(0.,qc(k)+pact(k))
          endif
-         if (tair(k).lt.t00) then
-            cnd(k) = 0.
-            dep(k) = 1.
-            qc(k) = 0.
+! pint : initiation of qi
+         pint(k) = 0.
+         tair(k) = pt(k)*pi0(k)
+         esi(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),1))
+         qsi(k) = 0.622*esi(k)/(p0(k)/10.-esi(k))
+         IF (qv(k).GT.qsi(k).AND.tair(k).LT.t0) THEN
+            xls(k)  = 3.4837E6-2370.*tair(k)
+            cpm1(k) = 1005.46*(1.+0.887*qv(k))
+            ssi(k) = qv(k)/qsi(k)-1.
+            nice(k) = 1.E3*EXP(1.296E1*ssi(k)-6.39E-1)
+            r_nci(k) = MAX(0.,nice(k)/rho(k)-qi(k)/4.19E-10)           ! RHOI = 800; DI = 1.E-4
+            abi(k) = 1.+xls(k)**2.*qsi(k)/cpm1(k)/(RV*tair(k)**2.)
+            qimax(k) = MAX((qv(k)-qsi(k)),0.)/abi(k)
+            pint(k) = MIN(r_nci(k)*1.02E-13,qimax(k))
+            pt(k) = pt(k)+pint(k)*xls(k)*pii(k)/cpm1(k)
+            qv(k) = MAX(0.,qv(k)-pint(k))
+            qi(k) = MAX(0.,qi(k)+pint(k))
          endif
-         y5(k) = cnd(k)*alv*pii(k)/cpm(k)+dep(k)*als*pii(k)/cpm(k)
-         y1(k) = qc(k)*qsw(k)/(qc(k)+qi(k))
-         y2(k) = qi(k)*qsi(k)/(qc(k)+qi(k))
-         y4(k) = dd(k)*y1(k)+dd1(k)*y2(k)
-         qvs(k) = y1(k)+y2(k)
-         rsub1(k) = (qv(k)-qvs(k))/(1.+y4(k)*y5(k))
-         cnd(k) = cnd(k)*rsub1(k)
-         dep(k) = dep(k)*rsub1(k)
-         if (qc(k).lt.cmin1) qc(k) = 0.
-         if (qi(k).lt.cmin1) qi(k) = 0.
-!c    ******   condensation or evaporation of qc  ******
-         cnd(k) = MAX(-qc(k),cnd(k))
-!c    ******   deposition or sublimation of qi    ******
-         dep(k) = MAX(-qi(k),dep(k))
-         pt(k) = pt(k)+cnd(k)*alv*pii(k)/cpm(k)+dep(k)*als*pii(k)/cpm(k)
-         qv(k) = MAX(0.,qv(k)-cnd(k)-dep(k))
-         qc(k) = MAX(0.,qc(k)+cnd(k))
-         qi(k) = MAX(0.,qi(k)+dep(k))
+! prediction of saturation referred to p3 scheme
+         if (qc(k).ge.cmin1.or.qi(k).ge.cmin1) then
+            tair(k) = pt(k)*pi0(k)
+            xlv(k)  = 3.1484E6-2370.*tair(k)
+            xls(k)  = 3.4837E6-2370.*tair(k)
+            cpm1(k) = 1005.46*(1.+0.887*qv(k))
+            esw(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),0))
+            esi(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),1))
+            IF (esi(k).GT.esw(k)) esi(k) = esw(k)
+            esw(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),0))
+            qsw(k) = 0.622*esw(k)/(p0(k)/10.-esw(k))
+            qsi(k) = 0.622*esi(k)/(p0(k)/10.-esi(k))
+            dv1(k) = 8.794E-4*pr0(k)*tair(k)**1.81
+            abw(k) = 1.+xlv(k)**2.*qsw(k)/cpm1(k)/(RV*tair(k)**2.)
+            abi(k) = 1.+xls(k)**2.*qsi(k)/cpm1(k)/(RV*tair(k)**2.)
+            if (qc(k).ge.cmin1) then
+               LTK(k)  = LOG(tair(k))
+               LQC(k)  = -1.*LOG(qc(k)*rho(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQC2(k) = LQC(k)*LQC(k)
+               if (lan1D(k).eq.1) then     ! land
+                  MVDC(k) = EXP(5.8936819-7.013013*LTK(k)+1.3178721*   &
+                            LQC(k)+1.1741987*LTK2(k)+2.6110916E-3*     &
+                            LQC2(k)-0.26646396*LTK(k)*LQC(k))
+               else                        ! ocean
+                  MVDC(k) = EXP(173.57305-64.370929*LTK(k)+0.36833626* &
+                            LQC(k)+6.1389254*LTK2(k)+5.5915321E-3*     &
+                            LQC2(k)-0.12488698*LTK(k)*LQC(k))
+               endif
+               mvrc(k) = MAX(5.E-7,MIN(5.E-5,MVDC(k)/2.E6))
+               ncloud(k) = qc(k)*rho(k)/(4188.790267*mvrc(k)**3.)
+               ncloud(k) = min(1.e9,max(0.1,ncloud(k)))
+               tauc(k) = 1./(4.*PI*dv1(k)*ncloud(k)*mvrc(k))
+            else
+               tauc(k) = 1.e10
+            endif
+            if (qi(k).ge.cmin1) then
+               LTK(k)  = LOG(tair(k))
+               LQI(k)  = -1.*LOG(qi(k)*rho(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQI2(k) = LQI(k)*LQI(k)
+               if (lan1D(k).eq.1) then     ! land
+                  MVDI(k) = EXP(152.58509-0.25772005*LQI(k)+3.75543E-4*&
+                            LQI2(k)-54.560357*LTK(k)+5.1248879*LTK2(k))
+               else                         ! ocean
+                  MVDI(k) = EXP(153.03137-0.25772005*LQI(k)+3.75543E-4*&
+                            LQI2(k)-54.560357*LTK(k)+5.1248879*LTK2(k))
+               endif
+               mvri(k) = MIN(5.E-4,MAX(3.E-6,MVDI(k)/2.E6))
+               nice(k) = qi(k)*rho(k)/(3769.910667*mvri(k)**3.)
+               nice(k) = MIN(1.E7,MAX(0.1,nice(k)))
+               taui(k) = 1./(4.*PI*dv1(k)*nice(k)*mvri(k))
+            else
+               taui(k) = 1.e10
+            endif
+
+            tau(k) = 1./(1./tauc(k)+(1./taui(k))*(1.+qsw(k)*xls(k)*    &
+                     xlv(k)/cpm1(k)/(RV*tair(k)**2.))/abi(k))
+            esw(k)  = p0(k)*qsw(k)/10./(0.622+qsw(k))
+            w1d(k)  = w1d(k)/100.
+            atem(k) = ((qsi(k)-qsw(k))/taui(k))*(1.+qsw(k)*xls(k)*     &
+                      xlv(k)/cpm1(k)/(RV*tair(k)**2.))/abi(k)+w1d(k)*  &
+                      9.806*(xlv(k)*qsw(k)/(RV*tair(k)**2.))/cpm1(k)-  &
+                      qsw(k)*9.806*rho(k)*w1d(k)/(p0(k)/10.-esw(k))
+            cnd(k) = MAX(-qc(k),(atem(k)*dt*tau(k)/tauc(k)+(qv(k)-     &
+                     qsw(k)-atem(k)*tau(k))*(1.-EXP(-dt/tau(k)))*      &
+                     tau(k)/tauc(k))/abw(k))
+            dep(k) = MAX(-qi(k),(atem(k)*dt*tau(k)/taui(k)+(qv(k)-     &
+                     qsw(k)-atem(k)*tau(k))*(1.-EXP(-dt/tau(k)))*      &
+                     tau(k)/taui(k)+(qsw(k)-qsi(k))*dt/taui(k))/abi(k))
+            pt(k) = pt(k)+cnd(k)*xlv(k)*pii(k)/cpm1(k)+dep(k)*xls(k)*  &
+                    pii(k)/cpm1(k)
+            qv(k) = MAX(0.,qv(k)-cnd(k)-dep(k))
+            qc(k) = MAX(0.,qc(k)+cnd(k))
+            qi(k) = MAX(0.,qi(k)+dep(k))
+         endif  ! qc,qi loops
+!-------------------------------------------------------------------------
+         tair(k) = pt(k)*pi0(k)
+         esw(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),0))
+         qsw(k) = 0.622*esw(k)/(p0(k)/10.-esw(k))
+         if (qv(k).lt.qsw(k).and.qc(k).ge.cmin1.and.qc(k).lt.cmin2) then
+            xlv(k)  = 3.1484E6-2370.*tair(k)
+            cpm1(k) = 1005.46*(1.+0.887*qv(k))
+            abw(k) = 1.+xlv(k)**2.*qsw(k)/cpm1(k)/(RV*tair(k)**2.)
+            cnd(k) = MAX(-qc(k),(qv(k)-qsw(k))/abw(k))
+            pt(k) = pt(k)+cnd(k)*xlv(k)*pii(k)/cpm1(k)
+            qv(k) = MAX(0.,qv(k)-cnd(k))
+            qc(k) = MAX(0.,qc(k)+cnd(k))
+            tair(k) = pt(k)*pi0(k)
+         endif
+         esi(k) = MIN(0.99*p0(k)/10.,POLYSVP(tair(k),1))
+         qsi(k) = 0.622*esi(k)/(p0(k)/10.-esi(k))
+         if (qv(k).lt.qsi(k).and.qi(k).ge.cmin1.and.qi(k).lt.cmin2) then
+            xls(k)  = 3.4837E6-2370.*tair(k)
+            cpm1(k) = 1005.46*(1.+0.887*qv(k))
+            abi(k) = 1.+xls(k)**2.*qsi(k)/cpm1(k)/(RV*tair(k)**2.)
+            dep(k) = MAX(-qi(k),(qv(k)-qsi(k))/abi(k))
+            pt(k) = pt(k)+dep(k)*xls(k)*pii(k)/cpm1(k)
+            qv(k) = MAX(0.,qv(k)-dep(k))
+            qi(k) = MAX(0.,qi(k)+dep(k))
+            tair(k) = pt(k)*pi0(k)
+         endif
 !=========================================================================
          if (qc(k).lt.cmin1) qc(k) = 0.
          if (qr(k).lt.cmin1) qr(k) = 0.
