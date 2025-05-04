@@ -42,7 +42,6 @@
       REAL, PARAMETER :: xnog = 4.E6
       REAL, PARAMETER :: rhohail = 900.
       REAL, PARAMETER :: rhograul = 400.
-      REAL, PRIVATE, PARAMETER :: t0 = 273.16
       REAL, PRIVATE, PARAMETER :: DI0 = 6.E-6
       REAL, DIMENSION(0:120) :: ITBLE                                   ! DEPOSITION GROWTH COEFFICIENTS
       DATA ITBLE /1.000000,0.979490,0.959401,0.939723,0.920450,        &
