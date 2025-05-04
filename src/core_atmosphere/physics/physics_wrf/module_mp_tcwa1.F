@@ -809,7 +809,7 @@ CONTAINS
             rtair,dep,dd,dd1,qvs,dm,rsub1,cnd,dlt2,dlt3,zr,vr,zs,vs,vg,&
             zg,pg,qsi,ssi,esi,qsw,ssw,y1,y2,y3,y4,y5,y6,y7,r_nci,dwv,  &
             qcsink,qisink,qrsoce,qrsink,qssoce,qssink,qgsoce,scv,tca,  &
-            xlv,xls,cpm1,esw,esi,nice,abw,abi,qcmax,qimax,dv1
+            xlv,xls,cpm1,esw,nice,abw,abi,qcmax,qimax,dv1
       real, dimension(kts:kte) :: praut,pracw,dgacs,dgacw,dgaci,dgacr, &
             pgacs,wgacs,qgacw,wgaci,qgacr,pgwet,pgdry,pgaut,pracs,     &
             psacr,qsacr,pgfr,psmlt,pgmlt,psdep,piacr,pevrv,pwacs,wgacr,&
