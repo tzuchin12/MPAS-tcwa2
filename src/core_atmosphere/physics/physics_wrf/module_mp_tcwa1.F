@@ -1,17 +1,16 @@
-!WRF:MODEL_LAYER:PHYSICS
-!
-      MODULE module_mp_tcwa1
 
-!      USE module_wrf_error
-!      USE module_utility, ONLY: WRFU_Clock, WRFU_Alarm
-!      USE module_domain, ONLY : HISTORY_ALARM, Is_alarm_tstep
-!      USE module_mp_radar
+! tcwa1 single-moment bulk microphysical scheme for MPASV8.2.2 by
+! Tzu-Chin Tsai at Taiwan CWA (tzuchin@cwa.gov.tw)
+!==========================================================================
+
+      MODULE module_mp_tcwa1
 
       REAL, PRIVATE :: al,cp,rd1,rd2,grvt,cd1,cd2,t0,t00,alv,alf,als,  &
                        avc,afc,asc,rw,cw,ci,c76,c358,c172,c409,c218,   &
                        c580,c610,c149,c879,c141,as,bs,aw,bw,roqr
       INTEGER, PRIVATE, PARAMETER :: SPECTRUM = 1                       ! 0.MP;1.GAMMA+MAPPING;2.MP+MAPPING SPECTRUM
       INTEGER, PRIVATE, PARAMETER :: VTRX = 1                           ! 0.FIXED;1.NUMS;2.ANAL;3.GCE-4ICE RAINDROPS FALL SPEED
+      REAL, PRIVATE, PARAMETER :: PI = 3.141592654
       REAL, PRIVATE, PARAMETER :: THRD = 1./3.
       REAL, PRIVATE, PARAMETER :: KMIN = 0.2222, KMAX = 0.8396          ! KMAX = 0.9441; KMAX =0.8396 for 15
       REAL, PRIVATE, PARAMETER :: cmin1 = 1.E-12, cmin2 = 1.E-8
@@ -43,7 +42,34 @@
       REAL, PARAMETER :: xnog = 4.E6
       REAL, PARAMETER :: rhohail = 900.
       REAL, PARAMETER :: rhograul = 400.
-!+---+-----------------------------------------------------------------+
+      REAL, PRIVATE, PARAMETER :: t0 = 273.16
+      REAL, PRIVATE, PARAMETER :: DI0 = 6.E-6
+      REAL, DIMENSION(0:120) :: ITBLE                                   ! DEPOSITION GROWTH COEFFICIENTS
+      DATA ITBLE /1.000000,0.979490,0.959401,0.939723,0.920450,        &
+                  0.899498,0.879023,0.857038,0.833681,0.810961,        &
+                  0.783430,0.755092,0.703072,0.537032,0.467735,        &
+                  0.524807,0.630957,0.812831,1.096478,1.479108,        &
+                  1.905461,2.089296,2.290868,2.398833,2.454709,        &
+                  2.426610,2.371374,2.290868,2.137962,1.995262,        &
+                  1.862087,1.737801,1.621810,1.513561,1.396368,        &
+                  1.288250,1.188502,1.096478,1.000000,0.922571,        &
+                  0.851138,0.785236,0.724436,0.668344,0.616595,        &
+                  0.575440,0.537032,0.501187,0.467735,0.436516,        &
+                  0.407380,0.380189,0.354813,0.331131,0.316228,        &
+                  0.301995,0.291743,0.285102,0.281838,0.278612,        &
+                  0.275423,0.278612,0.281838,0.285102,0.291743,        &
+                  0.298538,0.309030,0.319890,0.331131,0.346737,        &
+                  0.367282,0.393550,0.426580,0.457088,0.489779,        &
+                  0.524807,0.562341,0.609537,0.660693,0.716143,        &
+                  0.785236,0.860994,0.954993,1.047129,1.148154,        &
+                  1.258925,1.380384,1.496236,1.603245,1.698244,        &
+                  1.778279,1.840772,1.883649,1.905461,1.905461,        &
+                  1.883649,1.862087,1.840772,1.798871,1.737801,        &
+                  1.698244,1.640590,1.584893,1.548817,1.513561,        &
+                  1.475707,1.452112,1.428894,1.412538,1.393157,        &
+                  1.377209,1.361445,1.348963,1.336596,1.327394,        &
+                  1.318257,1.309182,1.303167,1.294196,1.288250,1.279381/
+
 CONTAINS
 !-------------------------------------------------------------------
 !  NASA/GSFC GCE
@@ -73,59 +99,11 @@ CONTAINS
       REAL, INTENT(IN) :: dt_in
 !  LOCAL VAR
       INTEGER :: i,j,k,i24h,ihail,ice2
-      REAL :: grav,rhowater,rhosnow
       REAL, DIMENSION(its:ite,kts:kte,jts:jte) :: SMLF,GMLF
 
       ihail = 2
       ice2  = 0
-      grav  = 9.81
-      rhowater = 1.E3
-      rhosnow = 1.E2
 
-!      xam_r = 3.14159*rhowater/6.
-!      xbm_r = 3.
-!      xmu_r = 0.
-!      xam_s = 3.14159*rhosnow/6.
-!      xbm_s = 3.
-!      xmu_s = 0.
-!      if (ihail.eq.1) then
-!         xam_g = 3.14159*rhohail/6.
-!      else
-!         xam_g = 3.14159*rhograul/6.
-!      endif
-!      xbm_g = 3.
-!      xmu_g = 0.
-!
-!      CALL radar_init
-!+---+-----------------------------------------------------------------+
-!      i24h = nint(86400./dt_in)
-!      if (mod(itimestep,i24h).eq.1) then
-!         write(6,*) 'ihail=',ihail,'  ice2=',ice2
-!         if (ice2.eq.0) then
-!            write(6,*) 'Running 3-ice scheme in GSFCGCE with'
-!            if (ihail.eq.0) then 
-!               write(6,*) '     ice, snow and graupel'
-!            elseif (ihail.eq.1) then
-!               write(6,*) '     ice, snow and hail'
-!            elseif (ihail.eq.2) then
-!               write(6,*) '     ice, snow (graupel or hail)'
-!            else
-!               write(6,*) 'ihail has to be either 0,1,or 2'
-!               stop
-!            endif !ihail
-!         elseif (ice2.eq.1) then
-!            write(6,*) 'Running 2-ice scheme in GSFCGCE with'
-!            write(6,*) '     ice and snow'
-!         elseif (ice2.eq.2) then
-!            write(6,*) 'Running 2-ice scheme in GSFCGCE with'
-!            write(6,*) '     ice and graupel'
-!         elseif (ice2.eq.3) then
-!            write(6,*) 'Running warm rain only scheme in GSFCGCE without any ice'
-!         else
-!            write(6,*) 'cwbcgce_2ice in namelist.input has to be 0, 1, 2, or 3'
-!            stop
-!         endif !ice2
-!      endif !itimestep
       CALL consat_s
 
       ! microphysics in GCE
@@ -133,561 +111,572 @@ CONTAINS
                      SMLF,GMLF,xland,ids,ide,jds,jde,kds,kde,&
                      ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte) 
 
-      CALL fall_flux(dt_in,qc,qr,qi,qs,qg,p,rho,z,dz8w,ht,rainnc,      &
-                     rainncv,grav,rhowater,rhosnow,snownc,   &
-                     snowncv,sr,graupelnc,graupelncv,th,pii, &
-                     SMLF,GMLF,ihail,ice2,ims,ime,jms,jme,kms,kme,its, &
-                     ite,jts,jte,kts,kte)
+      CALL fall_flux(dt_in,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,ht,sr,rainnc,&
+                     rainncv,snownc,snowncv,graupelnc,graupelncv,th,   &
+                     pii,SMLF,GMLF,xland,re_cloud,re_ice,re_snow,DBZM, &
+                     ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte)
 
       END SUBROUTINE mp_tcwa1
 !=======================================================================
-!-----------------------------------------------------------------------
-      SUBROUTINE fall_flux (dt,qc,qr,qi,qs,qg,p,rho,z,dz8w,topo,rainnc,&
-                            rainncv,grav,rhowater,rhosnow,   &
-                            snownc,snowncv,sr,graupelnc,graupelncv,    &
-                            TH,PII,SMLF3D,GMLF3D,ihail,  &
-                            ice2,ims,ime,jms,jme,kms,kme,its,ite,jts,  &
-                            jte,kts,kte)
-!-----------------------------------------------------------------------
+!
+!=======================================================================
+      SUBROUTINE fall_flux (dtb,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,topo,sr,&
+                            rainnc,rainncv,snownc,snowncv,graupelnc,   &
+                            graupelncv,TH,PII,SMLF3D,GMLF3D,xland,     &
+                            EFRC3D,EFRI3D,EFRS3D,DBZM3D,ims,ime,jms,   &
+                            jme,kms,kme,its,ite,jts,jte,kts,kte)
+!=======================================================================
       IMPLICIT NONE
-      INTEGER, INTENT(IN) :: ihail,ice2,ims,ime,jms,jme,kms,kme,its,   &
-                             ite,jts,jte,kts,kte
-      REAL, INTENT(IN) :: dt,grav,rhowater,rhosnow
-      REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: topo
-      REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: rainnc,       &
-            rainncv,snownc,snowncv,sr,graupelnc,graupelncv
+      INTEGER, INTENT(IN) :: ims,ime,jms,jme,kms,kme,its,ite,jts,jte,  &
+                             kts,kte
+      REAL, INTENT(IN) :: dtb
+      REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) :: topo,xland
+      REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: sr,rainnc,    &
+            rainncv,snownc,snowncv,graupelnc,graupelncv
       REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(INOUT) :: qr,qi,&
-                                                                 qs,qg
-      REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(IN) :: qc,TH,   &
-                                                PII,rho,z,dz8w,p
-      REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(INOUT) ::       &
-                                                SMLF3D,GMLF3D
-      REAL, DIMENSION(kts:kte) :: TK1D,TC1D,qcz,DSLL,RHOS,RHOG,SMLF,   &
-            GMLF,DBZM,N0R,N0S,N0G,N0H,MVDR,EFDR,MVDS,EFDS,MVDG,EFDG,  &
-            MVDH,EFDH,KDXR,KDXS,KDXG,KDXH,AFAR,AFAS,AFAG,LAMR,LAMS,    &
-            LAMG,MVDM,AVR,BVR,KINV,BEST0,BEST,C1X2,VTB1,VTA1,LTK,LTK2, &
-            LQR,LQR2,LQS,LQS2,LQG,LQG2,MVG0
+                                                qc,qs,qg
+      REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(IN) :: TH,PII,  &
+                                                rho,z,dz8w,p,qv
+      REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(OUT) :: DBZM3D, &
+            EFRC3D,EFRI3D,EFRS3D
+      INTEGER, DIMENSION(kts:kte) :: lan1D,HID
+      REAL, DIMENSION(kts:kte) :: TK1D,TC1D,DSLL,RHOI,RHOS,RHOG,SMLF,  &
+            GMLF,N0R,N0I,N0S,N0G,N0H,MVDC,EFDC,MVDR,EFDR,MVDI,EFDI,    &
+            MVDS,EFDS,MVDG,EFDG,MVDH,EFDH,KDXC,KDXR,KDXI,KDXS,KDXG,    &
+            KDXH,AFAC,AFAR,AFAI,AFAS,AFAG,LAMC,LAMR,LAMI,LAMS,LAMG,    &
+            LTK,LTK2,LQC,LQC2,LQR,LQR2,LQS,LQS2,LQG,LQG2,LQI,LQI2,MVG0,&
+            ADAGR,ZETA,VISHP,VIROI,INHGR,sqrhoz,qvz,qcz,qrz,qiz,qsz,   &
+            qgz,zz,dzw,prez,rhoz,vtc,vtr,vts,vtg,vti,LMDC,LMDR,LROS,   &
+            LMDS,LROG,LMDG,LMDH,LROI,LMDI,RADR,RADI,RADS,RADG,DBZM,esi,&
+            qsi,ssi,EFRC,EFRI,EFRS
+      REAL, DIMENSION(its:ite,kts:kte,jts:jte) :: SMLF3D,GMLF3D
 ! temperary vars
-      INTEGER :: ihail2=-1,k,i,j,min_q,max_q
-      REAL :: tmp1,term0,pptrain,pptsnow,pptgraul,pptice,dtb,pi,consta,&
-              constc,t_del_tv,del_tv,flux,fluxin,fluxout,tmpqrz
-      REAL, DIMENSION(kts:kte) :: sqrhoz,qrz,qiz,qsz,qgz,zz,dzw,prez,  &
-                                  rhoz,orhoz,vtr,vts,vtg,vti
-      REAL, PARAMETER :: constb = 0.8, constd = 0.41, o6 = 1./6.,      &
-                         cdrag = 0.6, abar = 19.3, bbar = 0.37,        &
-                         p0 = 1.0e5, rhoe_s = 1.29
+      INTEGER :: ihail,k,i,j,min_q,max_q
+      REAL :: pptclod,pptrain,pptsnow,pptgraul,pptice,t_del_tv,del_tv, &
+              flux,fluxin,fluxout
 ! for terminal velocity flux
       LOGICAL :: notlast
-!-----------------------------------------------------------------------
-!  This program calculates precipitation fluxes due to terminal velocities.
-!-----------------------------------------------------------------------
-      dtb = dt
-      pi = ACOS(-1.)
-      consta = 841.9967                        ! 2115.0*0.01**(1-constb)
-      constc = 11.72
-!***********************************************************************
-! Calculate precipitation fluxes due to terminal velocities.
-!***********************************************************************
-!- Calculate termianl velocity (vt?)  of precipitation q?z
-!- Find maximum vt? to determine the small delta t
 
       DO j = jts,jte   ! j_loop
       DO i = its,ite   ! i_loop:
+      pptclod = 0.
       pptrain = 0.
       pptsnow = 0.
       pptgraul = 0.
       pptice  = 0.
       DO k = kts,kte
+         qvz(k) = qv(i,k,j)
          qcz(k) = qc(i,k,j)
          qrz(k) = qr(i,k,j)
          qiz(k) = qi(i,k,j)
          qsz(k) = qs(i,k,j)
+         qgz(k) = qg(i,k,j)
+         TK1D(k) = TH(i,k,j)*PII(i,k,j)
          rhoz(k) = rho(i,k,j)
-         orhoz(k) = 1./rhoz(k)
          prez(k) = p(i,k,j)
-         sqrhoz(k) = SQRT(rhoe_s/rhoz(k))
+         sqrhoz(k) = SQRT(1.29/rhoz(k))
          zz(k) = z(i,k,j)
          dzw(k) = dz8w(i,k,j)
-      ENDDO ! end of k-loop 
-
-      IF (ice2.eq.0) THEN
-         DO k = kts,kte
-            qgz(k) = qg(i,k,j)
-         ENDDO
-      ELSE
-         DO k = kts,kte
-            qgz(k) = 0.
-         ENDDO
-      ENDIF
-
-      !-------------------------------Tsai-----------------------------------------------
-      DO k = kts, kte
-         TK1D(k) = TH(i,k,j)*PII(i,k,j)
-         TC1D(k) = TK1D(k)-t0
-         RHOS(k) = rhosnow
-         RHOG(k) = rhograul
+         lan1D(k) = INT(xland(i,j))
          MVG0(k) = 0.
-         AFAR(k) = 0.
-         AFAS(k) = 0.
-         AFAG(k) = 0.
-         LAMR(k) = 0.
-         LAMS(k) = 0.
-         LAMG(k) = 0.
-         N0R(K)  = 0.
-         N0S(K)  = 0.
-         N0G(K)  = 0.
-         vtr(k)  = 0.
-         DBZM(k) = -99.
          SMLF(k) = MAX(0.,SMLF3D(i,k,j))
          GMLF(k) = MAX(0.,GMLF3D(i,k,j))
+         EFRC(k) = 0.
+         EFRI(k) = 0.
+         EFRS(k) = 0.
+         RADR(k) = 0.
+         RADI(k) = 0.
+         RADS(k) = 0.
+         RADG(k) = 0.
+         DBZM(k) = -99.
       ENDDO
-      !-------------------------------Tsai-----------------------------------------------
+!-------- cloud ----------------------------------------------
+      t_del_tv = 0.
+      del_tv = dtb
+      notlast = .true.
+      DO while (notlast)
+      min_q = kte
+      max_q = kts-1
+      DO k = kts,kte
+         IF (qcz(k).GE.cmin1) THEN
+            LTK(k)  = LOG(TK1D(k))
+            LQC(k)  = -1.*LOG(rhoz(k)*qcz(k))
+            LTK2(k) = LTK(k)*LTK(k)
+            LQC2(k) = LQC(k)*LQC(k)
+            if (lan1D(k).eq.1) then     ! land
+               MVDC(k) = EXP(5.8936819-7.013013*LTK(k)+1.3178721*      &
+                         LQC(k)+1.1741987*LTK2(k)+2.6110916E-3*LQC2(k)-&
+                         0.26646396*LTK(k)*LQC(k))
+               vtc(k) = EXP(14.990691+2.533755*LQC(K)-14.31604*LTK(K)+ &
+                        5.1141094E-3*LQC2(K)+2.3378101*LTK2(K)-        &
+                        0.51291941*LQC(K)*LTK(K))/1.E5*sqrhoz(k)
+            else                         ! ocean
+               MVDC(k) = EXP(173.57305-64.370929*LTK(k)+0.36833626*    &
+                         LQC(k)+6.1389254*LTK2(k)+5.5915321E-3*LQC2(k)-&
+                         0.12488698*LTK(k)*LQC(k))
+               vtc(k) = EXP(329.97613+0.68256538*LQC(K)-121.76922*     &
+                        LTK(K)+1.0784065E-2*LQC2(K)+11.614512*LTK2(K)- &
+                        0.2358345*LQC(K)*LTK(K))/1.E5*sqrhoz(k)
+            endif
+            LMDC(k) = LOG(MVDC(k))
+            EFDC(k) = EXP(EFD1+EFD2*LMDC(k)+EFD3*6.90775528+EFD4*      &
+                      LMDC(k)**2.+EFD5*47.717083+EFD6*LMDC(k)*6.9077553)
+            KDXC(k) = MAX(KMIN,MIN(KMAX,(MVDC(k)/EFDC(k))**3.))
+            AFAC(k) = MAX(0.,(6.*KDXC(k)-3.+SQRT(8.*KDXC(k)+1.))/(2.-  &
+                      2.*KDXC(k)))
+            LAMC(k) = (AFAC(k)+3.)/EFDC(k)*1.E6
+            EFRC(k) = EFDC(k)/2.E6
+            if (k.eq.1) then
+               del_tv = AMIN1(del_tv,0.9*(zz(k)-topo(i,j))/vtc(k))
+            else
+               del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtc(k))
+            endif
+         else
+            vtc(k) = 0.
+         endif  ! qcz
+      ENDDO ! end of k-loop
+      if (max_q.ge.min_q) then
+         t_del_tv = t_del_tv+del_tv
+         if (t_del_tv.ge.dtb) then
+            notlast = .false.
+            del_tv = dtb+del_tv-t_del_tv
+         endif
+         fluxin = 0.
+         do k = max_q,min_q,-1
+            fluxout = rhoz(k)*vtc(k)*qcz(k)
+            flux = (fluxin-fluxout)/rhoz(k)/dzw(k)
+            qcz(k) = qcz(k)+del_tv*flux
+            qcz(k) = AMAX1(0.,qcz(k))
+            qc(i,k,j) = qcz(k)
+            fluxin = fluxout
+         enddo
+         if (min_q.eq.1) then
+            pptclod = pptclod+fluxin*del_tv
+         else
+            k = min_q-1
+            qcz(k) = qcz(k)+del_tv*fluxin/rhoz(k)/dzw(k)
+            qc(i,k,j) = qcz(k)
+         endif
+      else
+         notlast = .false.
+      endif
+      ENDDO  ! eno of DO while (notlast)
       !-- rain
       t_del_tv = 0.
       del_tv = dtb
       notlast = .true.
       DO while (notlast)
-        min_q = kte
-        max_q = kts-1
-        DO k = kts,kte
-          !0901         IF (qrz(k).GE.cmin1) THEN
-          IF (qrz(k).GE.cmin2) THEN
+      min_q = kte
+      max_q = kts-1
+      DO k = kts,kte
+         IF (qrz(k).GE.cmin1) THEN
             min_q = MIN0(min_q,k)
             max_q = MAX0(max_q,k)
-
-            IF (SPECTRUM.EQ.0) THEN
-               AFAR(k) = 0.
-               N0R(k) = LOG(xnor)
-               LAMR(k) = EXP((N0R(k)+LOG(pi*rhowater/rhoz(k)/qrz(k)/   &
-                         6.)+LGAMMA(AFAR(k)+4.))/(AFAR(k)+4.))
-            ELSEIF (SPECTRUM.EQ.1) THEN
-               LTK(k)  = LOG(TK1D(k))
-               LQR(k)  = -1.*LOG(rhoz(k)*qrz(k))
-               LTK2(k) = LTK(k)*LTK(k)
-               LQR2(k) = LQR(k)*LQR(k)
-               MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*        &
-                         LTK2(k)+MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
-               EFDR(k) = EXP(EFD1+EFD2*LOG(MVDR(k))+EFD3*LOG(1.E3)+    &
-                         EFD4*LOG(MVDR(k))**2.+EFD5*LOG(1.E3)**2.+     &
-                         EFD6*LOG(MVDR(k))*LOG(1.E3))
-               EFDR(k) = MAX(MIN(EFDR(k),MVDR(k)/KMIN**THRD),MVDR(k)/  &
-                         KMAX**THRD)
-               KDXR(k) = MAX(KMIN,MIN(KMAX,(MVDR(k)/EFDR(k))**3.))
-               AFAR(k) = MAX(0.,(6.*KDXR(k)-3.+SQRT(8.*KDXR(k)+        &
-                         1.))/(2.-2.*KDXR(k)))
-               LAMR(k) = (AFAR(k)+3.)/EFDR(k)*1.E6
-               N0R(k) = LOG(6.*rhoz(k)*qrz(k)/pi/rhowater)+(4.+        &
-                        AFAR(k))*LOG(LAMR(k))-LGAMMA(AFAR(k)+4.)
-            ELSEIF (SPECTRUM.EQ.2) THEN
-               MVDR(k) = EXP(8.425904+0.25*LOG(rhoz(k)*qrz(k)))
-               AFAR(k) = 0.
-               LAMR(k) = (EXP(LGAMMA(AFAR(k)+4.)-LGAMMA(AFAR(k)+1.)))**&
-                         THRD/MVDR(k)*1.E6
-               N0R(k) = LOG(6.*rhoz(k)*qrz(k)/pi/rhowater)+(4.+        &
-                        AFAR(k))*LOG(LAMR(k))-LGAMMA(AFAR(k)+4.)
-            ENDIF
-
-            IF (VTRX.EQ.0) THEN
-               vtr(k) = consta*EXP(LGAMMA(constb+AFAR(k)+4.)-LGAMMA(   &
-                        AFAR(k)+4.)-constb*LOG(LAMR(k)))*sqrhoz(k)
-            ELSEIF (VTRX.EQ.1) THEN
-               LTK(k)  = LOG(TK1D(k))
-               LQR(k)  = LOG(-1.*LOG(qrz(k)*rhoz(k)))
-               LQR2(k) = LQR(k)*LQR(k)
-               vtr(k)  = MIN(9.1,EXP((VTR1+VTR2*LTK(k)+VTR3*LQR(k)+    &
-                         VTR4*LQR2(k))/(1.+VTR5*LTK(k)+VTR6*LQR(k)+    &
-                         VTR7*LQR2(k)))/1.E4)*sqrhoz(k)
-            ELSEIF (VTRX.EQ.2) THEN
-               vtr(k) = CHEN(rhoz(k),AFAR(k)+3.,LAMR(k))
-            ELSEIF (VTRX.EQ.3) THEN
-               vtr(k) = MAX(0.,-26.7+2.06E6/LAMR(k)-2.045E9/LAMR(k)**  &
-                        2.+9.06E11/LAMR(k)**3.)*1.E-2*sqrhoz(k)
-            ENDIF
-
+            LTK(k)  = LOG(TK1D(k))
+            LQR(k)  = -1.*LOG(rhoz(k)*qrz(k))
+            LTK2(k) = LTK(k)*LTK(k)
+            LQR2(k) = LQR(k)*LQR(k)
+            MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*LTK2(k)+   &
+                      MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
+            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
+                      MVDR(k)
+            LMDR(k) = LOG(MVDR(k))
+            EFDR(k) = EXP(EFD1+EFD2*LMDR(k)+EFD3*6.90775528+EFD4*      &
+                      LMDR(k)**2.+EFD5*47.717083+EFD6*LMDR(k)*         &
+                      6.90775528)
+            EFDR(k) = MAX(MIN(EFDR(k),MVDR(k)/0.60568667),MVDR(k)/     &
+                      0.943389)
+            KDXR(k) = MAX(KMIN,MIN(KMAX,(MVDR(k)/EFDR(k))**3.))
+            AFAR(k) = MAX(0.,(6.*KDXR(k)-3.+SQRT(8.*KDXR(k)+1.))/(2.-  &
+                      2.*KDXR(k)))
+            LAMR(k) = (AFAR(k)+3.)/EFDR(k)*1.E6
+            vtr(k)  = VTQR(rhoz(k),AFAR(k)+3.,LAMR(k))
+            N0R(k)  = LOG(rhoz(k)*qrz(k)/523.5987756)+(4.+AFAR(k))*    &
+                      LOG(LAMR(k))-GAMLN(AFAR(k)+4.)
+            RADR(k) = EXP(N0R(k)+GAMLN(AFAR(k)+7.)-(AFAR(k)+7.)*       &
+                      LOG(LAMR(k)))
             if (k.eq.1) then
                del_tv = AMIN1(del_tv,0.9*(zz(k)-topo(i,j))/vtr(k))
             else
                del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtr(k))
             endif
-          else
+         else
             vtr(k) = 0.
-          endif  ! qrz
-        ENDDO ! end of k-loop
-
-        if (max_q.ge.min_q) then
+         endif  ! qrz
+      ENDDO ! end of k-loop
+      if (max_q.ge.min_q) then
           !- Check if the summation of the small delta t >=  big delta t
           !             (t_del_tv)          (del_tv)             (dtb)
-          t_del_tv = t_del_tv+del_tv
-          if (t_del_tv.ge.dtb) then
+         t_del_tv = t_del_tv+del_tv
+         if (t_del_tv.ge.dtb) then
             notlast = .false.
             del_tv = dtb+del_tv-t_del_tv
-          endif
+         endif
           ! use small delta t to calculate the qrz flux
           ! termi is the qrz flux pass in the grid box through the upper boundary
           ! termo is the qrz flux pass out the grid box through the lower boundary
-          fluxin = 0.
-          do k = max_q,min_q,-1
+         fluxin = 0.
+         do k = max_q,min_q,-1
             fluxout = rhoz(k)*vtr(k)*qrz(k)
             flux = (fluxin-fluxout)/rhoz(k)/dzw(k)
             qrz(k) = qrz(k)+del_tv*flux
             qrz(k) = AMAX1(0.,qrz(k))
             qr(i,k,j) = qrz(k)
             fluxin = fluxout
-          enddo
-          if (min_q.eq.1) then
+         enddo
+         if (min_q.eq.1) then
             pptrain = pptrain+fluxin*del_tv
-          else
-            k=min_q-1
+         else
+            k = min_q-1
             qrz(k) = qrz(k)+del_tv*fluxin/rhoz(k)/dzw(k)
             qr(i,k,j) = qrz(k)
-          endif
-        else
-           notlast = .false.
-        endif
+         endif
+      else
+         notlast = .false.
+      endif
       ENDDO  ! eno of DO while (notlast)
-      
       !-- snow
       t_del_tv = 0.
       del_tv = dtb
       notlast = .true.
-
       DO while (notlast)
-        min_q = kte
-        max_q = kts-1
-        DO k = kts,kte
-        !0901         IF (qsz(k).GE.cmin1) THEN
-          IF (qsz(k).GE.cmin2) THEN
+      min_q = kte
+      max_q = kts-1
+      DO k = kts,kte
+         IF (qsz(k).GE.cmin1) THEN
             min_q = MIN0(min_q,k)
             max_q = MAX0(max_q,k)
-            IF (SPECTRUM.EQ.0) THEN
-               RHOS(k) = rhosnow
-               AFAS(k) = 0.
-               N0S(k) = LOG(xnos)
-               LAMS(k) = EXP((N0S(k)+LOG(pi*RHOS(k)/rhoz(k)/qsz(k)/6.)+&
-                         LGAMMA(AFAS(k)+4.))/(AFAS(k)+4.))
-               SMLF(k) = MIN(SMLF(k),1.-MIN(1.,RHOS(k)/1.E3))
-            ELSEIF (SPECTRUM.EQ.1) THEN
-               LTK(k) = LOG(TK1D(k))
-               LQS(k) = -1.*LOG(rhoz(k)*qsz(k))
-               LTK2(k) = LTK(k)*LTK(k)
-               LQS2(k) = LQS(k)*LQS(k)
-               RHOS(k) = MAX(100.,MIN(910.,EXP(ROS1+ROS2*LTK(k)+ROS3*  &
-                         LQS(k)+ROS4*LTK2(k)+ROS5*LQS2(k)+ROS6*LTK(k)* &
-                         LQS(k))))
-               SMLF(k) = MIN(SMLF(k),1.-MIN(1.,RHOS(k)/1.E3))
-               RHOS(k) = 1.E3*SMLF(k)+(1.-SMLF(k))*RHOS(k)
-               RHOS(k) = MIN(MAX(RHOS(k),100.),910.)
-               MVDS(k) = EXP(MDS1+MDS2*LTK(k)+MDS3*LQS(k)+MDS4*LTK2(k)+&
-                         MDS5*LQS2(k)+MDS6*LTK(k)*LQS(k))
-               EFDS(k) = EXP(EFD1+EFD2*LOG(MVDS(k))+EFD3*LOG(RHOS(k))+ &
-                         EFD4*LOG(MVDS(k))**2.+EFD5*LOG(RHOS(k))**2.+  &
-                         EFD6*LOG(MVDS(k))*LOG(RHOS(k)))
-               EFDS(k) = MAX(MIN(EFDS(k),MVDS(k)/KMIN**THRD),MVDS(k)/  &
-                         KMAX**THRD)
-               KDXS(k) = MAX(KMIN,MIN(KMAX,(MVDS(k)/EFDS(k))**3.))
-               AFAS(k) = MAX(0.,(6.*KDXS(k)-3.+SQRT(8.*KDXS(k)+        &
-                         1.))/(2.-2.*KDXS(k)))
-               LAMS(k) = (AFAS(k)+3.)/EFDS(k)*1.E6
-               N0S(k) = LOG(6.*rhoz(k)*qsz(k)/pi/RHOS(k))+(4.+AFAS(k))*&
-                        LOG(LAMS(k))-LGAMMA(AFAS(k)+4.)
-            ELSEIF (SPECTRUM.EQ.2) THEN
-               LTK(k) = LOG(TK1D(k))
-               LQS(k) = -1.*LOG(rhoz(k)*qsz(k))
-               LTK2(k) = LTK(k)*LTK(k)
-               LQS2(k) = LQS(k)*LQS(k)
-               RHOS(k) = MAX(100.,MIN(910.,EXP(ROS1+ROS2*LTK(k)+ROS3*  &
-                         LQS(k)+ROS4*LTK2(k)+ROS5*LQS2(k)+ROS6*LTK(k)* &
-                         LQS(k))))
-               SMLF(k) = MIN(SMLF(k),1.-MIN(1.,RHOS(k)/1.E3))
-               RHOS(k) = 1.E3*SMLF(k)+(1.-SMLF(k))*RHOS(k)
-               RHOS(k) = MIN(MAX(RHOS(k),100.),910.)
-               MVDS(k) = EXP(MDS1+MDS2*LTK(k)+MDS3*LQS(k)+MDS4*LTK2(k)+&
-                         MDS5*LQS2(k)+MDS6*LTK(k)*LQS(k))
-               AFAS(k) = 0.
-               LAMS(k) = (EXP(LGAMMA(AFAS(k)+4.)-LGAMMA(AFAS(k)+1.)))**&
-                         THRD/MVDS(k)*1.E6
-               N0S(k) = LOG(6.*rhoz(k)*qsz(k)/pi/RHOS(k))+(4.+AFAS(k))*&
-                        LOG(LAMS(k))-LGAMMA(AFAS(k)+4.)
-            ENDIF
-            vts(k) = constc*sqrhoz(k)*EXP(LGAMMA(constd+4.+AFAS(k))-   &
-                     LGAMMA(AFAS(k)+4.)-constd*LOG(LAMS(k)))
+            LTK(k) = LOG(TK1D(k))
+            LQS(k) = -1.*LOG(rhoz(k)*qsz(k))
+            LTK2(k) = LTK(k)*LTK(k)
+            LQS2(k) = LQS(k)*LQS(k)
+            RHOS(k) = MAX(100.,MIN(910.,EXP(ROS1+ROS2*LTK(k)+ROS3*     &
+                      LQS(k)+ROS4*LTK2(k)+ROS5*LQS2(k)+ROS6*LTK(k)*    &
+                      LQS(k))))
+            RHOS(k) = MIN(910.,1.E3*SMLF(k)+(1.-SMLF(k))*RHOS(k))
+            MVDS(k) = EXP(MDS1+MDS2*LTK(k)+MDS3*LQS(k)+MDS4*LTK2(k)+   &
+                      MDS5*LQS2(k)+MDS6*LTK(k)*LQS(k))
+            LROS(k) = LOG(RHOS(k))
+            LMDS(k) = LOG(MVDS(k))
+            EFDS(k) = EXP(EFD1+EFD2*LMDS(k)+EFD3*LROS(k)+EFD4*         &
+                      LMDS(k)**2.+EFD5*LROS(k)**2.+EFD6*LMDS(k)*LROS(k))
+            EFDS(k) = MAX(MIN(EFDS(k),MVDS(k)/0.60568667),MVDS(k)/     &
+                      0.943389)
+            KDXS(k) = MAX(KMIN,MIN(KMAX,(MVDS(k)/EFDS(k))**3.))
+            AFAS(k) = MAX(0.,(6.*KDXS(k)-3.+SQRT(8.*KDXS(k)+1.))/(2.-  &
+                      2.*KDXS(k)))
+            LAMS(k) = (AFAS(k)+3.)/EFDS(k)*1.E6
+            EFRS(k) = EFDS(k)/2.E6
+            vts(k) = 11.72*sqrhoz(k)*EXP(GAMLN(4.41+AFAS(k))-          &
+                     GAMLN(AFAS(k)+4.)-0.41*LOG(LAMS(k)))
+            N0S(k) = LOG(6.*rhoz(k)*qsz(k)/PI/RHOS(k))+(4.+AFAS(k))*   &
+                     LOG(LAMS(k))-GAMLN(AFAS(k)+4.)
+            RADS(k) = EXP(N0S(k)+GAMLN(AFAS(k)+7.)-(AFAS(k)+7.)*       &
+                      LOG(LAMS(k)))*(RHOS(k)/910.)**2.
             if (k.eq.1) then
                del_tv = AMIN1(del_tv,0.9*(zz(k)-topo(i,j))/vts(k))
             else
                del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vts(k))
             endif
-          else
+         else
             vts(k) = 0.
-          endif
-        enddo
-
-        if (max_q.ge.min_q) then
+         endif
+      enddo
+      if (max_q.ge.min_q) then
           !- Check if the summation of the small delta t >=  big delta t
           !             (t_del_tv)          (del_tv)             (dtb)
-          t_del_tv = t_del_tv+del_tv
-          if (t_del_tv.ge.dtb) then
+         t_del_tv = t_del_tv+del_tv
+         if (t_del_tv.ge.dtb) then
             notlast = .false.
             del_tv = dtb+del_tv-t_del_tv
-          endif
+         endif
           ! use small delta t to calculate the qsz flux
           ! termi is the qsz flux pass in the grid box through the upper boundary
           ! termo is the qsz flux pass out the grid box through the lower boundary
-          fluxin = 0.
-          do k = max_q,min_q,-1
+         fluxin = 0.
+         do k = max_q,min_q,-1
             fluxout = rhoz(k)*vts(k)*qsz(k)
             flux = (fluxin-fluxout)/rhoz(k)/dzw(k)
             qsz(k) = qsz(k)+del_tv*flux
             qsz(k) = AMAX1(0.,qsz(k))
             qs(i,k,j) = qsz(k)
             fluxin = fluxout
-          enddo
-          if (min_q.eq.1) then
+         enddo
+         if (min_q.eq.1) then
             pptsnow = pptsnow+fluxin*del_tv
-          else
-            k=min_q-1
+         else
+            k = min_q-1
             qsz(k) = qsz(k)+del_tv*fluxin/rhoz(k)/dzw(k)
             qs(i,k,j) = qsz(k)
-          endif
-        else
-          notlast=.false.
-        endif
+         endif
+      else
+         notlast=.false.
+      endif
       ENDDO  ! end of DO while (notlast)
-
-      if (ice2.eq.0) then 
-        t_del_tv = 0.
-        del_tv = dtb
-        notlast = .true.
-        DO while (notlast)
-          min_q = kte
-          max_q = kts-1
-         
-          do k = kts,kte
-            !0901         IF (qgz(k).GE.cmin1) THEN
-             IF (qgz(k).GE.cmin2) THEN
-                MVG0(k) = EXP(8.8283+0.25*LOG(rhoz(k)*qgz(k)))/1.E6
-                DSLL(k) = MAX(1.E-3,MIN(1.,2.*1.E-2*(EXP(MIN(20.,-TC1D(k)/ &
-                          MAX(0.1,(1.1E4*rhoz(k)*(qcz(k)+qrz(k))-1.3E3*    &
-                          rhoz(k)*qgz(k)+1.))))-1.)))
-                if (ihail.eq.2) then
-                   IF (MVG0(k).GT.DSLL(k)) THEN
-                      ihail2 = 1
-                   ELSE
-                      ihail2 = 0
-                   ENDIF
-                ENDIF
-                if (ihail.eq.1.or.ihail2.eq.1) then ! Hail
-                   min_q = MIN0(min_q,k)
-                   max_q = MAX0(max_q,k)
-                   RHOG(k) = rhohail
-                   GMLF(k) = MIN(GMLF(k),1.-MIN(1.,RHOG(k)/1.E3))
-                   IF (SPECTRUM.EQ.0) THEN
-                      AFAG(k) = 0.
-                      N0H(k) = LOG(xnoh)
-                      LAMG(k) = EXP((N0H(k)+LOG(pi*rhohail/rhoz(k)/qgz(k)/ &
-                                6.)+LGAMMA(AFAG(k)+4.))/(AFAG(k)+4.))
-                   ELSEIF (SPECTRUM.EQ.1) THEN
-                      LTK(k) = LOG(TK1D(k))
-                      LQG(k) = -1.*LOG(rhoz(k)*qgz(k))
-                      LTK2(k) = LTK(k)*LTK(k)
-                      LQG2(k) = LQG(k)*LQG(k)
-                      MVDH(k) = EXP(MDH1+MDH2*LTK(k)+MDH3*LQG(k)+MDH4*     &
-                                LTK2(k)+MDH5*LQG2(k)+MDH6*LTK(k)*LQG(k))
-                      EFDH(k) = EXP(EFD1+EFD2*LOG(MVDH(k))+EFD3*LOG(9.E2)+ &
-                                EFD4*LOG(MVDH(k))**2.+EFD5*LOG(9.E2)**2.+  &
-                                EFD6*LOG(MVDH(k))*LOG(9.E2))
-                      EFDH(k) = MAX(MIN(EFDH(k),MVDH(k)/KMIN**THRD),       &
-                                MVDH(k)/KMAX**THRD)
-                      KDXH(k) = MAX(KMIN,MIN(KMAX,(MVDH(k)/EFDH(k))**3.))
-                      AFAG(k) = MAX(0.,(6.*KDXH(k)-3.+SQRT(8.*KDXH(k)+     &
-                                1.))/(2.-2.*KDXH(k)))
-                      LAMG(k) = (AFAG(k)+3.)/EFDH(k)*1.E6
-                      N0H(k) = LOG(6.*rhoz(k)*qgz(k)/pi/rhohail)+(4.+      &
-                               AFAG(k))*LOG(LAMG(k))-LGAMMA(AFAG(k)+4.)
-                   ELSEIF (SPECTRUM.EQ.2) THEN
-                      LTK(k) = LOG(TK1D(k))
-                      LQG(k) = -1.*LOG(rhoz(k)*qgz(k))
-                      LTK2(k) = LTK(k)*LTK(k)
-                      LQG2(k) = LQG(k)*LQG(k)
-                      MVDH(k) = EXP(MDH1+MDH2*LTK(k)+MDH3*LQG(k)+MDH4*     &
-                                LTK2(k)+MDH5*LQG2(k)+MDH6*LTK(k)*LQG(k))
-                      AFAG(k) = 0.
-                      LAMG(k) = (EXP(LGAMMA(AFAG(k)+4.)-LGAMMA(AFAG(k)+    &
-                                1.)))**THRD/MVDH(k)*1.E6
-                      N0H(k) = LOG(6.*rhoz(k)*qgz(k)/pi/rhohail)+(4.+      &
-                               AFAG(k))*LOG(LAMG(k))-LGAMMA(AFAG(k)+4.)
-                   ENDIF
-                   vtg(k) = SQRT(4.*grav*rhohail/3./rhoz(k)/cdrag)*EXP(    &
-                            LGAMMA(4.5+AFAG(k))-LGAMMA(AFAG(k)+4.)-0.5*    &
-                            LOG(LAMG(k)))
-                   if (k.eq.1) then
-                      del_tv = AMIN1(del_tv,0.9*(zz(k)-topo(i,j))/vtg(k))
-                   else
-                      del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtg(k))
-                   endif !k
-                elseif (ihail.eq.0.or.ihail2.eq.0) then  ! Graupel
-                   min_q = MIN0(min_q,k)
-                   max_q = MAX0(max_q,k)
-                   IF (SPECTRUM.EQ.0) THEN
-                      AFAG(k) = 0.
-                      RHOG(k) = rhograul
-                      N0G(k) = LOG(xnog)
-                      LAMG(k) = EXP((N0G(k)+LOG(pi*rhograul/rhoz(k)/qgz(k)/&
-                                6.)+LGAMMA(AFAG(k)+4.))/(AFAG(k)+4.))
-                      GMLF(k) = MIN(GMLF(k),1.-MIN(1.,RHOG(k)/1.E3))
-                   ELSEIF (SPECTRUM.EQ.1) THEN
-                      LTK(k) = LOG(TK1D(k))
-                      LQG(k) = -1.*LOG(rhoz(k)*qgz(k))
-                      LTK2(k) = LTK(k)*LTK(k)
-                      LQG2(k) = LQG(k)*LQG(k)
-                      GMLF(k) = MIN(GMLF(k),1.-MIN(1.,RHOG(k)/1.E3))
-                      RHOG(k) = MIN(900.,1.E3*GMLF(k)+(1.-GMLF(k))*MAX(    &
-                                250.,EXP(-0.056433*LQG(k)+6.608048)))
-                      MVDG(k) = EXP(MDG1+MDG2*LTK(k)+MDG3*LQG(k)+MDG4*     &
-                                LTK2(k)+MDG5*LQG2(k)+MDG6*LTK(k)*LQG(k))
-                      EFDG(k) = EXP(EFD1+EFD2*LOG(MVDG(k))+EFD3*           &
-                                LOG(RHOG(k))+EFD4*LOG(MVDG(k))**2.+EFD5*   &
-                                LOG(RHOG(k))**2.+EFD6*LOG(MVDG(k))*        &
-                                LOG(RHOG(k)))
-                      EFDG(k) = MAX(MIN(EFDG(k),MVDG(k)/KMIN**THRD),       &
-                                MVDG(k)/KMAX**THRD)
-                      KDXG(k) = MAX(KMIN,MIN(KMAX,(MVDG(k)/EFDG(k))**3.))
-                      AFAG(k) = MAX(0.,(6.*KDXG(k)-3.+SQRT(8.*KDXG(k)+     &
-                                1.))/(2.-2.*KDXG(k)))
-                      LAMG(k) = (AFAG(k)+3.)/EFDG(k)*1.E6
-                      N0G(k) = LOG(6.*rhoz(k)*qgz(k)/pi/RHOG(k))+(4.+      &
-                               AFAG(k))*LOG(LAMG(k))-LGAMMA(AFAG(k)+4.)
-                   ELSEIF (SPECTRUM.EQ.2) THEN
-                      LTK(k) = LOG(TK1D(k))
-                      LQG(k) = -1.*LOG(rhoz(k)*qgz(k))
-                      LTK2(k) = LTK(k)*LTK(k)
-                      LQG2(k) = LQG(k)*LQG(k)
-                      GMLF(k) = MIN(GMLF(k),1.-MIN(1.,RHOG(k)/1.E3))
-                      RHOG(k) = MIN(900.,1.E3*GMLF(k)+(1.-GMLF(k))*MAX(    &
-                                250.,EXP(-0.056433*LQG(k)+6.608048)))
-                      MVDG(k) = EXP(MDG1+MDG2*LTK(k)+MDG3*LQG(k)+MDG4*     &
-                                LTK2(k)+MDG5*LQG2(k)+MDG6*LTK(k)*LQG(k))
-                      AFAG(k) = 0.
-                      LAMG(k) = (EXP(LGAMMA(AFAG(k)+4.)-LGAMMA(AFAG(k)+    &
-                                1.)))**THRD/MVDG(k)*1.E6
-                      N0G(k) = LOG(6.*rhoz(k)*qgz(k)/pi/RHOG(k))+(4.+      &
-                               AFAG(k))*LOG(LAMG(k))-LGAMMA(AFAG(k)+4.)
-                   ENDIF
-                   vtg(k) = abar*(p0/prez(k))**0.4*EXP(LGAMMA(bbar+4.+     &
-                            AFAG(k))-LGAMMA(AFAG(k)+4.)-bbar*LOG(LAMG(k)))
-                   if (k.eq.1) then
-                      del_tv = AMIN1(del_tv,0.9*(zz(k)-topo(i,j))/vtg(k))
-                   else
-                      del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtg(k))
-                   endif !k
-                endif !ihail
-             else
-               vtg(k) = 0.
-             endif !qgz
-          enddo ! end of k-loop
-         
-          if (max_q.ge.min_q) then
-            !- Check if the summation of the small delta t >=  big delta t
-            !             (t_del_tv)          (del_tv)             (dtb)
-             t_del_tv = t_del_tv+del_tv
-             if (t_del_tv.ge.dtb) then
-                notlast = .false.
-                del_tv = dtb+del_tv-t_del_tv
-             endif
-            ! use small delta t to calculate the qgz flux
-            ! termi is the qgz flux pass in the grid box through the upper boundary
-            ! termo is the qgz flux pass out the grid box through the lower boundary
-            !
-             fluxin = 0.
-             do k = max_q,min_q,-1
-                fluxout = rhoz(k)*vtg(k)*qgz(k)
-                flux = (fluxin-fluxout)/rhoz(k)/dzw(k)
-                qgz(k) = qgz(k)+del_tv*flux
-                qgz(k) = AMAX1(0.,qgz(k))
-                qg(i,k,j) = qgz(k)
-                fluxin = fluxout
-             enddo
-             if (min_q.eq.1) then
-                pptgraul = pptgraul+fluxin*del_tv
-             else
-                k=min_q-1
-                qgz(k) = qgz(k)+del_tv*fluxin/rhoz(k)/dzw(k)
-                qg(i,k,j) = qgz(k)
-             endif
-          else
-             notlast = .false.
-          endif
-        ENDDO  ! end of DO while (notlast)
-      ENDIF !ice2
-      !
-      !-- cloud ice  (03/21/02) follow Vaughan T.J. Phillips at GFDL
-      !
       t_del_tv = 0.
       del_tv = dtb
       notlast = .true.
       DO while (notlast)
-        min_q = kte
-        max_q = kts-1
-        do k = kts,kte
-           if (qiz(k).ge.1.E-12) then
-              min_q = MIN0(min_q,k)
-              max_q = MAX0(max_q,k)
-              vti(k) = 3.29*(rhoz(k)*qiz(k))**0.16  ! Heymsfield and Donner
-              if (k.eq.1) then
-                 del_tv = AMIN1(del_tv,0.9*(zz(k)-topo(i,j))/vti(k))
-              else
-                 del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vti(k))
-              endif
-           else
-              vti(k) = 0.
-           endif
-        enddo
-       
-        if (max_q.ge.min_q) then
+      min_q = kte
+      max_q = kts-1
+      DO k = kts,kte
+         IF (qgz(k).GE.cmin1) THEN
+            TC1D(k) = TK1D(k)-t0
+            MVG0(k) = EXP(8.8283+0.25*LOG(rhoz(k)*qgz(k)))/1.E6
+            DSLL(k) = MAX(1.E-3,MIN(1.,2.*1.E-2*(EXP(MIN(20.,-TC1D(k)/ &
+                      MAX(0.1,(1.1E4*rhoz(k)*(qcz(k)+qrz(k))-1.3E3*    &
+                      rhoz(k)*qgz(k)+1.))))-1.)))
+            IF (MVG0(k).GT.DSLL(k)) THEN
+               ihail = 1
+            ELSE
+               ihail = 0
+            ENDIF
+            IF (ihail.eq.1) then ! Hail
+               min_q = MIN0(min_q,k)
+               max_q = MAX0(max_q,k)
+               LTK(k) = LOG(TK1D(k))
+               LQG(k) = -1.*LOG(rhoz(k)*qgz(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQG2(k) = LQG(k)*LQG(k)
+               MVDH(k) = EXP(MDH1+MDH2*LTK(k)+MDH3*LQG(k)+MDH4*LTK2(k)+&
+                         MDH5*LQG2(k)+MDH6*LTK(k)*LQG(k))
+               LMDH(k) = LOG(MVDH(k))
+               EFDH(k) = EXP(EFD1+EFD2*LMDH(k)+EFD3*6.80239476+EFD4*   &
+                         LMDH(k)**2.+EFD5*46.27257452+EFD6*LMDH(k)*    &
+                         6.80239476)
+               EFDH(k) = MAX(MIN(EFDH(k),MVDH(k)/0.60568667),MVDH(k)/  &
+                         0.943389)
+               KDXH(k) = MAX(KMIN,MIN(KMAX,(MVDH(k)/EFDH(k))**3.))
+               AFAG(k) = MAX(0.,(6.*KDXH(k)-3.+SQRT(8.*KDXH(k)+1.))/(  &
+                         2.-2.*KDXH(k)))
+               LAMG(k) = (AFAG(k)+3.)/EFDH(k)*1.E6
+               vtg(k) = SQRT(1.962E4/rhoz(k))*EXP(GAMLN(4.5+AFAG(k))-  &
+                        GAMLN(AFAG(k)+4.)-0.5*LOG(LAMG(k)))
+               N0H(k) = LOG(rhoz(k)*qgz(k)/471.238898)+(4.+AFAG(k))*   &
+                        LOG(LAMG(k))-GAMLN(AFAG(k)+4.)
+               RADG(k) = EXP(N0H(k)+GAMLN(AFAG(k)+7.)-(AFAG(k)+7.)*    &
+                         LOG(LAMG(k)))
+               if (k.eq.1) then
+                  del_tv = AMIN1(del_tv,0.9*(zz(k)-topo(i,j))/vtg(k))
+               else
+                  del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtg(k))
+               endif !k
+            elseif (ihail.eq.0) then  ! Graupel
+               min_q = MIN0(min_q,k)
+               max_q = MAX0(max_q,k)
+               LTK(k) = LOG(TK1D(k))
+               LQG(k) = -1.*LOG(rhoz(k)*qgz(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQG2(k) = LQG(k)*LQG(k)
+               RHOG(k) = MIN(900.,1.E3*GMLF(k)+(1.-GMLF(k))*MAX(250.,  &
+                         EXP(-0.056433*LQG(k)+6.608048)))
+               MVDG(k) = EXP(MDG1+MDG2*LTK(k)+MDG3*LQG(k)+MDG4*LTK2(k)+&
+                         MDG5*LQG2(k)+MDG6*LTK(k)*LQG(k))
+               LROG(k) = LOG(RHOG(k))
+               LMDG(k) = LOG(MVDG(k))
+               EFDG(k) = EXP(EFD1+EFD2*LMDG(k)+EFD3*LROG(k)+EFD4*      &
+                         LMDG(k)**2.+EFD5*LROG(k)**2.+EFD6*LMDG(k)*    &
+                         LROG(k))
+               EFDG(k) = MAX(MIN(EFDG(k),MVDG(k)/0.60568667),MVDG(k)/  &
+                         0.943389)
+               KDXG(k) = MAX(KMIN,MIN(KMAX,(MVDG(k)/EFDG(k))**3.))
+               AFAG(k) = MAX(0.,(6.*KDXG(k)-3.+SQRT(8.*KDXG(k)+1.))/(  &
+                         2.-2.*KDXG(k)))
+               LAMG(k) = (AFAG(k)+3.)/EFDG(k)*1.E6
+               vtg(k) = 19.3*(1.E5/prez(k))**0.4*EXP(GAMLN(4.37+       &
+                        AFAG(k))-GAMLN(AFAG(k)+4.)-0.37*LOG(LAMG(k)))
+               N0G(k) = LOG(6.*rhoz(k)*qgz(k)/PI/RHOG(k))+(4.+         &
+                        AFAG(k))*LOG(LAMG(k))-GAMLN(AFAG(k)+4.)
+               RADG(k) = EXP(N0G(k)+GAMLN(AFAG(k)+7.)-(AFAG(k)+7.)*    &
+                         LOG(LAMG(k)))*(RHOG(k)/900.)**2.
+               if (k.eq.1) then
+                  del_tv = AMIN1(del_tv,0.9*(zz(k)-topo(i,j))/vtg(k))
+               else
+                  del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtg(k))
+               endif !k
+            endif !ihail
+         else
+            vtg(k) = 0.
+         endif !qgz
+      enddo ! end of k-loop
+      if (max_q.ge.min_q) then
+         !- Check if the summation of the small delta t >=  big delta t
+         !             (t_del_tv)          (del_tv)             (dtb)
+         t_del_tv = t_del_tv+del_tv
+         if (t_del_tv.ge.dtb) then
+            notlast = .false.
+            del_tv = dtb+del_tv-t_del_tv
+         endif
+         ! use small delta t to calculate the qgz flux
+         ! termi is the qgz flux pass in the grid box through the upper boundary
+         ! termo is the qgz flux pass out the grid box through the lower boundary
+         !
+         fluxin = 0.
+         do k = max_q,min_q,-1
+            fluxout = rhoz(k)*vtg(k)*qgz(k)
+            flux = (fluxin-fluxout)/rhoz(k)/dzw(k)
+            qgz(k) = qgz(k)+del_tv*flux
+            qgz(k) = AMAX1(0.,qgz(k))
+            qg(i,k,j) = qgz(k)
+            fluxin = fluxout
+         enddo
+         if (min_q.eq.1) then
+            pptgraul = pptgraul+fluxin*del_tv
+         else
+            k = min_q-1
+            qgz(k) = qgz(k)+del_tv*fluxin/rhoz(k)/dzw(k)
+            qg(i,k,j) = qgz(k)
+         endif
+      else
+         notlast = .false.
+      endif
+      ENDDO  ! end of DO while (notlast)
+      !-- cloud ice  (03/21/02) follow Vaughan T.J. Phillips at GFDL
+      t_del_tv = 0.
+      del_tv = dtb
+      notlast = .true.
+      DO while (notlast)
+      min_q = kte
+      max_q = kts-1
+      DO k = kts,kte
+         if (qiz(k).ge.cmin1) then
+            min_q = MIN0(min_q,k)
+            max_q = MAX0(max_q,k)
+            TC1D(k) = TK1D(k)-t0
+            HID(k) = MAX(MIN(NINT(ABS(TC1D(k))/0.25),120),0)
+            INHGR(k) = ITBLE(HID(k))
+            esi(k) = MIN(0.99*prez(k),POLYSVP(TK1D(k),1))
+            qsi(k) = 0.622*esi(k)/(prez(k)-esi(k))
+            IF (TC1D(k).GE.-40.) THEN
+               HID(k)  = MAX(MIN(NINT(ABS(TC1D(k))/0.25),120),0)
+               INHGR(k) = ITBLE(HID(k))
+               RHOI(k) = 900.*EXP(-3.*MAX((qvz(k)-qsi(k))-5.E-5,0.)/   &
+                         INHGR(k))
+            ELSE
+               INHGR(k) = 8.
+               ssi(k) = qvz(k)/qsi(k)-1.
+               IF (ssi(k).GT.0.267) THEN
+                  RHOI(k) = -1027.456*ssi(k)+1185.834
+               ELSE
+                  RHOI(k) = -32.332*ssi(k)+900.
+               ENDIF
+            ENDIF
+            ADAGR(k) = INHGR(k)**THRD
+            LTK(k)  = LOG(TK1D(k))
+            LQI(k)  = -1.*LOG(rhoz(k)*qiz(k))
+            LTK2(k) = LTK(k)*LTK(k)
+            LQI2(k) = LQI(k)*LQI(k)
+            LROI(k) = LOG(MIN(MAX(RHOI(k),50.),900.))
+            ZETA(k) = (ADAGR(k)-1.)/(ADAGR(k)+2.)
+            IF (ZETA(k).GT.0.) THEN
+               VISHP(k) = DI0**(ZETA(k)/2.)
+            ELSEIF (ZETA(k).LT.0.) THEN
+               VISHP(k) = DI0**(-ZETA(k))
+            ELSE
+               VISHP(k) = 1.
+            ENDIF
+            VIROI(k) = MIN(1.,2.6795546-0.010732829*LQI(k)-1.176491*   &
+                       LROI(k)+3.2512268E-4*LQI2(k)+0.13920371*        &
+                       LROI(k)**2.-5.6243169E-4*LQI(k)*LROI(k))
+            if (lan1D(k).eq.1) then     ! land
+               MVDI(k) = EXP(152.58509-0.25772005*LQI(k)+3.75543E-4*   &
+                         LQI2(k)-54.560357*LTK(k)+5.1248879*LTK2(k))
+               vti(k) = EXP(265.16805-0.28802545*LQI(k)-3.754874E-3*   &
+                        LQI2(k)-93.843132*LTK(k)+8.8315122*LTK2(k))/   &
+                        1.E6*VISHP(k)*VIROI(k)*(1.0837/rhoz(k))**0.35
+            else  ! ocean
+               MVDI(k) = EXP(153.03137-0.25772005*LQI(k)+3.75543E-4*   &
+                         LQI2(k)-54.560357*LTK(k)+5.1248879*LTK2(k))
+               vti(k) = EXP(252.86312-0.23844613*LQI(k)-4.6185936E-3*  &
+                        LQI2(k)-89.119066*LTK(k)+8.3851678*LTK2(k))/   &
+                        1.E6*VISHP(k)*VIROI(k)*(1.0837/rhoz(k))**0.35
+            endif
+            LROI(k) = LOG(RHOI(k))
+            LMDI(k) = LOG(MVDI(k))
+            EFDI(k) = EXP(EFD1+EFD2*LMDI(k)+EFD3*LROI(k)+EFD4*         &
+                      LMDI(k)**2.+EFD5*LROI(k)**2.+EFD6*LMDI(k)*LROI(k))
+            EFDI(k) = MAX(MIN(EFDI(k),MVDI(k)/0.60568667),MVDI(k)/     &
+                      0.943389)
+            KDXI(k) = MAX(KMIN,MIN(KMAX,(MVDI(k)/EFDI(k))**3.))
+            AFAI(k) = MAX(0.,(6.*KDXI(k)-3.+SQRT(8.*KDXI(k)+1.))/(2.-  &
+                      2.*KDXI(k)))
+            LAMI(k) = (AFAI(k)+3.)/EFDI(k)*1.E6
+            EFRI(k) = EFDI(k)/2.E6
+            N0I(k) = LOG(6.*rhoz(k)*qiz(k)/PI/RHOI(k))+(4.+AFAI(k))*   &
+                     LOG(LAMI(k))-GAMLN(AFAI(k)+4.)
+            RADI(k) = EXP(N0I(k)+GAMLN(AFAI(k)+7.)-(AFAI(k)+7.)*       &
+                      LOG(LAMI(k)))*(RHOI(k)/910.)**2.
+            if (k.eq.1) then
+               del_tv = AMIN1(del_tv,0.9*(zz(k)-topo(i,j))/vti(k))
+            else
+               del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vti(k))
+            endif
+         else
+            vti(k) = 0.
+         endif
+      enddo
+      if (max_q.ge.min_q) then
           !- Check if the summation of the small delta t >=  big delta t
           !             (t_del_tv)          (del_tv)             (dtb)
-           t_del_tv = t_del_tv+del_tv
-           if (t_del_tv.ge.dtb) then
-              notlast = .false.
-              del_tv = dtb+del_tv-t_del_tv
-           endif
+         t_del_tv = t_del_tv+del_tv
+         if (t_del_tv.ge.dtb) then
+            notlast = .false.
+            del_tv = dtb+del_tv-t_del_tv
+         endif
             ! use small delta t to calculate the qiz flux
             ! termi is the qiz flux pass in the grid box through the upper boundary
             ! termo is the qiz flux pass out the grid box through the lower boundary
-           fluxin = 0.
-           do k = max_q,min_q,-1
-              fluxout = rhoz(k)*vti(k)*qiz(k)
-              flux = (fluxin-fluxout)/rhoz(k)/dzw(k)
-              qiz(k) = qiz(k)+del_tv*flux
-              qiz(k) = AMAX1(0.,qiz(k))
-              qi(i,k,j) = qiz(k)
-              fluxin = fluxout
-           enddo
-           if (min_q.eq.1) then
-              pptice = pptice+fluxin*del_tv
-           else
-              k=min_q-1
-              qiz(k) = qiz(k)+del_tv*fluxin/rhoz(k)/dzw(k)
-              qi(i,k,j) = qiz(k)
-           endif
-        else
-           notlast = .false.
-        endif
+         fluxin = 0.
+         do k = max_q,min_q,-1
+            fluxout = rhoz(k)*vti(k)*qiz(k)
+            flux = (fluxin-fluxout)/rhoz(k)/dzw(k)
+            qiz(k) = qiz(k)+del_tv*flux
+            qiz(k) = AMAX1(0.,qiz(k))
+            qi(i,k,j) = qiz(k)
+            fluxin = fluxout
+         enddo
+         if (min_q.eq.1) then
+            pptice = pptice+fluxin*del_tv
+         else
+            k = min_q-1
+            qiz(k) = qiz(k)+del_tv*fluxin/rhoz(k)/dzw(k)
+            qi(i,k,j) = qiz(k)
+         endif
+      else
+         notlast = .false.
+      endif
       ENDDO !notlast
-      snowncv(i,j) = pptsnow
-      snownc(i,j) = snownc(i,j)+pptsnow
+
+      DO k = kts,kte
+         IF ((RADR(k)+RADI(k)+RADS(k)+RADG(k)).GE.1.E-35) THEN
+            IF (TK1D(k).LE.273.15) THEN
+               DBZM(k) = 10.*LOG10(1.E18*(RADR(k)+2.24E-1*(RADI(k)+    &
+                         RADS(k)+RADG(k))))
+            ELSE
+               DBZM(k) = 10.*LOG10(1.E18*(RADR(k)+RADS(k)+RADG(k)))
+            ENDIF
+         ENDIF
+         EFRC3D(i,k,j) = EFRC(k)
+         EFRI3D(i,k,j) = EFRI(k)
+         EFRS3D(i,k,j) = EFRS(k)
+         DBZM3D(i,k,j) = DBZM(k)
+      ENDDO
+
+      snowncv(i,j) = pptice+pptsnow
+      snownc(i,j) = snownc(i,j)+pptice+pptsnow
       graupelncv(i,j) = pptgraul
       graupelnc(i,j) = graupelnc(i,j)+pptgraul
-      RAINNCV(i,j) = pptrain+pptsnow+pptgraul+pptice
-      RAINNC(i,j)  = RAINNC(i,j)+pptrain+pptsnow+pptgraul+pptice
+      RAINNCV(i,j) = pptrain+pptsnow+pptgraul+pptice+pptclod
+      RAINNC(i,j)  = RAINNC(i,j)+pptrain+pptsnow+pptgraul+pptice+pptclod
       sr(i,j) = 0.
       if (RAINNCV(i,j).gt.0.) sr(i,j) = (pptsnow+pptgraul+pptice)/     &
-                                        RAINNCV(i,j) 
+                                        RAINNCV(i,j)
 
       ENDDO                                                             ! i_loop
       ENDDO                                                             ! j_loop
 
       END SUBROUTINE fall_flux
-!----------------------------------------------------------------
+!======================================================================
 !
 !=======================================================================
       SUBROUTINE consat_s
@@ -1853,6 +1842,96 @@ CONTAINS
 
       return
       END SUBROUTINE saticel_s
+!=======================================================================
+!
+!=======================================================================
+      REAL FUNCTION VTQR(RHO,AFAR,LAMR)                                 ! Raindrops terminal velocity
+!========================================================================
+      IMPLICIT NONE
+      REAL, INTENT(IN) :: RHO,AFAR,LAMR
+      REAL :: RHOQ,VRA1,VRA2,VRA3,VRB1,VRB3,LAMM,LLAM,LLAM1,LGR1,LGBR1
+
+      RHOQ  = EXP(0.115231*RHO)
+      VRA1  = 0.044612*RHOQ
+      VRA2  = -0.263166*RHOQ
+      VRA3  = 4.7178*RHOQ*RHO**(-0.47335)
+      VRB1  = 2.2955-0.038465*RHO
+      VRB3  = 1.1451-0.038465*RHO
+      LAMM  = LAMR/1.E3
+      LLAM  = LOG(LAMM)
+      LLAM1 = LOG(LAMM+0.184325)
+      LGR1  = GAMLN(AFAR+1.)
+      LGBR1 = GAMLN(VRB1+AFAR+1.)
+      VTQR  = VRA1*EXP((AFAR+1.)*LLAM+LGBR1-(VRB1+AFAR+1.)*LLAM-LGR1)+ &
+              VRA2*EXP((AFAR+1.)*LLAM+LGBR1-(VRB1+AFAR+1.)*LLAM1-LGR1)+&
+              VRA3*EXP((AFAR+1.)*LLAM+GAMLN(VRB3+AFAR+1.)-(VRB3+AFAR+  &
+              1.)*LLAM1-LGR1)
+
+      END FUNCTION VTQR
+!======================================================================
+!
+!======================================================================
+      REAL FUNCTION POLYSVP(T,TYPE)                                    ! IMPLEMETED FROM MORRISON SCHEME
+!======================================================================
+!  COMPUTE SATURATION VAPOR PRESSURE POLYSVP RETURNED IN UNITS OF PA. T IS INPUT IN UNITS OF K.
+!  TYPE REFERS TO SATURATION WITH RESPECT TO LIQUID (0) OR ICE (1)
+!  REPLACE GOFF-GRATCH WITH FASTER FORMULATION FROM FLATAU ET AL. 1992, TABLE 4 (RIGHT-HAND COLUMN)
+      IMPLICIT NONE
+      REAL :: DUM,T,DT
+      INTEGER :: TYPE
+! ice
+      REAL :: a0i,a1i,a2i,a3i,a4i,a5i,a6i,a7i,a8i
+      DATA a0i,a1i,a2i,a3i,a4i,a5i,a6i,a7i,a8i /6.11147274,0.503160820,&
+           0.188439774E-1,0.420895665E-3,0.615021634E-5,0.602588177E-7,&
+           0.385852041E-9,0.146898966E-11,0.252751365E-14/
+! liquid
+      REAL :: a0,a1,a2,a3,a4,a5,a6,a7,a8
+      DATA a0,a1,a2,a3,a4,a5,a6,a7,a8 /6.11239921,0.443987641,         &
+           0.142986287E-1,0.264847430E-3,0.302950461E-5,0.206739458E-7,&
+           0.640689451E-10,-0.952447341E-13,-0.976195544E-15/
+      IF (TYPE.EQ.1) THEN                                               ! ICE
+         DT = MAX(-80.,T-273.16)
+         POLYSVP = a0i+DT*(a1i+DT*(a2i+DT*(a3i+DT*(a4i+DT*             &
+                          (a5i+DT*(a6i+DT*(a7i+a8i*DT)))))))
+         POLYSVP = POLYSVP*100.
+      ENDIF
+      IF (TYPE.EQ.0) THEN                                               ! LIQUID
+         DT = MAX(-80.,T-273.16)
+         POLYSVP = a0+DT*(a1+DT*(a2+DT*(a3+DT*(a4+DT*(a5+DT*           &
+                         (a6+DT*(a7+a8*DT)))))))
+         POLYSVP = POLYSVP*100.
+      ENDIF
+
+      END FUNCTION POLYSVP
+!======================================================================
+!
+!======================================================================
+      REAL FUNCTION GAMLN(XX)
+!======================================================================
+!     --- RETURNS THE VALUE LN(GAMMA(XX)) FOR XX > 0.
+      IMPLICIT NONE
+      REAL, INTENT(IN):: XX
+      DOUBLE PRECISION, PARAMETER:: STP = 2.5066282746310005D0
+      DOUBLE PRECISION, DIMENSION(6), PARAMETER:: &
+               COF = (/76.18009172947146D0, -86.50532032941677D0, &
+                       24.01409824083091D0, -1.231739572450155D0, &
+                      .1208650973866179D-2, -.5395239384953D-5/)
+      DOUBLE PRECISION:: SER,TMP,X,Y
+      INTEGER:: J
+
+      X = XX
+      Y = X
+      TMP = X+5.5D0
+      TMP = (X+0.5D0)*LOG(TMP)-TMP
+      SER = 1.000000000190015D0
+      DO 11 J = 1,6
+        Y = Y+1.D0
+        SER = SER+COF(J)/Y
+11    CONTINUE
+      GAMLN = TMP+LOG(STP*SER/X)
+
+      END FUNCTION GAMLN
+!  (C) Copr. 1986-92 Numerical Recipes Software 2.02
 !=======================================================================
 !
 !========================================================================
