@@ -801,7 +801,7 @@ CONTAINS
             GR4,GR5,GR6,GR7,GBR3,GBR4,GBR6,GBR25,GS1,GS2,GS3,GS4,GS5,  &
             GS6,GBS3,GBS4,GBS25,GG1,GG2,GG3,GG4,GBG3,GBG4,GBG25,ff,ecs,&
             ecg,mvrc,egi,MVG0,lan1D,ncloud,LLMR,LAR4,w1d,tauc,taui,tau,&
-            atem
+            atem,LQC,LQC2,LQI,LQI2,mvri
       real, dimension(ims:ime,jms:jme) :: xland
       real, dimension(ims:ime,kms:kme,jms:jme) :: ptwrf,qvwrf,qlwrf,   &
             qrwrf,qiwrf,qswrf,qgwrf,rho_mks,pi_mks,p0_mks,w_mks
