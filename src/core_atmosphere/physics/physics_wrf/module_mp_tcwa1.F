@@ -61,7 +61,7 @@ CONTAINS
                kms,kme,its,ite,jts,jte,kts,kte,has_reqc,has_reqi,      &
                has_reqs
       REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(INOUT) :: th,qv,&
-                                                ql,qr,qi,qs,qg
+                                                qc,qr,qi,qs,qg
       REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(IN) :: rho,pii, &
                                                               p,dz8w,z,w
       REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(OUT) :: DBZM,   &
@@ -98,34 +98,34 @@ CONTAINS
 !
 !      CALL radar_init
 !+---+-----------------------------------------------------------------+
-      i24h = nint(86400./dt_in)
-      if (mod(itimestep,i24h).eq.1) then
-         write(6,*) 'ihail=',ihail,'  ice2=',ice2
-         if (ice2.eq.0) then
-            write(6,*) 'Running 3-ice scheme in GSFCGCE with'
-            if (ihail.eq.0) then 
-               write(6,*) '     ice, snow and graupel'
-            elseif (ihail.eq.1) then
-               write(6,*) '     ice, snow and hail'
-            elseif (ihail.eq.2) then
-               write(6,*) '     ice, snow (graupel or hail)'
-            else
-               write(6,*) 'ihail has to be either 0,1,or 2'
-               stop
-            endif !ihail
-         elseif (ice2.eq.1) then
-            write(6,*) 'Running 2-ice scheme in GSFCGCE with'
-            write(6,*) '     ice and snow'
-         elseif (ice2.eq.2) then
-            write(6,*) 'Running 2-ice scheme in GSFCGCE with'
-            write(6,*) '     ice and graupel'
-         elseif (ice2.eq.3) then
-            write(6,*) 'Running warm rain only scheme in GSFCGCE without any ice'
-         else
-            write(6,*) 'cwbcgce_2ice in namelist.input has to be 0, 1, 2, or 3'
-            stop
-         endif !ice2
-      endif !itimestep
+!      i24h = nint(86400./dt_in)
+!      if (mod(itimestep,i24h).eq.1) then
+!         write(6,*) 'ihail=',ihail,'  ice2=',ice2
+!         if (ice2.eq.0) then
+!            write(6,*) 'Running 3-ice scheme in GSFCGCE with'
+!            if (ihail.eq.0) then 
+!               write(6,*) '     ice, snow and graupel'
+!            elseif (ihail.eq.1) then
+!               write(6,*) '     ice, snow and hail'
+!            elseif (ihail.eq.2) then
+!               write(6,*) '     ice, snow (graupel or hail)'
+!            else
+!               write(6,*) 'ihail has to be either 0,1,or 2'
+!               stop
+!            endif !ihail
+!         elseif (ice2.eq.1) then
+!            write(6,*) 'Running 2-ice scheme in GSFCGCE with'
+!            write(6,*) '     ice and snow'
+!         elseif (ice2.eq.2) then
+!            write(6,*) 'Running 2-ice scheme in GSFCGCE with'
+!            write(6,*) '     ice and graupel'
+!         elseif (ice2.eq.3) then
+!            write(6,*) 'Running warm rain only scheme in GSFCGCE without any ice'
+!         else
+!            write(6,*) 'cwbcgce_2ice in namelist.input has to be 0, 1, 2, or 3'
+!            stop
+!         endif !ice2
+!      endif !itimestep
       CALL consat_s
 
       ! microphysics in GCE
