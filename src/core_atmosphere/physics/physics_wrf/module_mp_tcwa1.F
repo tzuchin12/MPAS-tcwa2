@@ -106,8 +106,8 @@ CONTAINS
       CALL consat_s
 
       ! microphysics in GCE
-      CALL SATICEL_S(dt_in,ihail,ice2,th,qv,qc,qr,qi,qs,qg,rho,pii,p,  &
-                     w,SMLF,GMLF,xland,ids,ide,jds,jde,kds,kde,&
+      CALL SATICEL_S(dt_in,ihail,ice2,th,qv,qc,qr,qi,qs,qg,rho,pii,ht, &
+                     p,w,SMLF,GMLF,xland,ids,ide,jds,jde,kds,kde,   &
                      ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte) 
 
       CALL fall_flux(dt_in,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,ht,sr,rainnc,&
@@ -746,7 +746,7 @@ CONTAINS
 !
 !======================================================================
       SUBROUTINE saticel_s(dt,ihail,ice2,ptwrf,qvwrf,qlwrf,qrwrf,qiwrf,&
-                           qswrf,qgwrf,rho_mks,pi_mks,p0_mks,w_mks,    &
+                           qswrf,qgwrf,rho_mks,pi_mks,p0_mks,topo,w_mks,&
                            SMLF,GMLF,xland,ids,ide,jds,jde,kds,kde,ims,&
                            ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte)
 !-----------------------------------------------------------------------
@@ -801,8 +801,8 @@ CONTAINS
             GR4,GR5,GR6,GR7,GBR3,GBR4,GBR6,GBR25,GS1,GS2,GS3,GS4,GS5,  &
             GS6,GBS3,GBS4,GBS25,GG1,GG2,GG3,GG4,GBG3,GBG4,GBG25,ff,ecs,&
             ecg,mvrc,egi,MVG0,lan1D,ncloud,LLMR,LAR4,w1d,tauc,taui,tau,&
-            atem,LQC,LQC2,LQI,LQI2,mvri
-      real, dimension(ims:ime,jms:jme) :: xland
+            atem,LQC,LQC2,LQI,LQI2,mvri,LMDR,LMDS,LROS,LMDH,LMDG,LROG
+      real, dimension(ims:ime,jms:jme) :: xland,topo
       real, dimension(ims:ime,kms:kme,jms:jme) :: ptwrf,qvwrf,qlwrf,   &
             qrwrf,qiwrf,qswrf,qgwrf,rho_mks,pi_mks,p0_mks,w_mks
       real, dimension(kts:kte) :: pt,qv,qc,qr,qi,qs,qg,tair,tairc,egs, &
