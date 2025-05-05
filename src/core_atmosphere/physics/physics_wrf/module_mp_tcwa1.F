@@ -914,7 +914,7 @@ CONTAINS
          SMLF1D(k) = 0.
          GMLF1D(k) = 0.
         
-         ! for Clould 
+         ! for clould water
          IF (qc(k).GE.cmin1) THEN
             if (lan1D(k).eq.1.) then     ! land
                ncloud(k) = 250.*1.E6*rho(k)
@@ -924,54 +924,37 @@ CONTAINS
                ncloud(k) = 100.*1.E6*rho(k)
             endif
          ENDIF
-         
          ! for Rain
          IF (qr(k).GE.cmin1) THEN
-            ! Spectrum chosen
-            IF (SPECTRUM.EQ.0) THEN
-               AFAR(k) = 0.
-               tnw(k) = LOG(xnor)-LOG(10.**(8.+2.*AFAR(k)))
-               dd(k) = r00(k)*qr(k)
-               zr(k) = EXP((tnw(k)+LOG(cpi*roqr/dd(k)/6.)+LGAMMA(      &
-                       AFAR(k)+4.))/(AFAR(k)+4.))
-            ELSEIF (SPECTRUM.EQ.1) THEN
-               LTK(k)  = LOG(tair(k))
-               LQR(k)  = -1.*LOG(qr(k)*rho(k))
-               LTK2(k) = LTK(k)*LTK(k)
-               LQR2(k) = LQR(k)*LQR(k)
-               MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*LTK2(k)+&
-                         MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
-               EFDR(k) = EXP(EFD1+EFD2*LOG(MVDR(k))+EFD3*LOG(1.E3)+    &
-                         EFD4*LOG(MVDR(k))**2.+EFD5*LOG(1.E3)**2.+     &
-                         EFD6*LOG(MVDR(k))*LOG(1.E3))
-               EFDR(k) = MAX(MIN(EFDR(k),MVDR(k)/KMIN**THRD),MVDR(k)/  &
-                         KMAX**THRD)
-               KDXR(k) = MAX(KMIN,MIN(KMAX,(MVDR(k)/EFDR(k))**3.))
-               AFAR(k) = MAX(0.,(6.*KDXR(k)-3.+SQRT(8.*KDXR(k)+        &
-                         1.))/(2.-2.*KDXR(k)))
-               zr(k) = (AFAR(k)+3.)/EFDR(k)*1.E6
-               tnw(k) = LOG(6.*qr(k)*rho(k)/cpi/1.E3)+(4.+AFAR(k))*    &
-                        LOG(zr(k))-LGAMMA(AFAR(k)+4.)-LOG(10.**(8.+2.* &
-                        AFAR(k)))
-               zr(k) = zr(k)/1.E2
-            ELSEIF (SPECTRUM.EQ.2) THEN
-               MVDR(k) = EXP(8.425904+0.25*LOG(rho(k)*qr(k)))
-               AFAR(k) = 0.
-               zr(k) = (EXP(LGAMMA(AFAR(k)+4.)-LGAMMA(AFAR(k)+1.)))**  &
-                       THRD/MVDR(k)*1.E6
-               tnw(k) = LOG(6.*qr(k)*rho(k)/cpi/1.E3)+(4.+AFAR(k))*    &
-                        LOG(zr(k))-LGAMMA(AFAR(k)+4.)-LOG(10.**(8.+2.* &
-                        AFAR(k)))
-               zr(k) = zr(k)/1.E2
-            ENDIF
-
+            LTK(k)  = LOG(tair(k))
+            LQR(k)  = -1.*LOG(qr(k)*rho(k))
+            LTK2(k) = LTK(k)*LTK(k)
+            LQR2(k) = LQR(k)*LQR(k)
+            MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*LTK2(k)+   &
+                      MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
+            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
+                      MVDR(k)
+            LMDR(k) = LOG(MVDR(k))
+            EFDR(k) = EXP(EFD1+EFD2*LMDR(k)+EFD3*6.90775528+EFD4*      &
+                      LMDR(k)**2.+EFD5*47.717083+EFD6*LMDR(k)*         &
+                      6.90775528)
+            EFDR(k) = MAX(MIN(EFDR(k),MVDR(k)/0.60568667),MVDR(k)/     &
+                      0.943389)
+            KDXR(k) = MAX(KMIN,MIN(KMAX,(MVDR(k)/EFDR(k))**3.))
+            AFAR(k) = MAX(0.,(6.*KDXR(k)-3.+SQRT(8.*KDXR(k)+1.))/(2.-  &
+                      2.*KDXR(k)))
+            zr(k) = (AFAR(k)+3.)/EFDR(k)*1.E6
+            tnw(k) = LOG(qr(k)*rho(k)/523.5987756)+(4.+AFAR(k))*       &
+                     LOG(zr(k))-GAMLN(AFAR(k)+4.)-LOG(10.**(8.+2.*     &
+                     AFAR(k)))
+            zr(k) = zr(k)/1.E2
             LZR(k) = LOG(zr(k))
-            GR4(k) = LGAMMA(AFAR(k)+4.)
-            GR5(k) = LGAMMA(AFAR(k)+5.)
-            GR6(k) = LGAMMA(AFAR(k)+6.)
+            GR4(k) = GAMLN(AFAR(k)+4.)
+            GR5(k) = GAMLN(AFAR(k)+5.)
+            GR6(k) = GAMLN(AFAR(k)+6.)
             IF (AFAR(k).LT.0.1) THEN
-               BVR(k) = bw
-               AVR(k) = aw
+               BVR(k) = 0.8
+               AVR(k) = 2115.
             ELSE
                LTK(k)  = LOG(tair(k))
                LQR(k)  = -1.*LOG(qr(k)*rho(k))
@@ -982,93 +965,47 @@ CONTAINS
                          LQR2(k)*LQR2(k)))
                AVR(k)  = EXP(7.6004532-0.7990953*LTK(k)+1.0281818*     &
                          LQR(k)-0.16595505*LQR2(k)+1.110037E-2*LQR(k)* &
-                         LQR2(k)-2.0925743E-4*LQR2(k)*LQR2(k))  
+                         LQR2(k)-2.0925743E-4*LQR2(k)*LQR2(k))
                AVR(k)  = MAX(2.E2,MIN(3.E7,AVR(k)))*10.**(2.-2.*BVR(k))
             ENDIF
-
-            IF (VTRX.EQ.0) THEN
-               GBR4(k) = LGAMMA(BVR(k)+AFAR(k)+4.)
-               vr(k) = AVR(k)*EXP(GBR4(k)-GR4(k)-BVR(k)*LZR(k))*fv0(k)
-            ELSEIF (VTRX.EQ.1) THEN
-               LTK(k)  = LOG(tair(k))
-               LQR(k)  = LOG(-1.*LOG(qr(k)*rho(k)))
-               LQR2(k) = LQR(k)*LQR(k)
-               vr(k)   = MIN(9.1,EXP((VTR1+VTR2*LTK(k)+VTR3*LQR(k)+    &
-                         VTR4*LQR2(k))/(1.+VTR5*LTK(k)+VTR6*LQR(k)+    &
-                         VTR7*LQR2(k)))/1.E4)*1.E2*fv0(k)
-            ELSEIF (VTRX.EQ.2) THEN
-               LAMR(k) = zr(k)*1.E2
-               vr(k) = CHEN(rho(k),AFAR(k)+3.,LAMR(k))*1.E2*fv0(k)
-            ELSEIF (VTRX.EQ.3) THEN
-               LAMR(k) = zr(k)*1.E2
-               vr(k) = MAX(0.,-26.7+2.06E6/LAMR(k)-2.045E9/LAMR(k)**   &
-                       2.+9.06E11/LAMR(k)**3.)*fv0(k)! GCE-4ICE
-            ENDIF
+            LAMR(k) = zr(k)*1.E2
+            vr(k) = VTQR(rho(k),AFAR(k)+3.,LAMR(k))*1.E2
          ENDIF
-         
          ! for Snow
          IF (qs(k).GE.cmin1) THEN
-            ! Spectrum chosen
-            IF (SPECTRUM.EQ.0) THEN
-               roqs(k) = 0.1
-               AFAS(k) = 0.
-               tns(k) = LOG(xnos)-LOG(10.**(8.+2.*AFAS(k)))
-               dd(k) = r00(k)*qs(k)
-               zs(k) = EXP((tns(k)+LOG(cpi*roqs(k)/dd(k)/6.)+LGAMMA(   &
-                       AFAS(k)+4.))/(AFAS(k)+4.))
-            ELSEIF (SPECTRUM.EQ.1) THEN
-               LTK(k) = LOG(tair(k))
-               LQS(k) = -1.*LOG(qs(k)*rho(k))
-               LTK2(k) = LTK(k)*LTK(k)
-               LQS2(k) = LQS(k)*LQS(k) 
-               RHOS(k) = MAX(100.,MIN(910.,EXP(ROS1+ROS2*LTK(k)+ROS3*  &
-                         LQS(k)+ROS4*LTK2(k)+ROS5*LQS2(k)+ROS6*LTK(k)* &
-                         LQS(k))))
-               roqs(k) = RHOS(k)/1.E3
-               MVDS(k) = EXP(MDS1+MDS2*LTK(k)+MDS3*LQS(k)+MDS4*LTK2(k)+&
-                         MDS5*LQS2(k)+MDS6*LTK(k)*LQS(k))
-               EFDS(k) = EXP(EFD1+EFD2*LOG(MVDS(k))+EFD3*LOG(RHOS(k))+ &
-                         EFD4*LOG(MVDS(k))**2.+EFD5*LOG(RHOS(k))**2.+  &
-                         EFD6*LOG(MVDS(k))*LOG(RHOS(k)))
-               EFDS(k) = MAX(MIN(EFDS(k),MVDS(k)/KMIN**THRD),MVDS(k)/  &
-                         KMAX**THRD)
-               KDXS(k) = MAX(KMIN,MIN(KMAX,(MVDS(k)/EFDS(k))**3.))
-               AFAS(k) = MAX(0.,(6.*KDXS(k)-3.+SQRT(8.*KDXS(k)+        &
-                         1.))/(2.-2.*KDXS(k)))
-               zs(k) = (AFAS(k)+3.)/EFDS(k)*1.E6
-               tns(k) = LOG(6.*qs(k)*rho(k)/cpi/RHOS(k))+(4.+AFAS(k))* &
-                        LOG(zs(k))-LGAMMA(AFAS(k)+4.)-LOG(10.**(8.+2.* &
-                        AFAS(k)))
-               zs(k) = zs(k)/1.E2
-            ELSEIF (SPECTRUM.EQ.2) THEN
-               LTK(k) = LOG(tair(k))
-               LQS(k) = -1.*LOG(qs(k)*rho(k))
-               LTK2(k) = LTK(k)*LTK(k)
-               LQS2(k) = LQS(k)*LQS(k)
-               RHOS(k) = MAX(100.,MIN(910.,EXP(ROS1+ROS2*LTK(k)+ROS3*  &
-                         LQS(k)+ROS4*LTK2(k)+ROS5*LQS2(k)+ROS6*LTK(k)* &
-                         LQS(k))))
-               roqs(k) = RHOS(k)/1.E3
-               MVDS(k) = EXP(MDS1+MDS2*LTK(k)+MDS3*LQS(k)+MDS4*LTK2(k)+&
-                         MDS5*LQS2(k)+MDS6*LTK(k)*LQS(k))
-               AFAS(k) = 0.
-               zs(k) = (EXP(LGAMMA(AFAS(k)+4.)-LGAMMA(AFAS(k)+1.)))**  &
-                       THRD/MVDS(k)*1.E6
-               tns(k) = LOG(6.*qs(k)*rho(k)/cpi/RHOS(k))+(4.+AFAS(k))* &
-                        LOG(zs(k))-LGAMMA(AFAS(k)+4.)-LOG(10.**(8.+2.* &
-                        AFAS(k)))
-               zs(k) = zs(k)/1.E2
-            ENDIF
+            LTK(k) = LOG(tair(k))
+            LQS(k) = -1.*LOG(qs(k)*rho(k))
+            LTK2(k) = LTK(k)*LTK(k)
+            LQS2(k) = LQS(k)*LQS(k)
+            RHOS(k) = MAX(100.,MIN(910.,EXP(ROS1+ROS2*LTK(k)+ROS3*     &
+                      LQS(k)+ROS4*LTK2(k)+ROS5*LQS2(k)+ROS6*LTK(k)*    &
+                      LQS(k))))
+            roqs(k) = RHOS(k)/1.E3
+            MVDS(k) = EXP(MDS1+MDS2*LTK(k)+MDS3*LQS(k)+MDS4*LTK2(k)+   &
+                      MDS5*LQS2(k)+MDS6*LTK(k)*LQS(k))
+            LROS(k) = LOG(RHOS(k))
+            LMDS(k) = LOG(MVDS(k))
+            EFDS(k) = EXP(EFD1+EFD2*LMDS(k)+EFD3*LROS(k)+EFD4*         &
+                      LMDS(k)**2.+EFD5*LROS(k)**2.+EFD6*LMDS(k)*LROS(k))
+            EFDS(k) = MAX(MIN(EFDS(k),MVDS(k)/0.60568667),MVDS(k)/     &
+                      0.943389)
+            KDXS(k) = MAX(KMIN,MIN(KMAX,(MVDS(k)/EFDS(k))**3.))
+            AFAS(k) = MAX(0.,(6.*KDXS(k)-3.+SQRT(8.*KDXS(k)+1.))/(2.-  &
+                      2.*KDXS(k)))
+            zs(k) = (AFAS(k)+3.)/EFDS(k)*1.E6
+            tns(k) = LOG(1.90986*qs(k)*rho(k)/RHOS(k))+(4.+AFAS(k))*   &
+                     LOG(zs(k))-GAMLN(AFAS(k)+4.)-LOG(10.**(8.+2.*     &
+                     AFAS(k)))
+            zs(k) = zs(k)/1.E2
             LZS(k) = LOG(zs(k))
-            GS2(k) = LGAMMA(AFAS(k)+2.)
-            GS4(k) = LGAMMA(AFAS(k)+4.)
-            GS5(k) = LGAMMA(AFAS(k)+5.)
-            GS6(k) = LGAMMA(AFAS(k)+6.)
-            GBS3(k) = LGAMMA(bs+AFAS(k)+3.)
-            GBS4(k) = LGAMMA(bs+AFAS(k)+4.)
-            vs(k) = as*fv0(k)*EXP(GBS4(k)-GS4(k)-bs*LZS(k))
+            GS2(k) = GAMLN(AFAS(k)+2.)
+            GS4(k) = GAMLN(AFAS(k)+4.)
+            GS5(k) = GAMLN(AFAS(k)+5.)
+            GS6(k) = GAMLN(AFAS(k)+6.)
+            GBS3(k) = GAMLN(AFAS(k)+3.41)
+            GBS4(k) = GAMLN(AFAS(k)+4.41)
+            vs(k) = 177.3894*fv0(k)*EXP(GBS4(k)-GS4(k)-0.41*LZS(k))
          ENDIF
-
          ! for Graupel
          if (qg(k).ge.cmin1) then
             MVG0(k) = EXP(8.8283+0.25*LOG(rho(k)*qg(k)))*1.E-6
@@ -1076,129 +1013,77 @@ CONTAINS
                       MAX(0.1,(1.1E4*(qc(k)+qr(k))*rho(k)-1.3E3*qg(k)* &
                       rho(k)+1.))))-1.)))
          ENDIF
-
-         if (ihail.eq.2) then
-            IF (MVG0(k).GT.DSLL(k)) THEN
-               ihail2 = 1
-            ELSE
-               ihail2 = 0
-            ENDIF
+         IF (MVG0(k).GT.DSLL(k)) THEN
+            ihail = 1
+         ELSE
+            ihail = 0
          ENDIF
-
          ! for Graupel
          if (qg(k).ge.cmin1) then
-           if (ihail.eq.1.or.ihail2.eq.1) then
-              roqg(k) = .9
-              ag = SQRT(cd2*roqg(k))
-              bg = .5
-              IF (SPECTRUM.EQ.0) THEN
-                 AFAG(k) = 0.
-                 tng(k) = LOG(xnoh)-LOG(10.**(8.+2.*AFAG(k)))
-                 dd(k) = r00(k)*qg(k)
-                 zg(k) = EXP((tng(k)+LOG(cpi*roqg(k)/dd(k)/6.)+LGAMMA(   &
-                         AFAG(k)+4.))/(AFAG(k)+4.))
-              ELSEIF (SPECTRUM.EQ.1) THEN
-                 LTK(k) = LOG(tair(k))
-                 LQG(k) = -1.*LOG(qg(k)*rho(k))
-                 LTK2(k) = LTK(k)*LTK(k)
-                 LQG2(k) = LQG(k)*LQG(k)
-                 MVDH(k) = EXP(MDH1+MDH2*LTK(k)+MDH3*LQG(k)+MDH4*LTK2(k)+&
-                           MDH5*LQG2(k)+MDH6*LTK(k)*LQG(k))
-                 EFDH(k) = EXP(EFD1+EFD2*LOG(MVDH(k))+EFD3*LOG(9.E2)+    &
-                           EFD4*LOG(MVDH(k))**2.+EFD5*LOG(9.E2)**2.+     &
-                           EFD6*LOG(MVDH(k))*LOG(9.E2))
-                 EFDH(k) = MAX(MIN(EFDH(k),MVDH(k)/KMIN**THRD),MVDH(k)/  &
-                           KMAX**THRD)
-                 KDXH(k) = MAX(KMIN,MIN(KMAX,(MVDH(k)/EFDH(k))**3.))
-                 AFAG(k) = MAX(0.,(6.*KDXH(k)-3.+SQRT(8.*KDXH(k)+        &
-                           1.))/(2.-2.*KDXH(k)))
-                 zg(k) = (AFAG(k)+3.)/EFDH(k)*1.E6
-                 tng(k) = LOG(6.*qg(k)*rho(k)/cpi/900.)+(4.+AFAG(k))*    &
-                          LOG(zg(k))-LGAMMA(AFAG(k)+4.)-LOG(10.**(8.+2.* &
-                          AFAG(k)))
-                 zg(k) = zg(k)/1.E2
-              ELSEIF (SPECTRUM.EQ.2) THEN
-                 LTK(k) = LOG(tair(k))
-                 LQG(k) = -1.*LOG(qg(k)*rho(k))
-                 LTK2(k) = LTK(k)*LTK(k)
-                 LQG2(k) = LQG(k)*LQG(k)
-                 MVDH(k) = EXP(MDH1+MDH2*LTK(k)+MDH3*LQG(k)+MDH4*LTK2(k)+&
-                           MDH5*LQG2(k)+MDH6*LTK(k)*LQG(k))
-                 AFAG(k) = 0.
-                 zg(k) = (EXP(LGAMMA(AFAG(k)+4.)-LGAMMA(AFAG(k)+1.)))**  &
-                         THRD/MVDH(k)*1.E6
-                 tng(k) = LOG(6.*qg(k)*rho(k)/cpi/900.)+(4.+AFAG(k))*    &
-                          LOG(zg(k))-LGAMMA(AFAG(k)+4.)-LOG(10.**(8.+2.* &
-                          AFAG(k)))
-                 zg(k) = zg(k)/1.E2
-              ENDIF
-              LZG(k) = LOG(zg(k))
-              GG4(k) = LGAMMA(AFAG(k)+4.)
-              GBG3(k) = LGAMMA(bg+AFAG(k)+3.)
-              GBG4(k) = LGAMMA(bg+AFAG(k)+4.)
-              GBG25(k) = LGAMMA(bg*0.5+AFAG(k)+2.5)
-              vg(k) = ag*SQRT(rr0(k))*EXP(GBG4(k)-GG4(k)-bg*LZG(k))
-           elseif (ihail.eq.0.or.ihail2.eq.0) then
-              ag = 351.2
-              bg = .37
-              IF (SPECTRUM.EQ.0) THEN
-                 AFAG(k) = 0.
-                 roqg(k) = 0.4
-                 tng(k) = LOG(xnog)-LOG(10.**(8.+2.*AFAG(k)))
-                 dd(k) = r00(k)*qg(k)
-                 zg(k) = EXP((tng(k)+LOG(cpi*roqg(k)/dd(k)/6.)+LGAMMA(   &
-                         AFAG(k)+4.))/(AFAG(k)+4.))
-              ELSEIF (SPECTRUM.EQ.1) THEN
-                 LTK(k) = LOG(tair(k))
-                 LQG(k) = -1.*LOG(qg(k)*rho(k))
-                 LTK2(k) = LTK(k)*LTK(k)
-                 LQG2(k) = LQG(k)*LQG(k)
-                 RHOG(k) = MIN(900.,MAX(250.,EXP(-0.056433*LQG(k)+       &
-                           6.608048)))
-                 roqg(k) = RHOG(k)/1.E3
-                 MVDG(k) = EXP(MDG1+MDG2*LTK(k)+MDG3*LQG(k)+MDG4*LTK2(k)+&
-                           MDG5*LQG2(k)+MDG6*LTK(k)*LQG(k))
-                 EFDG(k) = EXP(EFD1+EFD2*LOG(MVDG(k))+EFD3*LOG(RHOG(k))+ &
-                           EFD4*LOG(MVDG(k))**2.+EFD5*LOG(RHOG(k))**2.+  &
-                           EFD6*LOG(MVDG(k))*LOG(RHOG(k)))
-                 EFDG(k) = MAX(MIN(EFDG(k),MVDG(k)/KMIN**THRD),MVDG(k)/  &
-                           KMAX**THRD)
-                 KDXG(k) = MAX(KMIN,MIN(KMAX,(MVDG(k)/EFDG(k))**3.))
-                 AFAG(k) = MAX(0.,(6.*KDXG(k)-3.+SQRT(8.*KDXG(k)+        &
-                           1.))/(2.-2.*KDXG(k)))
-                 zg(k) = (AFAG(k)+3.)/EFDG(k)*1.E6
-                 tng(k) = LOG(6.*qg(k)*rho(k)/cpi/RHOG(k))+(4.+AFAG(k))* &
-                          LOG(zg(k))-LGAMMA(AFAG(k)+4.)-LOG(10.**(8.+2.* &
-                          AFAG(k)))
-                 zg(k) = zg(k)/1.E2
-              ELSEIF (SPECTRUM.EQ.2) THEN
-                 LTK(k) = LOG(tair(k))
-                 LQG(k) = -1.*LOG(qg(k)*rho(k))
-                 LTK2(k) = LTK(k)*LTK(k)
-                 LQG2(k) = LQG(k)*LQG(k)
-                 RHOG(k) = MIN(900.,MAX(250.,EXP(-0.056433*LQG(k)+       &
-                           6.608048)))
-                 roqg(k) = RHOG(k)/1.E3
-                 MVDG(k) = EXP(MDG1+MDG2*LTK(k)+MDG3*LQG(k)+MDG4*LTK2(k)+&
-                           MDG5*LQG2(k)+MDG6*LTK(k)*LQG(k))
-                 AFAG(k) = 0.
-                 zg(k) = (EXP(LGAMMA(AFAG(k)+4.)-LGAMMA(AFAG(k)+1.)))**  &
-                         THRD/MVDG(k)*1.E6
-                 tng(k) = LOG(6.*qg(k)*rho(k)/cpi/RHOG(k))+(4.+AFAG(k))* &
-                          LOG(zg(k))-LGAMMA(AFAG(k)+4.)-LOG(10.**(8.+2.* &
-                          AFAG(k)))
-                 zg(k) = zg(k)/1.E2
-              ENDIF
-              LZG(k) = LOG(zg(k))
-              GG4(k) = LGAMMA(AFAG(k)+4.)
-              GBG3(k) = LGAMMA(bg+AFAG(k)+3.)
-              GBG4(k) = LGAMMA(bg+AFAG(k)+4.)
-              GBG25(k) = LGAMMA(bg*0.5+AFAG(k)+2.5)
-              vg(k) = ag*fv0(k)*EXP(GBG4(k)-GG4(k)-bg*LZG(k))
-           endif          ! ihail
-           GG1(k) = LGAMMA(AFAG(k)+1.)
-           GG2(k) = LGAMMA(AFAG(k)+2.)
-           GG3(k) = LGAMMA(AFAG(k)+3.)
+            if (ihail.eq.1) then
+               roqg(k) = .9
+               LTK(k) = LOG(tair(k))
+               LQG(k) = -1.*LOG(qg(k)*rho(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQG2(k) = LQG(k)*LQG(k)
+               MVDH(k) = EXP(MDH1+MDH2*LTK(k)+MDH3*LQG(k)+MDH4*LTK2(k)+&
+                         MDH5*LQG2(k)+MDH6*LTK(k)*LQG(k))
+               LMDH(k) = LOG(MVDH(k))
+               EFDH(k) = EXP(EFD1+EFD2*LMDH(k)+EFD3*6.80239476+EFD4*   &
+                         LMDH(k)**2.+EFD5*46.27257452+EFD6*LMDH(k)*    &
+                         6.80239476)
+               EFDH(k) = MAX(MIN(EFDH(k),MVDH(k)/0.60568667),MVDH(k)/  &
+                         0.943389)
+               KDXH(k) = MAX(KMIN,MIN(KMAX,(MVDH(k)/EFDH(k))**3.))
+               AFAG(k) = MAX(0.,(6.*KDXH(k)-3.+SQRT(8.*KDXH(k)+1.))/(  &
+                         2.-2.*KDXH(k)))
+               zg(k) = (AFAG(k)+3.)/EFDH(k)*1.E6
+               tng(k) = LOG(qg(k)*rho(k)/471.238898)+(4.+AFAG(k))*     &
+                        LOG(zg(k))-GAMLN(AFAG(k)+4.)-LOG(10.**(8.+2.*  &
+                        AFAG(k)))
+               zg(k) = zg(k)/1.E2
+               LZG(k) = LOG(zg(k))
+               GG4(k) = GAMLN(AFAG(k)+4.)
+               GBG3(k) = GAMLN(AFAG(k)+3.5)
+               GBG4(k) = GAMLN(AFAG(k)+4.5)
+               GBG25(k) = GAMLN(AFAG(k)+2.75)
+               vg(k) = 44.27188724*SQRT(rr0(k))*EXP(GBG4(k)-GG4(k)-    &
+                       0.5*LZG(k))
+            elseif (ihail.eq.0) then
+               LTK(k) = LOG(tair(k))
+               LQG(k) = -1.*LOG(qg(k)*rho(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQG2(k) = LQG(k)*LQG(k)
+               RHOG(k) = MIN(900.,MAX(250.,EXP(-0.056433*LQG(k)+       &
+                         6.608048)))
+               roqg(k) = RHOG(k)/1.E3
+               MVDG(k) = EXP(MDG1+MDG2*LTK(k)+MDG3*LQG(k)+MDG4*LTK2(k)+&
+                         MDG5*LQG2(k)+MDG6*LTK(k)*LQG(k))
+               LROG(k) = LOG(RHOG(k))
+               LMDG(k) = LOG(MVDG(k))
+               EFDG(k) = EXP(EFD1+EFD2*LMDG(k)+EFD3*LROG(k)+EFD4*      &
+                         LMDG(k)**2.+EFD5*LROG(k)**2.+EFD6*LMDG(k)*    &
+                         LROG(k))
+               EFDG(k) = MAX(MIN(EFDG(k),MVDG(k)/0.60568667),MVDG(k)/  &
+                         0.943389)
+               KDXG(k) = MAX(KMIN,MIN(KMAX,(MVDG(k)/EFDG(k))**3.))
+               AFAG(k) = MAX(0.,(6.*KDXG(k)-3.+SQRT(8.*KDXG(k)+1.))/(  &
+                         2.-2.*KDXG(k)))
+               zg(k) = (AFAG(k)+3.)/EFDG(k)*1.E6
+               tng(k) = LOG(1.90986*qg(k)*rho(k)/RHOG(k))+(4.+AFAG(k))*&
+                        LOG(zg(k))-GAMLN(AFAG(k)+4.)-LOG(10.**(8.+2.*  &
+                        AFAG(k)))
+               zg(k) = zg(k)/1.E2
+               LZG(k) = LOG(zg(k))
+               GG4(k) = GAMLN(AFAG(k)+4.)
+               GBG3(k) = GAMLN(AFAG(k)+3.37)
+               GBG4(k) = GAMLN(AFAG(k)+4.37)
+               GBG25(k) = GAMLN(AFAG(k)+2.685)
+               vg(k) = 351.2*fv0(k)*EXP(GBG4(k)-GG4(k)-0.37*LZG(k))
+            endif          ! ihail
+            GG1(k) = GAMLN(AFAG(k)+1.)
+            GG2(k) = GAMLN(AFAG(k)+2.)
+            GG3(k) = GAMLN(AFAG(k)+3.)
          endif          ! qg min
 
 !     ***   Y1 : DYNAMIC VISCOSITY OF AIR (U)
