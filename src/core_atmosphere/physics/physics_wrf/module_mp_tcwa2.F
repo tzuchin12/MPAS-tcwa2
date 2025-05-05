@@ -38,7 +38,7 @@
       REAL, PRIVATE, PARAMETER :: CP = 1.00546E3,   TK0C = 2.7315E2
       REAL, PRIVATE, PARAMETER :: R = 2.87058E2,    RV = 4.61495E2
       REAL, PRIVATE, PARAMETER :: CPI = 2.093E3,    CPW = 4.218E3
-      REAL, PRIVATE, PARAMETER :: CMW = 1.8015E-2,  MLRA = 0.2
+      REAL, PRIVATE, PARAMETER :: CMW = 1.8015E-2,  MLRA = 0.3
       REAL, PRIVATE, PARAMETER :: RHOSU = 8.5E4/(2.8715E2*2.7315E2)
       REAL, PRIVATE, PARAMETER :: RHOW = 9.97E2,    RHOG1 = 4.E2
       REAL, PRIVATE, PARAMETER :: RHOI0 = 9.1E2,    iRHOI0 = 1./RHOI0
@@ -1622,7 +1622,7 @@
             ORZHR,FDBZR,FZDRR,FKDPR,FRHVR,KDPR1,FDBZS,ZHROX,FZDRS,     &
             ZDROX,ZDASP,LASP,FKDPS,KDROX,KDASP,LDROX,LDASP,FDBZG,FZDRG,&
             FKDPG,ZHASP,RHASP,ORZHI,ZHZET,FDBZI,ZDZET,FZDRI,FRHVI,     &
-            FKDPI,KDZET,LDZET,RADS,RADG
+            FKDPI,KDZET,LDZET,RADS,RADG,DSMM,DGMM
       REAL :: SR,ICENCV,CLODNCV,RAINNC,RAINNCV,SNOWNC,SNOWNCV,GRAPNC,  &
               GRAPNCV,DT,DTMN,K1,C1,ZCMAX
       REAL, PARAMETER :: MIXA = -1.0892332E-2, MIXB = 2.0820143E-2
@@ -2561,6 +2561,13 @@
                   ORA1(K) = (3.+4.*ORAR(K)+ORAR(K)**4.)/8.
                   ORA2(K) = (3.-4.*ORAR(K)+ORAR(K)**4.)/8.
                   ORA3(K) = (1.-ORAR(K)**4.)/8.
+
+                  RHOS(K) = SMLF(K)*RHOW+(1.-SMLF(K))*RHOS(K)
+                  DSMM(K)  = MVDS(K)*1.E3
+                  SASPR(K) = SMLF(K)*(0.9951+2.51E-2*DSMM(K)-3.644E-2* &
+                             DSMM(K)**2.+5.303E-3*DSMM(K)**3.-2.492E-4*&
+                             DSMM(K)**4.)+(1.-SMLF(K))*SASPR(K)
+
                   IF (AGG_SHAPE.EQ.0) THEN
                      SCALA(K) = THRD
                   ELSEIF (AGG_SHAPE.EQ.1.OR.AGG_SHAPE.EQ.2) THEN
@@ -2659,6 +2666,13 @@
                   ORA1(K) = (3.+4.*ORAR(K)+ORAR(K)**4.)/8.
                   ORA2(K) = (3.-4.*ORAR(K)+ORAR(K)**4.)/8.
                   ORA3(K) = (1.-ORAR(K)**4.)/8.
+
+                  RHOG(K) = GMLF(K)*RHOW+(1.-GMLF(K))*RHOG(K)
+                  DGMM(K)  = MVDG(K)*1.E3
+                  GASPR(K) = GMLF(K)*(0.9951+2.51E-2*DGMM(K)-3.644E-2* &
+                             DGMM(K)**2.+5.303E-3*DGMM(K)**3.-2.492E-4*&
+                             DGMM(K)**4.)+(1.-GMLF(K))*GASPR(K)
+
                   IF (GRAP_SHAPE.EQ.0) THEN
                      SCALA(K) = THRD
                   ELSEIF (GRAP_SHAPE.EQ.1.OR.GRAP_SHAPE.EQ.2) THEN
