@@ -829,7 +829,7 @@
 
 !======================================================================
       SUBROUTINE SOLVE_AFAG(TK1D,RHO,QG1D,QC1D,QR1D,NG1D,LAMG,AFAG,    &
-                 MVDG,RHOG,GASPR,AVG,BVG)
+                 MVDG,RHOG,GASPR,AMG,AVG,BVG)
 !======================================================================
       IMPLICIT NONE
       INTEGER :: IHAIL
