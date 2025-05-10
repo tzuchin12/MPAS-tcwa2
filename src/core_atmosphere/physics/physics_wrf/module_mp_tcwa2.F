@@ -837,8 +837,7 @@
               AMG,AVG,BVG,LAMGMIN,LAMGMAX,KDX,MVDG,BDG,FDG,MVDC,MVDR,  &
               MVDL,TC1D,VTQR,VTQG,VTQL,VTQ0,VTQGL,DNRG,LTK,LQG,MDG,    &
               LBDG,LLMG,LLMG2,LMDG,LMDG2,LROG,LROG2,LAG2,LAG22,RHOX,   &
-              KINV,BEST0,BEST,C1X2,VTB1,VTA1,GG1,MVG0,DSLL,GMLF,DGMM,  &
-              LAG5,LAG52
+              KINV,BEST0,BEST,C1X2,VTB1,VTA1,GG1,MVG0,DSLL,GMLF
 
       IHAIL = 0
       IF (ICE_RHOG.EQ.0) THEN
@@ -910,32 +909,11 @@
       IF (GRAP_SHAPE.EQ.0) THEN
          GASPR = 1.
       ELSEIF (GRAP_SHAPE.EQ.1) THEN
-         IF (TK1D.LT.TK0C) THEN
-            LTK   = LOG(TK1D)
-            LBDG  = LOG(MVDG*1.E6)
-!            GASPR = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*LTK+     &
-!                    5.1416616*LBDG+1.0361366*LTK**2.+0.017687308*      &
-!                    LBDG**2.-0.9649671*LTK*LBDG))
-            GASPR = MAX(SASMIN,MIN(SASMAX,0.30882863-5.1821694*LTK+    &
-                    3.6717888*LBDG+0.95308838*LTK**2.+0.010507446*     &
-                    LBDG**2.-0.67976225*LTK*LBDG))
-         ELSE
-            LLMG  = LOG(LAMG)
-            LLMG2 = LLMG*LLMG
-            LAG5  = LOG(AFAG+5.)
-            LAG52 = LAG5*LAG5
-            GASPR = MIN(1.,((5.6387098+1.5626893*LAG5-1.5481826*LLMG+  &
-                    0.12481435*LAG52+0.11244742*LLMG2-0.2336531*LAG5*  &
-                    LLMG)/(1.+0.28272803*LAG5-0.2780308*LLMG+          &
-                    2.1750225E-2*LAG52+1.9960971E-2*LLMG2-4.1317594E-2*&
-                    LAG5*LLMG))/10.)
-            IF (GMLF.GE.MLIMIT) THEN
-               DGMM  = MVDG*1.E3
-               GASPR = GMLF*(0.9951+2.51E-2*DGMM-3.644E-2*DGMM**2.+    &
-                       5.303E-3*DGMM**3.-2.492E-4*DGMM**4.)+(1.-GMLF)* &
-                       GASPR
-            ENDIF
-         ENDIF
+         LTK   = LOG(TK1D)
+         LBDG  = LOG(MVDG*1.E6)
+         GASPR = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*LTK+        &
+                 5.1416616*LBDG+1.0361366*LTK**2.+0.017687308*         &
+                 LBDG**2.-0.9649671*LTK*LBDG))
       ENDIF
 
       IF (ICE_VTG.EQ.0) THEN
@@ -1682,10 +1660,10 @@
                MVRR(K) = (QR3D(K)/NR3D(K)/C4PI3W)**THRD
                MVRR(K) = MIN(RRMAX,MAX(RRMIN,MVRR(K)))
 !               EFRR(K) = EXP(EFR1+EFR2*LOG(NR3D(K))+EFR3*LOG(MVRR(K)))
-!               EFRR(K) = EXP(0.85940035-7.6675539E-2*LOG(NR3D(K))+     &
-!                         1.0463454*LOG(MVRR(K))+1.636384E-3*           &
-!                         LOG(NR3D(K))**2.+5.55445E-4*LOG(MVRR(K))**2.- &
-!                         2.660869E-3*LOG(NR3D(K))*LOG(MVRR(K)))
+!               EFRR = EXP(0.60248802-5.9285673E-2*LOG(NR3D(K))+        &
+!                      1.0385685*LOG(MVRR(K))+1.4000158E-3*             &
+!                      LOG(NR3D(K))**2.+4.1927565E-4*LOG(MVRR(K))**2.-  &
+!                      2.2498841E-3*LOG(NR3D(K))*LOG(MVRR(K)))
                EFRR(K) = EXP(1.2279293-0.10100674*LOG(NR3D(K))+        &
                          1.071836*LOG(MVRR(K))+2.042647E-3*            &
                          LOG(NR3D(K))**2.+1.000161E-3*LOG(MVRR(K))**2.-&
@@ -1849,14 +1827,10 @@
             ELSEIF (GRAP_SHAPE.EQ.1) THEN
                LTK(K)   = LOG(TK3D(K))
                LBDG(K)  = LOG(MDG(K)*1.E3)
-!               GASPR(K) = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*   &
-!                          LTK(K)+5.1416616*LBDG(K)+1.0361366*          &
-!                          LTK(K)**2.+0.017687308*LBDG(K)**2.-0.9649671*&
-!                          LTK(K)*LBDG(K)))
-               GASPR(K) = MAX(SASMIN,MIN(SASMAX,0.30882863-5.1821694*  &
-                          LTK(K)+3.6717888*LBDG(K)+0.95308838*         &
-                          LTK(K)**2.+0.010507446*LBDG(K)**2.-          &
-                          0.67976225*LTK(K)*LBDG(K)))
+               GASPR(K) = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*   &
+                          LTK(K)+5.1416616*LBDG(K)+1.0361366*          &
+                          LTK(K)**2.+0.017687308*LBDG(K)**2.-0.9649671*&
+                          LTK(K)*LBDG(K)))
             ENDIF
             IF (AFAG_3M.EQ.0) THEN
                AFAG(K) = AFAG0
