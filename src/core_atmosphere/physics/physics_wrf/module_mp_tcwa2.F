@@ -30,7 +30,7 @@
       INTEGER, PRIVATE, PARAMETER :: NMODE = 3
       INTEGER, PRIVATE, PARAMETER :: EXYM = 1                           ! 0. EMPIRICAL 1. THEORETICAL METHOD
       INTEGER, PRIVATE, PARAMETER :: SSAT = 2                           ! 0. ADJUST QC; 1. ADJUST QC+QI; 2. PREDICTION SATURATION
-      INTEGER, PRIVATE, PARAMETER :: SATW = 0                           ! 0.WITHOUT; 1.WITH W EFFECT ON SATURATION
+      INTEGER, PRIVATE, PARAMETER :: SATW = 1                           ! 0.WITHOUT; 1.WITH W EFFECT ON SATURATION
       INTEGER, PRIVATE, PARAMETER :: IACT = 1                           ! 1. RY89; 2. WC20-power law
 !----------------- FOR MICROPHYSICAL PROCESSES -------------------------
       REAL, PRIVATE, PARAMETER :: PI = 3.1415926535897932384626434
@@ -1595,7 +1595,7 @@
             A3,RACT,CND,DEP,ABW,ABI,QVS,RSUB,Y1,Y2,Y4,Y5,LMDI,LROI,    &
             LROI2,LROI3,LMDS,LROS,LMDG,LROG,LLMI2,LLMI3,LAI22,LAI23,   &
             LMDI2,LMDI3,ZETA3,LAR22,LAR23,LLMR2,LLMR3,EFRI,EFRS,DSMM,  &
-            DGMM,SMLR,GMLR
+            DGMM
       REAL, DIMENSION(KTS:KTE) :: DBZM,DBZ1,DBZR,DBZI,DBZS,DBZG,ZDR,   &
             ZDRR,ZDRI,ZDRS,ZDRG,KDP,KDPR,KDPI,KDPS,KDPG,LDR,LDRR,LDRI, &
             LDRS,LDRG,RHV,RHVR,RHVI,RHVS,RHVG,SCAKW,SCAW0,SCAW1,SCAWA, &
@@ -2536,11 +2536,10 @@
             EFRS(K) = (AFAS(K)+3.)/LAMS(K)
             IF (QS3D(K).GE.QSMAL1) THEN
                IF (SMLF(K).GE.MLIMIT) THEN
-                  SMLR(K)  = 0.01195*EXP(4.411*SMLF(K))
                   DSMM(K)  = MVDS(K)*1.E3
-                  SASPR(K) = SMLR(K)*(0.9951+2.51E-2*DSMM(K)-3.644E-2* &
+                  SASPR(K) = SMLF(K)*(0.9951+2.51E-2*DSMM(K)-3.644E-2* &
                              DSMM(K)**2.+5.303E-3*DSMM(K)**3.-2.492E-4*&
-                             DSMM(K)**4.)+(1.-SMLR(K))*SASPR(K)
+                             DSMM(K)**4.)+(1.-SMLF(K))*SASPR(K)
                   RHOS(K) = MIN(RHOIMAX,MAX(RHOIMIN,SMLF(K)*RHOW+(1.-  &
                             SMLF(K))*RHOS(K)))
                   ORA0(K) = 10.*SMLF(K)+(1.-SMLF(K))*40.
@@ -2641,11 +2640,10 @@
                  AMG(K),AVG(K),BVG(K))
             IF (QG3D(K).GE.QSMAL1) THEN
                IF (GMLF(K).GE.MLIMIT) THEN
-                  GMLR(K)  = 0.01195*EXP(4.411*GMLF(K))
                   DGMM(K)  = MVDG(K)*1.E3
-                  GASPR(K) = GMLR(K)*(0.9951+2.51E-2*DGMM(K)-3.644E-2* &
+                  GASPR(K) = GMLF(K)*(0.9951+2.51E-2*DGMM(K)-3.644E-2* &
                              DGMM(K)**2.+5.303E-3*DGMM(K)**3.-2.492E-4*&
-                             DGMM(K)**4.)+(1.-GMLR(K))*GASPR(K)
+                             DGMM(K)**4.)+(1.-GMLF(K))*GASPR(K)
                   RHOG(K) = MIN(900.,MAX(100.,GMLF(K)*RHOW+(1.-        &
                             GMLF(K))*RHOG(K)))
                   ORA0(K) = 10.*GMLF(K)+(1.-GMLF(K))*40.
@@ -4311,8 +4309,7 @@
          ENDIF
       ELSE                                                              ! WARM CLOUD START
          IF ((HCwqv+HRwqv+HSwqv+HGwqv).GE.QSMALL) THEN
-            VDMAX = XXLV*(QV1D-QVSW0)/(1.+XXLV**2.*QV1D/(CPM*RV*TK1D** &
-                    2.))*iDT
+            VDMAX = XXLV*(QV1D-QVSW0)/ABW1*iDT
             SUMCND = HCwqv+HRwqv+HSwqv+HGwqv
             IF (SUMCND.GT.VDMAX.AND.VDMAX.GE.QSMALL) THEN
                RATIO = MIN(1.,VDMAX/(SUMCND+QSMALL))
@@ -4323,8 +4320,7 @@
             ENDIF
          ENDIF
          IF ((HCwqv+HRwqv+HSwqv+HGwqv).LT.0.) THEN
-            EVMAX = XXLV*(QV1D-QVSW0)/(1.+XXLV**2.*QV1D/(CPM*RV*TK1D** &
-                    2.))*iDT
+            EVMAX = XXLV*(QV1D-QVSW0)/ABW1*iDT
             SUMEVP = HCwqv+HRwqv+HSwqv+HGwqv
             IF (EVMAX.LT.0..AND.SUMEVP.LT.EVMAX*0.9999) THEN
                HCwqv = HCwqv*MIN(1.,0.9999*EVMAX/SUMEVP)
