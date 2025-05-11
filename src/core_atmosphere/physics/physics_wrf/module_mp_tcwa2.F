@@ -2984,12 +2984,12 @@
       IF (QS1D.GE.QSMALL) THEN
          CALL SOLVE_AFAS(TK1D,RHO,QS1D,QC1D,NS1D,AFAS,LAMS,MVDS,RHOS,  &
               SASPR,AMS,AVS,BVS)
-         IF (SMLF.GE.MLIMIT) THEN
-            DSMM  = MVDS*1.E3
-            SASPR = SMLF*(0.9951+2.51E-2*DSMM-3.644E-2*DSMM**2.+       &
-                    5.303E-3*DSMM**3.-2.492E-4*DSMM**4.)+(1.-SMLF)*SASPR
-            RHOS = MIN(RHOIMAX,MAX(RHOIMIN,SMLF*RHOW+(1.-SMLF)*RHOS))
-         ENDIF
+!         IF (SMLF.GE.MLIMIT) THEN
+!            DSMM  = MVDS*1.E3
+!            SASPR = SMLF*(0.9951+2.51E-2*DSMM-3.644E-2*DSMM**2.+       &
+!                    5.303E-3*DSMM**3.-2.492E-4*DSMM**4.)+(1.-SMLF)*SASPR
+!            RHOS = MIN(RHOIMAX,MAX(RHOIMIN,SMLF*RHOW+(1.-SMLF)*RHOS))
+!         ENDIF
          IF (ICE_VTS.EQ.0.OR.ICE_VTS.EQ.2) THEN
             FSQS = EXP(GAMLN(BVS+BMS+AFAS+1.)-GAMLN(BMS+AFAS+1.)-BVS*  &
                    LOG(LAMS))
@@ -3019,12 +3019,12 @@
       IF (QG1D.GE.QSMALL) THEN
          CALL SOLVE_AFAG(TK1D,RHO,QG1D,QC1D,QR1D,NG1D,LAMG,AFAG,MVDG,  &
               RHOG,GASPR,AMG,AVG,BVG)
-         IF (GMLF.GE.MLIMIT) THEN
-            DGMM  = MVDG*1.E3
-            GASPR = GMLF*(0.9951+2.51E-2*DGMM-3.644E-2*DGMM**2.+       &
-                    5.303E-3*DGMM**3.-2.492E-4*DGMM**4.)+(1.-GMLF)*GASPR
-            RHOG = MIN(900.,MAX(100.,GMLF*RHOW+(1.-GMLF)*RHOG))
-         ENDIF
+!         IF (GMLF.GE.MLIMIT) THEN
+!            DGMM  = MVDG*1.E3
+!            GASPR = GMLF*(0.9951+2.51E-2*DGMM-3.644E-2*DGMM**2.+       &
+!                    5.303E-3*DGMM**3.-2.492E-4*DGMM**4.)+(1.-GMLF)*GASPR
+!            RHOG = MIN(900.,MAX(100.,GMLF*RHOW+(1.-GMLF)*RHOG))
+!         ENDIF
          IF (ICE_VTG.EQ.0.OR.ICE_VTG.EQ.2) THEN
             FSQG = EXP(GAMLN(BVG+BMG+AFAG+1.)-GAMLN(BMG+AFAG+1.)-BVG*  &
                    LOG(LAMG))
