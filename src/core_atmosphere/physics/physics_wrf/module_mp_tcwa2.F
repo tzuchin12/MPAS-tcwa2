@@ -30,7 +30,7 @@
       INTEGER, PRIVATE, PARAMETER :: NMODE = 3
       INTEGER, PRIVATE, PARAMETER :: EXYM = 1                           ! 0. EMPIRICAL 1. THEORETICAL METHOD
       INTEGER, PRIVATE, PARAMETER :: SSAT = 2                           ! 0. ADJUST QC; 1. ADJUST QC+QI; 2. PREDICTION SATURATION
-      INTEGER, PRIVATE, PARAMETER :: SATW = 1                           ! 0.WITHOUT; 1.WITH W EFFECT ON SATURATION
+      INTEGER, PRIVATE, PARAMETER :: SATW = 0                           ! 0.WITHOUT; 1.WITH W EFFECT ON SATURATION
       INTEGER, PRIVATE, PARAMETER :: IACT = 1                           ! 1. RY89; 2. WC20-power law
 !----------------- FOR MICROPHYSICAL PROCESSES -------------------------
       REAL, PRIVATE, PARAMETER :: PI = 3.1415926535897932384626434
@@ -1595,7 +1595,7 @@
             A3,RACT,CND,DEP,ABW,ABI,QVS,RSUB,Y1,Y2,Y4,Y5,LMDI,LROI,    &
             LROI2,LROI3,LMDS,LROS,LMDG,LROG,LLMI2,LLMI3,LAI22,LAI23,   &
             LMDI2,LMDI3,ZETA3,LAR22,LAR23,LLMR2,LLMR3,EFRI,EFRS,DSMM,  &
-            DGMM
+            DGMM,SMLR,GMLR
       REAL, DIMENSION(KTS:KTE) :: DBZM,DBZ1,DBZR,DBZI,DBZS,DBZG,ZDR,   &
             ZDRR,ZDRI,ZDRS,ZDRG,KDP,KDPR,KDPI,KDPS,KDPG,LDR,LDRR,LDRI, &
             LDRS,LDRG,RHV,RHVR,RHVI,RHVS,RHVG,SCAKW,SCAW0,SCAW1,SCAWA, &
@@ -2064,7 +2064,7 @@
                  QI3D(K),QS3D(K),QG3D(K),NC3D(K),NR3D(K),NI3D(K),      &
                  NS3D(K),NG3D(K),VT_QC(K),VT_QR(K),VT_QI(K),VT_QS(K),  &
                  VT_QG(K),VT_NC(K),VT_NR(K),VT_NI(K),VT_NS(K),VT_NG(K),&
-                 RHO(K),SMLF(K),GMLF(K))
+                 RHO(K))
          ENDIF
          IF (QC3D(K).GE.QSMALL.AND.NC3D(K).GE.NSMALL) THEN
             MVDC(K) = (QC3D(K)*iAMW/NC3D(K))**THRD
@@ -2536,10 +2536,11 @@
             EFRS(K) = (AFAS(K)+3.)/LAMS(K)
             IF (QS3D(K).GE.QSMAL1) THEN
                IF (SMLF(K).GE.MLIMIT) THEN
+                  SMLR(K)  = 0.01195*EXP(4.411*SMLF(K))
                   DSMM(K)  = MVDS(K)*1.E3
-                  SASPR(K) = SMLF(K)*(0.9951+2.51E-2*DSMM(K)-3.644E-2* &
+                  SASPR(K) = SMLR(K)*(0.9951+2.51E-2*DSMM(K)-3.644E-2* &
                              DSMM(K)**2.+5.303E-3*DSMM(K)**3.-2.492E-4*&
-                             DSMM(K)**4.)+(1.-SMLF(K))*SASPR(K)
+                             DSMM(K)**4.)+(1.-SMLR(K))*SASPR(K)
                   RHOS(K) = MIN(RHOIMAX,MAX(RHOIMIN,SMLF(K)*RHOW+(1.-  &
                             SMLF(K))*RHOS(K)))
                   ORA0(K) = 10.*SMLF(K)+(1.-SMLF(K))*40.
@@ -2640,10 +2641,11 @@
                  AMG(K),AVG(K),BVG(K))
             IF (QG3D(K).GE.QSMAL1) THEN
                IF (GMLF(K).GE.MLIMIT) THEN
+                  GMLR(K)  = 0.01195*EXP(4.411*GMLF(K))
                   DGMM(K)  = MVDG(K)*1.E3
-                  GASPR(K) = GMLF(K)*(0.9951+2.51E-2*DGMM(K)-3.644E-2* &
+                  GASPR(K) = GMLR(K)*(0.9951+2.51E-2*DGMM(K)-3.644E-2* &
                              DGMM(K)**2.+5.303E-3*DGMM(K)**3.-2.492E-4*&
-                             DGMM(K)**4.)+(1.-GMLF(K))*GASPR(K)
+                             DGMM(K)**4.)+(1.-GMLR(K))*GASPR(K)
                   RHOG(K) = MIN(900.,MAX(100.,GMLF(K)*RHOW+(1.-        &
                             GMLF(K))*RHOG(K)))
                   ORA0(K) = 10.*GMLF(K)+(1.-GMLF(K))*40.
@@ -2872,7 +2874,7 @@
 !======================================================================
       SUBROUTINE SEDI_FALL(TK1D,P1D,QV1D,QC1D,QR1D,QI1D,QS1D,QG1D,NC1D,&
                  NR1D,NI1D,NS1D,NG1D,VTQC,VTQR,VTQI,VTQS,VTQG,VTNC,    &
-                 VTNR,VTNI,VTNS,VTNG,RHO,SMLF,GMLF)
+                 VTNR,VTNI,VTNS,VTNG,RHO)
 !======================================================================
       IMPLICIT NONE
       REAL :: TK1D,P1D,QV1D,QC1D,QR1D,QI1D,QS1D,QG1D,NC1D,NR1D,NI1D,   &
@@ -2884,7 +2886,7 @@
               MVDI,MVDS,MVDG,BEST,RASPR,SASPR,GASPR,LLMC,LAC2,LAC5,    &
               LLMR,LAR2,LAR5,LLMI,LLMI2,LLMI3,LAI2,LAI5,RHOX,VISHP,    &
               LLMS,LLMS2,LLMS3,LAS2,LAS5,LLMG,LLMG2,LLMG3,LAG2,LAG5,   &
-              AFAZ,SMLF,GMLF,DSMM,DGMM
+              AFAZ
 
       QRHO  = SQRT(RHO)
       RHOAJ = (RHOSU/RHO)**0.54
@@ -2984,12 +2986,6 @@
       IF (QS1D.GE.QSMALL) THEN
          CALL SOLVE_AFAS(TK1D,RHO,QS1D,QC1D,NS1D,AFAS,LAMS,MVDS,RHOS,  &
               SASPR,AMS,AVS,BVS)
-!         IF (SMLF.GE.MLIMIT) THEN
-!            DSMM  = MVDS*1.E3
-!            SASPR = SMLF*(0.9951+2.51E-2*DSMM-3.644E-2*DSMM**2.+       &
-!                    5.303E-3*DSMM**3.-2.492E-4*DSMM**4.)+(1.-SMLF)*SASPR
-!            RHOS = MIN(RHOIMAX,MAX(RHOIMIN,SMLF*RHOW+(1.-SMLF)*RHOS))
-!         ENDIF
          IF (ICE_VTS.EQ.0.OR.ICE_VTS.EQ.2) THEN
             FSQS = EXP(GAMLN(BVS+BMS+AFAS+1.)-GAMLN(BMS+AFAS+1.)-BVS*  &
                    LOG(LAMS))
@@ -3019,12 +3015,6 @@
       IF (QG1D.GE.QSMALL) THEN
          CALL SOLVE_AFAG(TK1D,RHO,QG1D,QC1D,QR1D,NG1D,LAMG,AFAG,MVDG,  &
               RHOG,GASPR,AMG,AVG,BVG)
-!         IF (GMLF.GE.MLIMIT) THEN
-!            DGMM  = MVDG*1.E3
-!            GASPR = GMLF*(0.9951+2.51E-2*DGMM-3.644E-2*DGMM**2.+       &
-!                    5.303E-3*DGMM**3.-2.492E-4*DGMM**4.)+(1.-GMLF)*GASPR
-!            RHOG = MIN(900.,MAX(100.,GMLF*RHOW+(1.-GMLF)*RHOG))
-!         ENDIF
          IF (ICE_VTG.EQ.0.OR.ICE_VTG.EQ.2) THEN
             FSQG = EXP(GAMLN(BVG+BMG+AFAG+1.)-GAMLN(BMG+AFAG+1.)-BVG*  &
                    LOG(LAMG))
@@ -4390,8 +4380,8 @@
                WSAPR = 1.
             ELSEIF (AGG_SHAPE.EQ.1) THEN
                DSMM  = MVDS*1.E3
-               WSAPR = SMLF*(0.9951+2.51E-2*DSMM-3.644E-2*DSMM**2.+    &
-                       5.303E-3*DSMM**3.-2.492E-4*DSMM**4.)+(1.-SMLF)* &
+               WSAPR = SMLR*(0.9951+2.51E-2*DSMM-3.644E-2*DSMM**2.+    &
+                       5.303E-3*DSMM**3.-2.492E-4*DSMM**4.)+(1.-SMLR)* &
                        SASPR
             ENDIF
             IF (SMLF.GE.MLIMIT) THEN
@@ -4468,8 +4458,8 @@
                WGAPR = 1.
             ELSEIF (GRAP_SHAPE.EQ.1) THEN
                DGMM  = MVDG*1.E3
-               WGAPR = GMLF*(0.9951+2.51E-2*DGMM-3.644E-2*DGMM**2.+    &
-                       5.303E-3*DGMM**3.-2.492E-4*DGMM**4.)+(1.-GMLF)* &
+               WGAPR = GMLR*(0.9951+2.51E-2*DGMM-3.644E-2*DGMM**2.+    &
+                       5.303E-3*DGMM**3.-2.492E-4*DGMM**4.)+(1.-GMLR)* &
                        GASPR
             ENDIF
             IF (GMLF.GE.MLIMIT) THEN
