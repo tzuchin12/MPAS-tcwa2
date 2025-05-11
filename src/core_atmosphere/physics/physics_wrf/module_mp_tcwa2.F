@@ -3139,7 +3139,7 @@
               DNIAG,DNSAG,DNSAC,DNSRM,DNGRM,AMI,BMI,AMG,AMS,RHO,iRHO,  &
               AVC,BVC,AVR,BVR,AVI,BVI,AVS,BVS,AVG,BVG,CAPS,SASR1,SASR2,&
               SASR3,SASR4,SASP1,SASP2,SASP3,CAPG,GASR1,GASR2,GASR3,    &
-              GASR4,MVDM,RASPR,SMLV,GMLV
+              GASR4,MVDM,RASPR,SMLV,GMLV,MVG0,DSLL
       REAL :: QHOci,QHOrg,QNMci,QNMrg,QNCci,QFZci,QFZrg,QMLir,QMLic,   &
               QMLsr,QMLgr,QIMii,QIMcsi,QIMrsi,QIMcgi,QIMrgi,QBKrc,     &
               QINig,QINsg,QCNcr,QCNis,QRMci,QRMcs,QRMcg,QRMri,QRMrs,   &
