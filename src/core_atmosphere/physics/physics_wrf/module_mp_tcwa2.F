@@ -4266,66 +4266,6 @@
             QCLis  = MIN(QCLis,QI1D*iDT)
             NCLis  = MIN(NCLis,NI1D*iDT)
          ENDIF
-         IF (QG1D.GE.QSMALL.AND.QI1D.GE.QSMALL.AND.IHAIL.EQ.1) THEN
-            IF (EXYM.EQ.0.AND.MVDG.GE.MVDI) THEN
-               EIG0 = MIN(1.,0.01*EXP(0.1*TC1D))
-               EIG3 = EIG0
-            ELSEIF (EXYM.EQ.1.AND.VTQG.GT.VTQI) THEN
-               LLMG  = LOG(LAMG)
-               LAG2  = LOG(AFAG+2.)
-               LAG5  = LOG(AFAG+5.)
-               RVLG0 = LOG(2.E3*MIN(0.999,MAX(1.E-5,VTNI/VTNG)))
-               RVLG3 = LOG(2.E3*MIN(0.999,MAX(1.E-5,VTQI/VTQG)))
-               EIG0  = ELXM(LAG2,LLMG,RVLG0,MVDG,RHOG,GASPR)
-               EIG3  = ELXM(LAG5,LLMG,RVLG3,MVDG,RHOG,GASPR)
-            ENDIF
-            VTQ0  = VTQG-VTQI
-            VTN0  = VTNG-VTNI
-            VTQIG = SQRT(VTQ0*VTQ0+0.04*VTQI*VTQG)
-            VTNIG = SQRT(VTN0*VTN0+0.04*VTNI*VTNG)
-            IF ((ADAGR-1.).GE.SLIMIT) THEN
-               QCLig = QCLI1*EIG3*VTQIG*NG1D*(GIMF1/DI0Z1+GASR1*GIMG1* &
-                       GG2*DI0Z1+GASR1*GIMH1*GG2/DI0Z2+GASR2*GIM1*GG3)
-               NCLig = NCLI1*EIG0*VTNIG*NG1D*(GIF1/DI0Z1+GASR1*GIG1*   &
-                       GG2*DI0Z1+GASR1*GIH1*GG2/DI0Z2+GASR2*GG3)
-            ELSEIF ((1.-ADAGR).GE.SLIMIT) THEN
-               QCLig = QCLI1*EIG3*VTQIG*NG1D*(GIM2G1*DI0Z2+GASR1*2.*   &
-                       GIMG1*GG2*DI0Z1+GASR2*GIM1*GG3)
-               NCLig = NCLI1*EIG0*VTNIG*NG1D*(GI2G1*DI0Z2+GASR1*2.*    &
-                       GIG1*GG2*DI0Z1+GASR2*GG3)
-            ELSEIF (ABS(ADAGR-1.).LT.SLIMIT) THEN
-               QCLig = QCLI1*EIG3*VTQIG*NG1D*(GIM3+GASR1*2.*GIM2*GG2+  &
-                       GASR2*GIM1*GG3)
-               NCLig = NCLI1*EIG0*VTNIG*NG1D*(GI3+GASR1*2.*GI2*GG2+    &
-                       GASR2*GG3)
-            ENDIF
-            QCLig = MIN(QCLig,QI1D*iDT)
-            NCLig = MIN(NCLig,NI1D*iDT)
-         ENDIF
-         IF (QG1D.GE.QSMALL.AND.QS1D.GE.QSMALL.AND.IHAIL.EQ.1) THEN
-            IF (EXYM.EQ.0.AND.MVDG.GE.MVDS) THEN
-               ESG0 = MIN(1.,0.01*EXP(0.1*TC1D))
-               ESG3 = ESG0
-            ELSEIF (EXYM.EQ.1.AND.VTQG.GT.VTQS) THEN
-               LLMG  = LOG(LAMG)
-               LAG2  = LOG(AFAG+2.)
-               LAG5  = LOG(AFAG+5.)
-               RVLG0 = LOG(2.E3*MIN(0.999,MAX(1.E-5,VTNS/VTNG)))
-               RVLG3 = LOG(2.E3*MIN(0.999,MAX(1.E-5,VTQS/VTQG)))
-               ESG0  = ELXM(LAG2,LLMG,RVLG0,MVDG,RHOG,GASPR)
-               ESG3  = ELXM(LAG5,LLMG,RVLG3,MVDG,RHOG,GASPR)
-            ENDIF
-            VTQ0  = VTQG-VTQS
-            VTN0  = VTNG-VTNS
-            VTQSG = SQRT(VTQ0*VTQ0+0.04*VTQS*VTQG)
-            VTNSG = SQRT(VTN0*VTN0+0.04*VTNS*VTNG)
-            QCLsg = QCLS1*ESG3*VTQSG*NG1D*(GASR2*SASR2*GSM3+GASR1*     &
-                    SASR1*2.*GG2*GSM2+GSM1*GG3)
-            NCLsg = NCLS1*ESG0*VTNSG*NG1D*(GASR2*SASR2*GS3+GASR1*      &
-                    SASR1*2.*GS2*GG2+GG3)
-            QCLsg = MIN(QCLsg,QS1D*iDT)
-            NCLsg = MIN(NCLsg,NS1D*iDT)
-         ENDIF
          IF (QS1D.GE.QSMALL) THEN
             IF (EXYM.EQ.0.AND.MVDS.GE.2.E-4) THEN
                ESS0 = 0.1*MIN(1.,0.05*EXP(0.1*TC1D))
