@@ -494,7 +494,10 @@
 !         EFRR = EXP(0.85940035-7.6675539E-2*LOG(NR1D)+1.0463454*       &
 !                LOG(MVRR)+1.636384E-3*LOG(NR1D)**2.+5.55445E-4*        &
 !                LOG(MVRR)**2.-2.660869E-3*LOG(NR1D)*LOG(MVRR))
-         EFRR = EXP(1.2279293-0.10100674*LOG(NR1D)+1.071836*           &
+!         EFRR = EXP(1.2279293-0.10100674*LOG(NR1D)+1.071836*           &
+!                LOG(MVRR)+2.042647E-3*LOG(NR1D)**2.+1.000161E-3*       &
+!                LOG(MVRR)**2.-3.432233E-3*LOG(NR1D)*LOG(MVRR))
+         EFRR = EXP(1.0061826-0.091600003*LOG(NR1D)+1.063933*          &
                 LOG(MVRR)+2.042647E-3*LOG(NR1D)**2.+1.000161E-3*       &
                 LOG(MVRR)**2.-3.432233E-3*LOG(NR1D)*LOG(MVRR))
          KDX  = MAX(KCRMIN,MIN(KCRMAX,(MVRR/EFRR)**3.))
@@ -1677,8 +1680,12 @@
 !                      1.0385685*LOG(MVRR(K))+1.4000158E-3*             &
 !                      LOG(NR3D(K))**2.+4.1927565E-4*LOG(MVRR(K))**2.-  &
 !                      2.2498841E-3*LOG(NR3D(K))*LOG(MVRR(K)))
-               EFRR(K) = EXP(1.2279293-0.10100674*LOG(NR3D(K))+        &
-                         1.071836*LOG(MVRR(K))+2.042647E-3*            &
+!               EFRR(K) = EXP(1.2279293-0.10100674*LOG(NR3D(K))+        &
+!                         1.071836*LOG(MVRR(K))+2.042647E-3*            &
+!                         LOG(NR3D(K))**2.+1.000161E-3*LOG(MVRR(K))**2.-&
+!                         3.432233E-3*LOG(NR3D(K))*LOG(MVRR(K)))
+               EFRR(K) = EXP(1.0061826-0.091600003*LOG(NR3D(K))+       &
+                         1.063933*LOG(MVRR(K))+2.042647E-3*            &
                          LOG(NR3D(K))**2.+1.000161E-3*LOG(MVRR(K))**2.-&
                          3.432233E-3*LOG(NR3D(K))*LOG(MVRR(K)))
                KDX(K)  = MAX(KCRMIN,MIN(KCRMAX,(MVRR(K)/EFRR(K))**3.))
