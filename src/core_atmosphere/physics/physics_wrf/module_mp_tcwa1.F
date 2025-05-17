@@ -1294,7 +1294,8 @@ CONTAINS
 !                          qc(k)*r00(k)*qi(k)*1.e-9/ami50)
 !            endif
             if (qc(k).ge.cmin2.and.qs(k).ge.cmin2) then
-               ecs(k) = EXP(0.1*tairc(k))
+!               ecs(k) = EXP(0.1*tairc(k))
+               ecs(k) = 1.
                y1(k) = EXP(tns(k)+GBS3(k)-(bs+AFAS(k)+3.)*LZS(k))
                psacw(k) = r2is*cpi4*ecs(k)*as*fv0(k)*qc(k)*y1(k)
                psacw(k) = MIN(qc(k)*idt,psacw(k))
@@ -1387,7 +1388,8 @@ CONTAINS
                wgacs(k) = MIN(qs(k)*idt,wgacs(k))
             endif
             if (qc(k).ge.cmin2.and.qg(k).ge.cmin2) then
-               ecg(k) = EXP(0.05*tairc(k))
+!               ecg(k) = EXP(0.05*tairc(k))
+                ecg(k) = 1.
                if (ihail.eq.1.or.ihail2.eq.1) then
                   y1(k) = EXP(tng(k)+GBG3(k)-(bg+AFAG(k)+3.)*LZG(k))
                   dgacw(k) = r2ig*cpi4*ecg(k)*ag*SQRT(rr0(k))*qc(k)*   &

@@ -3139,7 +3139,8 @@
               DNIAG,DNSAG,DNSAC,DNSRM,DNGRM,AMI,BMI,AMG,AMS,RHO,iRHO,  &
               AVC,BVC,AVR,BVR,AVI,BVI,AVS,BVS,AVG,BVG,CAPS,SASR1,SASR2,&
               SASR3,SASR4,SASP1,SASP2,SASP3,CAPG,GASR1,GASR2,GASR3,    &
-              GASR4,MVDM,RASPR,SMLV,GMLV,MVG0,DSLL
+              GASR4,MVDM,RASPR,SMLV,GMLV,MVG0,DSLL,ISEPS,ISEPL,LIM1,   &
+              LIM2,LIM22,LIM23,LIMV,DSLSV,DNSAG
       REAL :: QHOci,QHOrg,QNMci,QNMrg,QNCci,QFZci,QFZrg,QMLir,QMLic,   &
               QMLsr,QMLgr,QIMii,QIMcsi,QIMrsi,QIMcgi,QIMrgi,QBKrc,     &
               QINig,QINsg,QCNcr,QCNis,QRMci,QRMcs,QRMcg,QRMri,QRMrs,   &
@@ -4225,8 +4226,8 @@
             DNGRM  = MIN(MAX(DNGRM,RHOIMIN),RHOG0)
             MVDX   = (MVDR*NR1D+MVDG*NG1D)/(NR1D+NG1D+NSMALL)
             QCLgrg = QRMrg+QCLgr
-!            NCLgrg = NCLgr+QRMrg*V2M3/(DNGRM*MVDX**3.)
-            NCLgrg = NRMrg+NCLgr
+            NCLgrg = QCLgr*V2M3/(DNGRM*MVDX**3.)
+!            NCLgrg = NRMrg+NCLgr
          ENDIF
 !----------------- ICE-PHASE COLLECTION&CONVERSION*INITILIZATION -------
          IF (QS1D.GE.QSMALL.AND.QI1D.GE.QSMALL) THEN
@@ -4284,8 +4285,22 @@
                   ESS3  = 0.
                ENDIF
             ENDIF
-            QCLss = 2.*PI*XISP*VTQS*ESS3*SASR2/3.*NS1D**2.*GSM3*AMS
-            NCLss = -2.*PI*XISP*VTNS*ESS0*SASR2/3.*NS1D**2.*GS3
+            QCLss = PI**2.*RHOS*VTQS*ESS3*SASR2*NS1D**2.*GSM3/6.
+            IF (QCLss.GT.0.) THEN
+               ISEPS = 0.6
+               ISEPL = SASPR
+               LIM1  = 0.7*(1.-RHOS/RHOI0)
+               LIM2  = SQRT(1.-LIM1*LIM1)
+               LIM22 = LIM2*LIM2
+               LIM23 = LIM22*LIM2
+               LIMV  = (1.+2.*ISEPL+ISEPL**2.+ISEPS+2.*ISEPL*ISEPS+    &
+                       ISEPL**2.*ISEPS)/8.
+               DSLSV = (1.+LIM2/SQRT(SASPR)+2.*LIM2*SQRT(SASPR)+2.*    &
+                       LIM22+LIM22*SASPR+LIM23*SQRT(SASPR))*GS4*LIMV
+               DNSAG = 2.*RHOS*GS4/DSLSV
+               NCLss = QCLss*V2M3/DNSAG/DSLSV-PI*VTNS*ESS0*SASR2*      &
+                       NS1D**2.*GS3
+            ENDIF
          ENDIF
          IF (QI1D.GE.QSMALL) THEN
             IF (SSAT.EQ.2) THEN
