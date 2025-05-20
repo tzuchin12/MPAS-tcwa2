@@ -30,7 +30,7 @@
       INTEGER, PRIVATE, PARAMETER :: NMODE = 3
       INTEGER, PRIVATE, PARAMETER :: EXYM = 1                           ! 0. EMPIRICAL 1. THEORETICAL METHOD
       INTEGER, PRIVATE, PARAMETER :: SSAT = 2                           ! 0. ADJUST QC; 1. ADJUST QC+QI; 2. PREDICTION SATURATION
-      INTEGER, PRIVATE, PARAMETER :: SATW = 1                           ! 0.WITHOUT; 1.WITH W EFFECT ON SATURATION
+      INTEGER, PRIVATE, PARAMETER :: SATW = 0                           ! 0.WITHOUT; 1.WITH W EFFECT ON SATURATION
       INTEGER, PRIVATE, PARAMETER :: IACT = 1                           ! 1. RY89; 2. WC20-power law
 !----------------- FOR MICROPHYSICAL PROCESSES -------------------------
       REAL, PRIVATE, PARAMETER :: PI = 3.1415926535897932384626434
@@ -1937,13 +1937,13 @@
          ENDIF
          IF (SSRW(K).GT.RSMALL.AND.W3D(K).GT.1.E-5) THEN
             IF (IACT.EQ.1) THEN                                        ! USE ROGERS AND YAU (1989) TO RELATE NUMBER ACTIVATED TO W BASED ON TWOMEY 1959
-               IF (LAND.EQ.1.) THEN                                    ! CONTINENTAL
-                  C1 = 1000.; K1 = 0.5
-               ELSEIF (LAND.EQ.2.) THEN                                ! MARINE
+!               IF (LAND.EQ.1.) THEN                                    ! CONTINENTAL
+!                  C1 = 1000.; K1 = 0.5
+!               ELSEIF (LAND.EQ.2.) THEN                                ! MARINE
                   C1 = 120.; K1 = 0.4
-               ELSE                                                    ! CONTINENTAL CLEAN
-                  C1 = 250.; K1 = 0.45
-               ENDIF
+!               ELSE                                                    ! CONTINENTAL CLEAN
+!                  C1 = 250.; K1 = 0.45
+!               ENDIF
                WCM(K)   = W3D(K)*100.                                  ! CONVERT FROM M/S TO CM/S
                ZCN99(K) = 0.88*C1**(2./(K1+2.))*(7.E-2*WCM(K)**        &
                           1.5)**(K1/(K1+2.))
@@ -3162,16 +3162,16 @@
               DSMM,DGMM,LMVRC,LMVRR,TMP1,GUC,GUR,RMcsq,RMrsq,RMcgq,    &
               RMrgq,RMcsa,RMrsa,RMcga,RMrga,VTQ0,VTQC,VTQR,VTQI,VTQS,  &
               VTQG,VTN0,VTNC,VTNR,VTNI,VTNS,VTNG,VTQIC,VTQSC,VTQGC,    &
-              VTQRI,VTQRS,VTQRG,VTQIS,VTNIC,VTNSC,VTNGC,VTNRI,VTNRS,   &
-              VTNRG,VTNIS,ECS0,ECS3,ECG0,ECG3,ERS0,ERS3,ERG0,ERG3,EIR0,&
-              EIR3,ESR0,ESR3,EGR0,EGR3,EIS0,EIS3,ECI0,ECI3,ERI0,ERI3,  &
-              EII0,EII3,ESS0,ESS3,ECS,ERS,ECG,ERG,SMLTQ,GMLTQ,SMLTA,   &
-              GMLTA,VENQS,VENQG,STOKE,MVDX,ABW,FSQC,FSNC,FSQR,FSNR,    &
-              FSQI,FSNI,FSQS,FSNS,FSQG,FSNG,LLMC,LAC2,LAC5,LLMR,LAR2,  &
-              LAR5,LAI2,LAI5,RHOX,VISHP,LAS2,LAS22,LAS5,LAG2,LAG22,    &
-              LAG5,AFAZ,LMDS,LMDS2,LROS,LROS2,LMDG,LMDG2,LROG,LROG2,   &
-              DQSLDT,DQSIDT,ABW1,ABI1,BRTMP,VENQR,TAU,TAUC,TAUR,TAUI,  &
-              TAUS,TAUG,ATEM,EIG0,EIG3,ESG0,ESG3,VTQIG,VTQSG,VTNIG,VTNSG
+              VTQRI,VTQRS,VTQRG,VTQIS,VTQIG,VTQSG,VTNIC,VTNSC,VTNGC,   &
+              VTNRI,VTNRS,VTNRG,VTNIS,VTNIG,VTNSG,ECS0,ECS3,ECG0,ECG3, &
+              ERS0,ERS3,ERG0,ERG3,EIR0,EIR3,ESR0,ESR3,EGR0,EGR3,EIS0,  &
+              EIS3,EIG0,EIG3,ESG0,ESG3,ECI0,ECI3,ERI0,ERI3,EII0,EII3,  &
+              ESS0,ESS3,ECS,ERS,ECG,ERG,SMLTQ,GMLTQ,SMLTA,GMLTA,VENQS, &
+              VENQG,STOKE,MVDX,ABW,FSQC,FSNC,FSQR,FSNR,FSQI,FSNI,FSQS, &
+              FSNS,FSQG,FSNG,LLMC,LAC2,LAC5,LLMR,LAR2,LAR5,LAI2,LAI5,  &
+              RHOX,VISHP,LAS2,LAS22,LAS5,LAG2,LAG22,LAG5,AFAZ,LMDS,    &
+              LMDS2,LROS,LROS2,LMDG,LMDG2,LROG,LROG2,DQSLDT,DQSIDT,    &
+              ABW1,ABI1,BRTMP,VENQR,TAU,TAUC,TAUR,TAUI,TAUS,TAUG,ATEM
       REAL :: HIdqv,HSdqv,HGdqv,HCwqv,HRwqv,HSwqv,HGwqv,HSwcd,HGwcd,   &
               HSwrm,HGwrm,VDMAX,SBMAX,EVMAX,SUMDEP,SUMSUB,SUMEVP,      &
               SUMCND,MLMAX,ESW0,ESI0,QVSW0,QVSI0,XXLF0,BEST,VENQI,     &
@@ -4226,8 +4226,8 @@
             DNGRM  = MIN(MAX(DNGRM,RHOIMIN),RHOG0)
             MVDX   = (MVDR*NR1D+MVDG*NG1D)/(NR1D+NG1D+NSMALL)
             QCLgrg = QRMrg+QCLgr
-            NCLgrg = QCLgr*V2M3/(DNGRM*MVDX**3.)
-!            NCLgrg = NRMrg+NCLgr
+!            NCLgrg = QCLgr*V2M3/(DNGRM*MVDX**3.)
+            NCLgrg = NRMrg+NCLgr
          ENDIF
 !----------------- ICE-PHASE COLLECTION&CONVERSION*INITILIZATION -------
          IF (QS1D.GE.QSMALL.AND.QI1D.GE.QSMALL) THEN
@@ -4266,6 +4266,66 @@
             ENDIF
             QCLis  = MIN(QCLis,QI1D*iDT)
             NCLis  = MIN(NCLis,NI1D*iDT)
+         ENDIF
+         IF (QG1D.GE.QSMALL.AND.QI1D.GE.QSMALL.AND.IHAIL.EQ.1) THEN
+            IF (EXYM.EQ.0.AND.MVDG.GE.MVDI) THEN
+               EIG0 = MIN(1.,0.01*EXP(0.1*TC1D))
+               EIG3 = EIG0
+            ELSEIF (EXYM.EQ.1.AND.VTQG.GT.VTQI) THEN
+               LLMG  = LOG(LAMG)
+               LAG2  = LOG(AFAG+2.)
+               LAG5  = LOG(AFAG+5.)
+               RVLG0 = LOG(2.E3*MIN(0.999,MAX(1.E-5,VTNI/VTNG)))
+               RVLG3 = LOG(2.E3*MIN(0.999,MAX(1.E-5,VTQI/VTQG)))
+               EIG0  = ELXM(LAG2,LLMG,RVLG0,MVDG,RHOG,GASPR)
+               EIG3  = ELXM(LAG5,LLMG,RVLG3,MVDG,RHOG,GASPR)
+            ENDIF
+            VTQ0  = VTQG-VTQI
+            VTN0  = VTNG-VTNI
+            VTQIG = SQRT(VTQ0*VTQ0+0.04*VTQI*VTQG)
+            VTNIG = SQRT(VTN0*VTN0+0.04*VTNI*VTNG)
+            IF ((ADAGR-1.).GE.SLIMIT) THEN
+               QCLig = QCLI1*EIG3*VTQIG*NG1D*(GIMF1/DI0Z1+GASR1*GIMG1* &
+                       GG2*DI0Z1+GASR1*GIMH1*GG2/DI0Z2+GASR2*GIM1*GG3)
+               NCLig = NCLI1*EIG0*VTNIG*NG1D*(GIF1/DI0Z1+GASR1*GIG1*   &
+                       GG2*DI0Z1+GASR1*GIH1*GG2/DI0Z2+GASR2*GG3)
+            ELSEIF ((1.-ADAGR).GE.SLIMIT) THEN
+               QCLig = QCLI1*EIG3*VTQIG*NG1D*(GIM2G1*DI0Z2+GASR1*2.*   &
+                       GIMG1*GG2*DI0Z1+GASR2*GIM1*GG3)
+               NCLig = NCLI1*EIG0*VTNIG*NG1D*(GI2G1*DI0Z2+GASR1*2.*    &
+                       GIG1*GG2*DI0Z1+GASR2*GG3)
+            ELSEIF (ABS(ADAGR-1.).LT.SLIMIT) THEN
+               QCLig = QCLI1*EIG3*VTQIG*NG1D*(GIM3+GASR1*2.*GIM2*GG2+  &
+                       GASR2*GIM1*GG3)
+               NCLig = NCLI1*EIG0*VTNIG*NG1D*(GI3+GASR1*2.*GI2*GG2+    &
+                       GASR2*GG3)
+            ENDIF
+            QCLig = MIN(QCLig,QI1D*iDT)
+            NCLig = MIN(NCLig,NI1D*iDT)
+         ENDIF
+         IF (QG1D.GE.QSMALL.AND.QS1D.GE.QSMALL.AND.IHAIL.EQ.1) THEN
+            IF (EXYM.EQ.0.AND.MVDG.GE.MVDS) THEN
+               ESG0 = MIN(1.,0.01*EXP(0.1*TC1D))
+               ESG3 = ESG0
+            ELSEIF (EXYM.EQ.1.AND.VTQG.GT.VTQS) THEN
+               LLMG  = LOG(LAMG)
+               LAG2  = LOG(AFAG+2.)
+               LAG5  = LOG(AFAG+5.)
+               RVLG0 = LOG(2.E3*MIN(0.999,MAX(1.E-5,VTNS/VTNG)))
+               RVLG3 = LOG(2.E3*MIN(0.999,MAX(1.E-5,VTQS/VTQG)))
+               ESG0  = ELXM(LAG2,LLMG,RVLG0,MVDG,RHOG,GASPR)
+               ESG3  = ELXM(LAG5,LLMG,RVLG3,MVDG,RHOG,GASPR)
+            ENDIF
+            VTQ0  = VTQG-VTQS
+            VTN0  = VTNG-VTNS
+            VTQSG = SQRT(VTQ0*VTQ0+0.04*VTQS*VTQG)
+            VTNSG = SQRT(VTN0*VTN0+0.04*VTNS*VTNG)
+            QCLsg = QCLS1*ESG3*VTQSG*NG1D*(GASR2*SASR2*GSM3+GASR1*     &
+                    SASR1*2.*GG2*GSM2+GSM1*GG3)
+            NCLsg = NCLS1*ESG0*VTNSG*NG1D*(GASR2*SASR2*GS3+GASR1*      &
+                    SASR1*2.*GS2*GG2+GG3)
+            QCLsg = MIN(QCLsg,QS1D*iDT)
+            NCLsg = MIN(NCLsg,NS1D*iDT)
          ENDIF
          IF (QS1D.GE.QSMALL) THEN
             IF (EXYM.EQ.0.AND.MVDS.GE.2.E-4) THEN
@@ -4609,7 +4669,7 @@
          NMLic = NMLic*RATIO; NCLir = NCLir*RATIO; NiCNis = NiCNis*RATIO
          NSBiv = NSBiv*RATIO; NCLig = NCLig*RATIO
       ENDIF
-      QSSOUR = QS1D+(QCNis+QCLis+QCLig+QRMcs+QVDvs)*DT
+      QSSOUR = QS1D+(QCNis+QCLis+QRMcs+QVDvs)*DT
       QSSINK = (-QMLsr+QCLsr+QCLsg+QINsg-QEVsv-QSBsv)*DT
       IF (QSSINK.GT.QSSOUR.AND.QSSOUR.GE.QSMALL) THEN
          RATIO = MIN(1.,QSSOUR/(QSSINK+QSMALL))
@@ -4626,8 +4686,8 @@
          NMLsr = NMLsr*RATIO; NCLss = NCLss*RATIO; NINsg = NINsg*RATIO
          NCLsr = NCLsr*RATIO; NSBsv = NSBsv*RATIO; NCLsg = NCLsg*RATIO
       ENDIF
-      QGSOUR = QG1D+(QHOrg+QNMrg+QINig+QINsg+QRMcg+QCLsg+QCLirg+QCLsrg+&
-               QCLgrg+QVDvg)*DT
+      QGSOUR = QG1D+(QHOrg+QNMrg+QINig+QINsg+QRMcg+QCLig+QCLsg+QCLirg+ &
+               QCLsrg+QCLgrg+QVDvg)*DT
       QGSINK = (-QMLgr+QCLgr-QSBgv-QEVgv)*DT
       IF (QGSINK.GT.QGSOUR.AND.QGSOUR.GE.QSMALL) THEN
          RATIO = MIN(1.,QGSOUR/(QGSINK+QSMALL))
