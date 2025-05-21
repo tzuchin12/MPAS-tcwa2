@@ -2265,7 +2265,7 @@
                           1122.8963*SQRT(LLMR(K))
                ZZHR(K) = NR3D(K)*10.**((FDBZR(K)-200.)/10.-18.)*ORZHR(K)
                DBZR(K) = 10.*LOG10(1.E18*ZZHR(K))
-               IF (AFAR(K).LE.10.) THEN
+               IF (AFAR(K).GE.1.) THEN
                   FZDRR(K) = EXP(10.243103+0.46561642*LAR2(K)+         &
                              1.7270962*LLMR(K)+5.8974032E-3*LAR22(K)-  &
                              0.34268382*LLMR2(K)+0.10193409*LAR2(K)*   &
@@ -2274,13 +2274,17 @@
                              0.10413007*LAR22(K)*LLMR(K))/1.E4*ORAR(K)/&
                              0.9409
                ELSE
-                  FZDRR(K) = EXP(27.639873+3.7680268*LAR2(K)-4.3382556*&
-                             LLMR(K)+0.36498072*LAR22(K)+0.29286255*   &
-                             LLMR2(K)-0.58159197*LAR2(K)*LLMR(K)+      &
-                             9.968596E-3*LAR23(K)-7.1806791E-3*        &
-                             LLMR3(K)+0.023642573*LAR2(K)*LLMR2(K)-    &
-                             0.028767891*LAR22(K)*LLMR(K))/1.E4*       &
-                             ORAR(K)/0.9409
+                  FZDRR(K) = EXP(19.61943+2.743765*LAR2(K)-2.1913656*  &
+                             LLMR(K)+0.067589745*LAR22(K)+0.0588952*   &
+                             LLMR2(K)-0.15553337*LAR2(K)*LLMR(K))/     &
+                             1.E4*ORAR(K)/0.9409
+!                  FZDRR(K) = EXP(27.639873+3.7680268*LAR2(K)-4.3382556*&
+!                             LLMR(K)+0.36498072*LAR22(K)+0.29286255*   &
+!                             LLMR2(K)-0.58159197*LAR2(K)*LLMR(K)+      &
+!                             9.968596E-3*LAR23(K)-7.1806791E-3*        &
+!                             LLMR3(K)+0.023642573*LAR2(K)*LLMR2(K)-    &
+!                             0.028767891*LAR22(K)*LLMR(K))/1.E4*       &
+!                             ORAR(K)/0.9409
                ENDIF
                ZZVR(K)  = 10.**(DBZR(K)/10.-18.-FZDRR(K)/10.)
                IF (AFAR(K).LE.10.) THEN
@@ -3881,7 +3885,8 @@
          ENDIF
 !----------------- RIMING OF CLOUD DROPLETS ----------------------------
          IF (QI1D.GE.QSMALL.AND.QC1D.GE.QSMALL) THEN
-            IF (EXYM.EQ.1.AND.VTQI.GT.VTQC) THEN
+!            IF (EXYM.EQ.1.AND.VTQI.GT.VTQC) THEN
+            IF (EXYM.EQ.1.AND.VTQI.GT.VTQC.AND.MVDI.GE.1.E-4) THEN
                LLMI  = LOG(LAMI)
                LAI2  = LOG(AFAI+2.)
                LAI5  = LOG(AFAI+5.)
@@ -3953,7 +3958,8 @@
             IF (EXYM.EQ.0.AND.MVDS.GE.1.5E-4) THEN
                ECS0 = MIN(MVDC,3.E-5)*3.333E4*SQRT(MIN(MVDS,1.E-3)*1.E3)! Approximation based on Pruppacher&Klett(1997) Fig.14-11
                ECS3 = ECS0
-            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC) THEN
+!            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC) THEN
+            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC.AND.MVDS.GE.2.E-4) THEN
                LLMS  = LOG(LAMS)
                LAS2  = LOG(AFAS+2.)
                LAS5  = LOG(AFAS+5.)
