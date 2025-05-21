@@ -30,7 +30,7 @@
       INTEGER, PRIVATE, PARAMETER :: NMODE = 3
       INTEGER, PRIVATE, PARAMETER :: EXYM = 1                           ! 0. EMPIRICAL 1. THEORETICAL METHOD
       INTEGER, PRIVATE, PARAMETER :: SSAT = 2                           ! 0. ADJUST QC; 1. ADJUST QC+QI; 2. PREDICTION SATURATION
-      INTEGER, PRIVATE, PARAMETER :: SATW = 0                           ! 0.WITHOUT; 1.WITH W EFFECT ON SATURATION
+      INTEGER, PRIVATE, PARAMETER :: SATW = 1                           ! 0. WITHOUT; 1. WITH W EFFECT ON SATURATION
       INTEGER, PRIVATE, PARAMETER :: IACT = 1                           ! 1. RY89; 2. WC20-power law
 !----------------- FOR MICROPHYSICAL PROCESSES -------------------------
       REAL, PRIVATE, PARAMETER :: PI = 3.1415926535897932384626434
