@@ -2554,9 +2554,9 @@
                IF (SMLF(K).GE.MLIMIT) THEN
                   SMLV(K) = (RHOS(K)/(RHOW/SMLF(K)-RHOW+RHOS(K)))**MLRA
                   DSMM(K)  = MVDS(K)*1.E3
-                  SASPR(K) = SMLV(K)*(0.9951+2.51E-2*DSMM(K)-3.644E-2* &
+                  SASPR(K) = SMLF(K)*(0.9951+2.51E-2*DSMM(K)-3.644E-2* &
                              DSMM(K)**2.+5.303E-3*DSMM(K)**3.-2.492E-4*&
-                             DSMM(K)**4.)+(1.-SMLV(K))*SASPR(K)
+                             DSMM(K)**4.)+(1.-SMLF(K))*SASPR(K)
                   RHOS(K) = MIN(RHOIMAX,MAX(RHOIMIN,SMLF(K)*RHOW+(1.-  &
                             SMLF(K))*RHOS(K)))
                   ORA0(K) = 10.*SMLF(K)+(1.-SMLF(K))*40.
@@ -2657,9 +2657,9 @@
                IF (GMLF(K).GE.MLIMIT) THEN
                   GMLV(K) = (RHOG(K)/(RHOW/GMLF(K)-RHOW+RHOG(K)))**MLRA
                   DGMM(K)  = MVDG(K)*1.E3
-                  GASPR(K) = GMLV(K)*(0.9951+2.51E-2*DGMM(K)-3.644E-2* &
+                  GASPR(K) = GMLF(K)*(0.9951+2.51E-2*DGMM(K)-3.644E-2* &
                              DGMM(K)**2.+5.303E-3*DGMM(K)**3.-2.492E-4*&
-                             DGMM(K)**4.)+(1.-GMLV(K))*GASPR(K)
+                             DGMM(K)**4.)+(1.-GMLF(K))*GASPR(K)
                   RHOG(K) = MIN(900.,MAX(100.,GMLF(K)*RHOW+(1.-        &
                             GMLF(K))*RHOG(K)))
                   ORA0(K) = 10.*GMLF(K)+(1.-GMLF(K))*40.
@@ -3959,7 +3959,7 @@
                ECS0 = MIN(MVDC,3.E-5)*3.333E4*SQRT(MIN(MVDS,1.E-3)*1.E3)! Approximation based on Pruppacher&Klett(1997) Fig.14-11
                ECS3 = ECS0
 !            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC) THEN
-            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC.AND.MVDS.GE.2.E-4) THEN
+            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC.AND.MVDS.GE.1.5E-4) THEN
                LLMS  = LOG(LAMS)
                LAS2  = LOG(AFAS+2.)
                LAS5  = LOG(AFAS+5.)
