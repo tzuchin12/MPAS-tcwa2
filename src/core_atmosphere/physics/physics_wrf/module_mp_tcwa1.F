@@ -842,11 +842,11 @@ CONTAINS
                       MAX(0.1,(1.1E4*(qc(k)+qr(k))*rho(k)-1.3E3*qg(k)* &
                       rho(k)+1.))))-1.)))
          ENDIF
-         IF (MVG0(k).GT.DSLL(k)) THEN
-            ihail = 1
-         ELSE
+!         IF (MVG0(k).GT.DSLL(k)) THEN
+!            ihail = 1
+!         ELSE
             ihail = 0
-         ENDIF
+!         ENDIF
          ! for Graupel
          if (qg(k).ge.cmin1) then
             if (ihail.eq.1) then
