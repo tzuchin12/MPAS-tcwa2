@@ -1750,7 +1750,6 @@ CONTAINS
 !..Single melting snow/graupel particle 90% meltwater on external sfc
       DOUBLE PRECISION, PARAMETER :: melt_outside_s = 0.9d0
       DOUBLE PRECISION, PARAMETER :: melt_outside_g = 0.9d0
-!      CHARACTER*256 :: radar_debug
 
       PI5 = 3.14159*3.14159*3.14159*3.14159*3.14159
       lamda4 = lamda_radar*lamda_radar*lamda_radar*lamda_radar
@@ -2241,7 +2240,6 @@ CONTAINS
       if (host.EQ.'air') then
          if (matrix.EQ.'air') then
             write(radar_debug,*) 'GET_M_MIX_NESTED: bad matrix:',matrix
-            CALL wrf_debug(150,radar_debug)
             cumulerror = cumulerror + 1
          else
             vol1 = volice/MAX(volice+volwater,1d-10)
@@ -2262,14 +2260,12 @@ CONTAINS
             else
                write(radar_debug,*) 'GET_M_MIX_NESTED:bad hostmatrix:',&
                                     hostmatrix
-               CALL wrf_debug(150,radar_debug)
                cumulerror = cumulerror+1
             endif
          endif
       elseif (host.EQ.'ice') then
          if (matrix.EQ.'ice') then
             write(radar_debug,*) 'GET_M_MIX_NESTED:bad matrix:',matrix
-            CALL wrf_debug(150,radar_debug)
             cumulerror = cumulerror+1
          else
             vol1 = volair/MAX(volair+volwater,1d-10)
@@ -2290,14 +2286,12 @@ CONTAINS
             else
                write(radar_debug,*) 'GET_M_MIX_NESTED:bad hostmatrix:',&
                                     hostmatrix
-               CALL wrf_debug(150,radar_debug)
                cumulerror = cumulerror+1
             endif
          endif
       elseif (host.EQ.'water') then
          if (matrix.EQ.'water') then
             write(radar_debug,*) 'GET_M_MIX_NESTED:bad matrix:',matrix
-            CALL wrf_debug(150,radar_debug)
             cumulerror = cumulerror+1
          else
             vol1 = volair/MAX(volice+volair,1d-10)
@@ -2318,7 +2312,6 @@ CONTAINS
             else
                write(radar_debug,*) 'GET_M_MIX_NESTED:bad hostmatrix:',&
                                     hostmatrix
-               CALL wrf_debug(150,radar_debug)
                cumulerror = cumulerror+1
             endif
          endif
@@ -2328,12 +2321,10 @@ CONTAINS
          cumulerror = cumulerror+error
       else
          write(radar_debug,*) 'GET_M_MIX_NESTED: unknown matrix:',host
-         CALL wrf_debug(150,radar_debug)
          cumulerror = cumulerror+1
       endif
       IF (cumulerror.NE.0) THEN
          write(radar_debug,*) 'GET_M_MIX_NESTED: error encountered'
-         CALL wrf_debug(150,radar_debug)
          get_m_mix_nested = CMPLX(1.0d0,0.0d0)    
       endif
 
@@ -2365,17 +2356,14 @@ CONTAINS
                         volice,m_a,m_w,m_i,inclusion,error)
          else
             write(radar_debug,*) 'GET_M_MIX: unknown matrix:',matrix
-            CALL wrf_debug(150,radar_debug)
             error = 1
          endif
       else
          write(radar_debug,*) 'GET_M_MIX:unknown mixingrule:',mixingrule
-         CALL wrf_debug(150,radar_debug)
          error = 2
       endif
       if (error.NE.0) then
          write(radar_debug,*) 'GET_M_MIX: error encountered'
-         CALL wrf_debug(150,radar_debug)
       endif
 
       END FUNCTION get_m_mix
@@ -2396,7 +2384,6 @@ CONTAINS
       IF (DABS(vol1+vol2+vol3-1.0d0).GT.1d-6) THEN
          write(radar_debug,*) 'M_COMPLEX_MAXWELLGARNETT: sum of the ', &
          'partial volume fractions is not 1...ERROR'
-         CALL wrf_debug(150,radar_debug)
          m_complex_maxwellgarnett = CMPLX(-999.99d0,-999.99d0)
          error = 1
          return
@@ -2413,7 +2400,6 @@ CONTAINS
       else
          write(radar_debug,*) 'M_COMPLEX_MAXWELLGARNETT: ',            &
                               'unknown inclusion: ',inclusion
-         CALL wrf_debug(150,radar_debug)
          m_complex_maxwellgarnett = DCMPLX(-999.99d0,-999.99d0)
          error = 1
          return
