@@ -732,8 +732,8 @@ CONTAINS
          LZS(k) = 0.
          vs(k) = 0.
          AFAS(k) = 0.
-         MVG0(k) = 0.
-         DSLL(k) = 1.
+!         MVG0(k) = 0.
+!         DSLL(k) = 1.
          tng(k) = 0.
          roqg(k) = 0.
          zg(k) = 0.
@@ -761,8 +761,8 @@ CONTAINS
             LQR2(k) = LQR(k)*LQR(k)
             MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*LTK2(k)+   &
                       MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
-            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
-                      MVDR(k)
+!            MVDR(k) = MIN(1.,1.16-2.E-4*topo(i,j)-1.2E-4*MVDR(k))*     &
+!                      MVDR(k)
             LMDR(k) = LOG(MVDR(k))
             EFDR(k) = EXP(EFD1+EFD2*LMDR(k)+EFD3*6.90775528+EFD4*      &
                       LMDR(k)**2.+EFD5*47.717083+EFD6*LMDR(k)*         &
@@ -836,12 +836,12 @@ CONTAINS
             vs(k) = 177.3894*fv0(k)*EXP(GBS4(k)-GS4(k)-0.41*LZS(k))
          ENDIF
          ! for Graupel
-         if (qg(k).ge.cmin1) then
-            MVG0(k) = EXP(8.8283+0.25*LOG(rho(k)*qg(k)))*1.E-6
-            DSLL(k) = MAX(1.E-3,MIN(1.,2.*1.E-2*(EXP(MIN(20.,-tairc(k)/&
-                      MAX(0.1,(1.1E4*(qc(k)+qr(k))*rho(k)-1.3E3*qg(k)* &
-                      rho(k)+1.))))-1.)))
-         ENDIF
+!         if (qg(k).ge.cmin1) then
+!            MVG0(k) = EXP(8.8283+0.25*LOG(rho(k)*qg(k)))*1.E-6
+!            DSLL(k) = MAX(1.E-3,MIN(1.,2.*1.E-2*(EXP(MIN(20.,-tairc(k)/&
+!                      MAX(0.1,(1.1E4*(qc(k)+qr(k))*rho(k)-1.3E3*qg(k)* &
+!                      rho(k)+1.))))-1.)))
+!         ENDIF
 !         IF (MVG0(k).GT.DSLL(k)) THEN
 !            ihail = 1
 !         ELSE
@@ -849,36 +849,6 @@ CONTAINS
 !         ENDIF
          ! for Graupel
          if (qg(k).ge.cmin1) then
-            if (ihail.eq.1) then
-               roqg(k) = .9
-               LTK(k) = LOG(tair(k))
-               LQG(k) = -1.*LOG(qg(k)*rho(k))
-               LTK2(k) = LTK(k)*LTK(k)
-               LQG2(k) = LQG(k)*LQG(k)
-               MVDH(k) = EXP(MDH1+MDH2*LTK(k)+MDH3*LQG(k)+MDH4*LTK2(k)+&
-                         MDH5*LQG2(k)+MDH6*LTK(k)*LQG(k))
-               LMDH(k) = LOG(MVDH(k))
-               EFDH(k) = EXP(EFD1+EFD2*LMDH(k)+EFD3*6.80239476+EFD4*   &
-                         LMDH(k)**2.+EFD5*46.27257452+EFD6*LMDH(k)*    &
-                         6.80239476)
-               EFDH(k) = MAX(MIN(EFDH(k),MVDH(k)/0.60568667),MVDH(k)/  &
-                         0.943389)
-               KDXH(k) = MAX(KMIN,MIN(KMAX,(MVDH(k)/EFDH(k))**3.))
-               AFAG(k) = MAX(0.,(6.*KDXH(k)-3.+SQRT(8.*KDXH(k)+1.))/(  &
-                         2.-2.*KDXH(k)))
-               zg(k) = (AFAG(k)+3.)/EFDH(k)*1.E6
-               tng(k) = LOG(qg(k)*rho(k)/471.238898)+(4.+AFAG(k))*     &
-                        LOG(zg(k))-GAMLN(AFAG(k)+4.)-LOG(10.**(8.+2.*  &
-                        AFAG(k)))
-               zg(k) = zg(k)/1.E2
-               LZG(k) = LOG(zg(k))
-               GG4(k) = GAMLN(AFAG(k)+4.)
-               GBG3(k) = GAMLN(AFAG(k)+3.5)
-               GBG4(k) = GAMLN(AFAG(k)+4.5)
-               GBG25(k) = GAMLN(AFAG(k)+2.75)
-               vg(k) = 44.27188724*SQRT(rr0(k))*EXP(GBG4(k)-GG4(k)-    &
-                       0.5*LZG(k))
-            elseif (ihail.eq.0) then
                LTK(k) = LOG(tair(k))
                LQG(k) = -1.*LOG(qg(k)*rho(k))
                LTK2(k) = LTK(k)*LTK(k)
@@ -909,7 +879,6 @@ CONTAINS
                GBG4(k) = GAMLN(AFAG(k)+4.37)
                GBG25(k) = GAMLN(AFAG(k)+2.685)
                vg(k) = 351.2*fv0(k)*EXP(GBG4(k)-GG4(k)-0.37*LZG(k))
-            endif          ! ihail
             GG1(k) = GAMLN(AFAG(k)+1.)
             GG2(k) = GAMLN(AFAG(k)+2.)
             GG3(k) = GAMLN(AFAG(k)+3.)
