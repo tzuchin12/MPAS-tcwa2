@@ -75,11 +75,11 @@ CONTAINS
 !  Tao et al, 2001, Meteo. & Atmos. Phy., 97-137
 !-------------------------------------------------------------------
       SUBROUTINE mp_tcwa1(th,qv,qc,qr,qi,qs,qg,rho,pii,p,w,dt_in,z,ht, &
-                          dz8w,xland,DBZM,re_cloud,re_ice,re_snow,     &
-                          has_reqc,has_reqi,has_reqs,sr,rainnc,rainncv,&
-                          snownc,snowncv,graupelnc,graupelncv,ids,ide, &
-                          jds,jde,kds,kde,ims,ime,jms,jme,kms,kme,its, &
-                          ite,jts,jte,kts,kte)
+                          dz8w,xland,DBZM,ZDR,KDP,re_cloud,re_ice,     &
+                          re_snow,has_reqc,has_reqi,has_reqs,sr,rainnc,&
+                          rainncv,snownc,snowncv,graupelnc,graupelncv, &
+                          ids,ide,jds,jde,kds,kde,ims,ime,jms,jme,kms, &
+                          kme,its,ite,jts,jte,kts,kte)
 !-------------------------------------------------------------------
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: ids,ide,jds,jde,kds,kde,ims,ime,jms,jme,  &
@@ -90,7 +90,7 @@ CONTAINS
       REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(IN) :: rho,pii, &
                                                               p,dz8w,z,w
       REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(OUT) :: DBZM,   &
-            re_cloud,re_ice,re_snow
+            ZDR,KDP,re_cloud,re_ice,re_snow
       REAL, DIMENSION(ims:ime,jms:jme), INTENT(INOUT) :: rainnc,       &
             rainncv,snownc,snowncv,sr,graupelnc,graupelncv 
 !+---+-----------------------------------------------------------------+
@@ -113,7 +113,8 @@ CONTAINS
       CALL fall_flux(dt_in,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,ht,sr,rainnc,&
                      rainncv,snownc,snowncv,graupelnc,graupelncv,th,   &
                      pii,SMLF,GMLF,xland,re_cloud,re_ice,re_snow,DBZM, &
-                     ims,ime,jms,jme,kms,kme,its,ite,jts,jte,kts,kte)
+                     ZDR,KDP,ims,ime,jms,jme,kms,kme,its,ite,jts,jte,  &
+                     kts,kte)
 
       END SUBROUTINE mp_tcwa1
 !=======================================================================
@@ -122,8 +123,9 @@ CONTAINS
       SUBROUTINE fall_flux (dtb,qv,qc,qr,qi,qs,qg,p,rho,z,dz8w,topo,sr,&
                             rainnc,rainncv,snownc,snowncv,graupelnc,   &
                             graupelncv,TH,PII,SMLF3D,GMLF3D,xland,     &
-                            EFRC3D,EFRI3D,EFRS3D,DBZM3D,ims,ime,jms,   &
-                            jme,kms,kme,its,ite,jts,jte,kts,kte)
+                            EFRC3D,EFRI3D,EFRS3D,DBZM3D,ZDR3D,KDP3D,   &
+                            ims,ime,jms,jme,kms,kme,its,ite,jts,jte,   &
+                            kts,kte)
 !=======================================================================
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: ims,ime,jms,jme,kms,kme,its,ite,jts,jte,  &
@@ -137,7 +139,7 @@ CONTAINS
       REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(IN) :: TH,PII,  &
                                                 rho,z,dz8w,p,qv
       REAL, DIMENSION(ims:ime,kms:kme,jms:jme), INTENT(OUT) :: DBZM3D, &
-            EFRC3D,EFRI3D,EFRS3D
+            ZDR3D,KDP3D,EFRC3D,EFRI3D,EFRS3D
       INTEGER, DIMENSION(kts:kte) :: lan1D,HID
       REAL, DIMENSION(kts:kte) :: TK1D,TC1D,DSLL,RHOI,RHOS,RHOG,SMLF,  &
             GMLF,N0R,N0I,N0S,N0G,N0H,MVDC,EFDC,MVDR,EFDR,MVDI,EFDI,    &
@@ -146,8 +148,8 @@ CONTAINS
             LTK,LTK2,LQC,LQC2,LQR,LQR2,LQS,LQS2,LQG,LQG2,LQI,LQI2,MVG0,&
             ADAGR,ZETA,VISHP,VIROI,INHGR,sqrhoz,qvz,qcz,qrz,qiz,qsz,   &
             qgz,zz,dzw,prez,rhoz,vtc,vtr,vts,vtg,vti,LMDC,LMDR,LROS,   &
-            LMDS,LROG,LMDG,LMDH,LROI,LMDI,DBZM,esi,qsi,ssi,EFRC,EFRI,  &
-            EFRS
+            LMDS,LROG,LMDG,LMDH,LROI,LMDI,DBZM,ZDR,KDP,esi,qsi,ssi,    &
+            EFRC,EFRI,EFRS
       REAL, DIMENSION(its:ite,kts:kte,jts:jte) :: SMLF3D,GMLF3D
 ! temperary vars
       INTEGER :: ihail,k,i,j,min_q,max_q
@@ -184,6 +186,8 @@ CONTAINS
          EFRI(k) = 0.
          EFRS(k) = 0.
          DBZM(k) = -99.
+         ZDR(k) = 0.
+         KDP(k) = 0.
       ENDDO
 !-------- cloud ----------------------------------------------
       t_del_tv = 0.
@@ -639,9 +643,11 @@ CONTAINS
       ENDDO
 
       CALL REFL10CM_TCWA(qvz,qcz,qiz,qrz,qsz,qgz,TK1D,rhoz,SMLF,GMLF,  &
-           DBZM,ihail,prez,lan1D,kts,kte)
+           DBZM,ZDR,KDP,ihail,prez,lan1D,kts,kte)
       DO k = kts,kte
          DBZM3D(i,k,j) = MAX(-35.,DBZM(k))
+         ZDR3D(i,k,j) = ZDR(k)
+         KDP3D(i,k,j) = KDP(k)
       ENDDO
 
       snowncv(i,j) = pptice+pptsnow
@@ -1946,138 +1952,67 @@ CONTAINS
 !
 !========================================================================
       SUBROUTINE REFL10CM_TCWA(qv1d,qc1d,qi1d,qr1d,qs1d,qg1d,tk1d,rhoz,&
-                 SMLF,GMLF,dBZ,ihail,prez,lan1D,kts,kte)
+                 SMLF,GMLF,DBZM,ZDR,KDP,ihail,prez,lan1D,kts,kte)
 !========================================================================
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: kts,kte,ihail
       INTEGER, DIMENSION(kts:kte), INTENT(IN) :: lan1D
       REAL, DIMENSION(kts:kte), INTENT(IN) :: qv1d,qc1d,qi1d,qr1d,qs1d,&
                                 qg1d,tk1d,rhoz,SMLF,GMLF,prez
-      REAL, DIMENSION(kts:kte), INTENT(INOUT) :: dBZ
+      REAL, DIMENSION(kts:kte), INTENT(INOUT) :: DBZM,ZDR,KDP
 !..Local variables
       INTEGER, DIMENSION(kts:kte) :: HID
-      REAL, DIMENSION(kts:kte) :: rr,rs,rg,ze_ice,ze_rain,ze_snow,     &
-            ze_graupel,xam_s,xam_g,xmu_r,xmu_s,xmu_g,xocms,xocmg,RHOI, &
-            RHOS,RHOG,AFAR,AFAI,AFAS,AFAG,N0R,N0I,N0S,N0G,LAMR,LAMI,   &
-            LAMS,LAMG,LTK,LTK2,LQR,LQR2,LQI,LQI2,LQS,LQS2,LQG,LQG2,    &
-            MVDR,MVDI,MVDS,MVDG,MVDH,EFDR,EFDI,EFDS,EFDG,EFDH,KDXR,    &
-            KDXI,KDXS,KDXG,KDXH,MVG0,DSLL,TC1D,INHGR,esw,esi,qsi,ssi
-      DOUBLE PRECISION, DIMENSION(kts:kte) :: ilamr,ilams,ilamg,N0_r,  &
-                                              N0_s,N0_g
-      DOUBLE PRECISION :: fmelt_s,fmelt_g,cback,x,eta,f_d
-      LOGICAL, DIMENSION(kts:kte) :: L_qr,L_qi,L_qs,L_qg
-      INTEGER :: i,k,k_0,kbot,n,ihail2
-      LOGICAL :: melti
-      REAL, PARAMETER :: xam_r = 3.14159*1000./6.
-      REAL, PARAMETER :: xbm_r = 3., xbm_s = 3., xbm_g = 3.
-      REAL, PARAMETER :: xobms = 1./3., xobmg = 1./3.
-!+---+
-      INTEGER, PARAMETER :: nrbins = 50
-      DOUBLE PRECISION, DIMENSION(nrbins+1) :: xxDx
-      DOUBLE PRECISION, DIMENSION(nrbins) :: xxDs,xdts,xxDg,xdtg
-      DOUBLE PRECISION, PARAMETER :: lamda_radar = 0.10           ! in meters
-      DOUBLE PRECISION :: K_w,lamda4,PI5
-      COMPLEX*16 :: m_w_0,m_i_0
-      DOUBLE PRECISION, DIMENSION(nrbins+1) :: simpson
-      DOUBLE PRECISION, DIMENSION(3), PARAMETER :: basis = (/1.d0/3.d0,&
-                        4.d0/3.d0,1.d0/3.d0/)
-      INTEGER, PARAMETER :: slen = 20
-      CHARACTER(len=slen) :: mixingrulestring_s,matrixstring_s,        &
-              inclusionstring_s,hoststring_s,hostmatrixstring_s,       &
-              hostinclusionstring_s,mixingrulestring_g,matrixstring_g, &
-              inclusionstring_g,hoststring_g,hostmatrixstring_g,       &
-              hostinclusionstring_g
-!..Single melting snow/graupel particle 90% meltwater on external sfc
-      DOUBLE PRECISION, PARAMETER :: melt_outside_s = 0.9d0
-      DOUBLE PRECISION, PARAMETER :: melt_outside_g = 0.9d0
+      REAL, DIMENSION(kts:kte) :: RHOI,RHOS,RHOG,AFAR,AFAI,AFAS,AFAG,  &
+            NR3D,NI3D,NS3D,NG3D,LAMR,LAMI,LAMS,LAMG,LTK,LTK2,LQR,LQR2, &
+            LQI,LQI2,LQS,LQS2,LQG,LQG2,MVDR,MVDI,MVDS,MVDG,MVDH,EFDR,  &
+            EFDI,EFDS,EFDG,EFDH,KDXR,KDXI,KDXS,KDXG,KDXH,MVG0,DSLL,    &
+            TC1D,INHGR,esw,esi,qsi,ssi,LMDI,LROI,LROI2,LROI3,LMDS,LROS,&
+            LMDG,LROG,LLMI,LLMI2,LLMI3,LAI2,LAI22,LAI23,LMDI2,LMDI3,   &
+            ZETA3,LAR2,LAR22,LAR23,LLMR,LLMR2,LLMR3,LAS2,LLMS,LAG2,    &
+            LLMG,SASPR,GASPR,ADAGR,ZETA,ZETA2
+      REAL, DIMENSION(kts:kte) :: DBZR,DBZI,DBZS,DBZG,ZDRR,ZDRI,ZDRS,  &
+            ZDRG,KDPR,KDPI,KDPS,KDPG,SCAKW,SCAW0,SCAW1,SCAWA,SCAWB,    &
+            EPSIN,EPSS,ALPHE,LAMDZ,NEREL,ORA0,ORAR,ORA1,ORA2,ORA3,ORA4,&
+            SCA0,SCALA,SCALB,SCA2,SCAFA,SCAFB,SCFAA,SCFAB,SCFBB,SMLV,  &
+            GMLV,ZZHR,ZZHI,ZZHS,ZZHG,ZZVR,ZZVI,ZZVS,ZZVG,LMDR,EORA,    &
+            ORZHR,FDBZR,FZDRR,FKDPR,KDPR1,FDBZS,ZHROX,FZDRS,ZDROX,     &
+            ZDASP,LASP,FKDPS,KDROX,KDASP,FDBZG,FZDRG,FKDPG,ZHASP,RHASP,&
+            ORZHI,ZHZET,FDBZI,ZDZET,FZDRI,FKDPI,KDZET,RADS,RADG
+      INTEGER :: i,k,ihail2
+      REAL, PARAMETER :: ZXMIN1 = 1.E-28, DBZWL = 0.11, MLRA = 0.3
+      REAL, PARAMETER :: MIXA = -1.0892332E-2, MIXB = 2.0820143E-2
+      REAL, PARAMETER :: MIXC = 4.8553456E-6,  MIXD = -7.6529057E-5
+      REAL, PARAMETER :: MIXE = -1.1783334E-9, MIXF = -2.9599665E-6
+      REAL, PARAMETER :: MLIMIT = 1.E-2, SLIMIT = 1.E-2
 
-      PI5 = 3.14159*3.14159*3.14159*3.14159*3.14159
-      lamda4 = lamda_radar*lamda_radar*lamda_radar*lamda_radar
-      m_w_0 = m_complex_water_ray(lamda_radar,0.0d0)
-      m_i_0 = m_complex_ice_maetzler(lamda_radar,0.0d0)
-      K_w = (ABS((m_w_0*m_w_0-1.)/(m_w_0*m_w_0+2.)))**2.
-      do n = 1,nrbins+1
-         simpson(n) = 0.0d0
-      enddo
-      do n = 1,nrbins-1, 2
-         simpson(n) = simpson(n)+basis(1)
-         simpson(n+1) = simpson(n+1)+basis(2)
-         simpson(n+2) = simpson(n+2)+basis(3)
-      enddo
-      do n = 1, slen
-         mixingrulestring_s(n:n) = char(0)
-         matrixstring_s(n:n) = char(0)
-         inclusionstring_s(n:n) = char(0)
-         hoststring_s(n:n) = char(0)
-         hostmatrixstring_s(n:n) = char(0)
-         hostinclusionstring_s(n:n) = char(0)
-         mixingrulestring_g(n:n) = char(0)
-         matrixstring_g(n:n) = char(0)
-         inclusionstring_g(n:n) = char(0)
-         hoststring_g(n:n) = char(0)
-         hostmatrixstring_g(n:n) = char(0)
-         hostinclusionstring_g(n:n) = char(0)
-      enddo
-      mixingrulestring_s = 'maxwellgarnett'
-      hoststring_s = 'air'
-      matrixstring_s = 'water'
-      inclusionstring_s = 'spheroidal'
-      hostmatrixstring_s = 'icewater'
-      hostinclusionstring_s = 'spheroidal'
-      mixingrulestring_g = 'maxwellgarnett'
-      hoststring_g = 'air'
-      matrixstring_g = 'water'
-      inclusionstring_g = 'spheroidal'
-      hostmatrixstring_g = 'icewater'
-      hostinclusionstring_g = 'spheroidal'
-!..Create bins of snow (from 100 microns up to 2 cm).
-      xxDx(1) = 100.D-6
-      xxDx(nrbins+1) = 0.02d0
-      do n = 2,nrbins
-         xxDx(n) = DEXP(DFLOAT(n-1)/DFLOAT(nrbins)*DLOG(xxDx(nrbins+1)/&
-                   xxDx(1))+DLOG(xxDx(1)))
-      enddo
-      do n = 1,nrbins
-         xxDs(n) = DSQRT(xxDx(n)*xxDx(n+1))
-         xdts(n) = xxDx(n+1)-xxDx(n)
-      enddo
-!..Create bins of graupel (from 100 microns up to 5 cm).
-      xxDx(1) = 100.D-6
-      xxDx(nrbins+1) = 0.05d0
-      do n = 2,nrbins
-         xxDx(n) = DEXP(DFLOAT(n-1)/DFLOAT(nrbins)*DLOG(xxDx(nrbins+1)/&
-                   xxDx(1))+DLOG(xxDx(1)))
-      enddo
-      do n = 1,nrbins
-         xxDg(n) = DSQRT(xxDx(n)*xxDx(n+1))
-         xdtg(n) = xxDx(n+1)-xxDx(n)
-      enddo
-!--------------------------------------------------------------------------
-      do k = kts,kte
-         dBZ(k) = -35.
-         xmu_r(k) = AFAR(k)
-         xam_s(k) = PI*RHOS(k)/6.
-         xmu_s(k) = AFAS(k)
-         xam_g(k) = PI*RHOG(k)/6.
-         xmu_g(k) = AFAG(k)
-         xocms(k) = (1./xam_s(k))**(1./xbm_s)
-         xocmg(k) = (1./xam_g(k))**(1./xbm_g)
-      enddo
-!+---+-----------------------------------------------------------------+
-!..Put column of data into local arrays.
-!+---+-----------------------------------------------------------------+
-      do k = kts,kte
-!         temp(k) = tk1d(k)
-         ze_rain(k) = 1.E-22
-         ze_ice(k)  = 1.E-22
-         ze_snow(k) = 1.E-22
-         ze_graupel(k) = 1.E-22
+      DO K = kts,kte
+         ZZHR(K) = ZXMIN1;  ZZHI(K) = ZXMIN1;  ZZHS(K) = ZXMIN1
+         ZZHG(K) = ZXMIN1;  ZZVR(K) = ZXMIN1;  ZZVI(K) = ZXMIN1
+         ZZVS(K) = ZXMIN1;  ZZVG(K) = ZXMIN1;  RADS(K) = 0.
+         RADG(K) = 0.; DBZM(K) = -60.; ZDR(K) = 0.; KDP(K) = 0.
+         KDPR(K) = 0.; KDPI(K) = 0.; KDPS(K) = 0.; KDPG(K) = 0.
+         TC1D(K)  = tk1d(K)-t0
+         EPSIN(K) = 5.27137+2.16474E-2*TC1D(K)-1.31198E-3*TC1D(K)**2.
+         EPSS(K)  = 78.54*(1.-4.579E-3*(TC1D(K)-25.)+1.19E-5*(TC1D(K)- &
+                    25.)**2.-2.8E-8*(TC1D(K)-25.)**3.)
+         ALPHE(K) = -16.8129/tk1d(K)+6.09265E-2
+         LAMDZ(K) = 3.3836E-4*EXP(2513.98/tk1d(K))*1.E-2
+         NEREL(K) = 1.+2.*(LAMDZ(K)/DBZWL)**(1.-ALPHE(K))*SIN(PI*      &
+                    ALPHE(K)/2.)+(LAMDZ(K)/DBZWL)**(2.-2.*ALPHE(K))
+         SCAWA(K) = EPSIN(K)+((EPSS(K)-EPSIN(K))*((LAMDZ(K)/DBZWL)**(  &
+                    1.-ALPHE(K))*SIN(ALPHE(K)*PI/2.)+1.))/NEREL(K)
+         SCAWB(K) = ((EPSS(K)-EPSIN(K))*((LAMDZ(K)/DBZWL)**(1.-        &
+                    ALPHE(K))*COS(ALPHE(K)*PI/2.)))/NEREL(K)+1.25664*  &
+                    DBZWL/1.88496
+         SCAW0(K) = SCAWA(K)**2.+4.*SCAWA(K)+4.+SCAWB(K)**2.
+         SCAKW(K) = ((SCAWA(K)**2.+SCAWA(K)-2.+SCAWB(K)**2.)/          &
+                    SCAW0(K))**2.+(3.*SCAWB(K)/SCAW0(K))**2.
+         SCAW1(K) = SQRT(((SCAWA(K)-1.)/((SCAWA(K)-1.)**2.+SCAWB(K)**  &
+                    2.))**2.+(SCAWB(K)/((SCAWA(K)-1.)**2.+SCAWB(K)**   &
+                    2.)**2.))
+      ENDDO
+      DO K = kts,kte
          if (qr1d(k).GE.cmin2) then
-!            rr(k) = qr1d(k)
-!            N0_r(k) = xnor
-!            lamr = (xam_r*xcrg(3)*N0_r(k)/rr(k))**(1./xcre(1))
-!            ilamr(k) = 1./LAMR(K)
-            L_qr(k) = .true.
             LTK(k)  = LOG(tk1d(k))
             LQR(k)  = -1.*LOG(rhoz(k)*qr1d(k))
             LTK2(k) = LTK(k)*LTK(k)
@@ -2093,17 +2028,73 @@ CONTAINS
             AFAR(k) = MAX(0.,(6.*KDXR(k)-3.+SQRT(8.*KDXR(k)+1.))/(2.-  &
                       2.*KDXR(k)))
             LAMR(k) = (AFAR(k)+3.)/EFDR(k)*1.E6
-            N0R(k) = LOG(6.*rhoz(k)*qr1d(k)/PI/1.E3)+(4.+AFAR(k))*     &
-                     LOG(LAMR(k))-GAMLN(AFAR(k)+4.)
+            NR3D(k) = 6.*qr1d(k)*rhoz(k)*EXP(3.*LOG(LAMR(k))+          &
+                      LGAMMA(AFAR(k)+1.)-LGAMMA(AFAR(k)+4.))/PI/1.E3
+            ORA0(K) = 10.
+            ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+            LLMR(K) = LOG(LAMR(K))
+            LAR2(K) = LOG(AFAR(K)+2.)
+            LLMR2(K) = LLMR(K)*LLMR(K)
+            LLMR3(K) = LLMR2(K)*LLMR(K)
+            LAR22(K) = LAR2(K)*LAR2(K)
+            LAR23(K) = LAR22(K)*LAR2(K)
+            LMDR(K) = LOG(1.E6*MVDR(K))
+            EORA(K) = EXP(ORA0(K)*PI/180.)
+            ORZHR(K) = 0.90655197-0.22828439*LMDR(K)+0.72204255*       &
+                       EORA(K)+0.038145645*LMDR(K)**2.-0.55980115*     &
+                       EORA(K)**2.+0.10191288*LMDR(K)*EORA(K)-         &
+                       1.1570334E-3*LMDR(K)**3.+0.1019446*EORA(K)**3.+ &
+                       0.010382487*LMDR(K)*EORA(K)**2.-0.01654166*     &
+                       LMDR(K)**2.*EORA(K)
+            FDBZR(K) = 1950.2082+29.685692*LAR2(K)-17.761215*          &
+                       SQRT(LAR2(K))+328.61414*LOG(LLMR(K))**2.-       &
+                       1122.8963*SQRT(LLMR(K))
+            ZZHR(K) = NR3D(K)*10.**((FDBZR(K)-200.)/10.-18.)*ORZHR(K)
+            DBZR(K) = 10.*LOG10(1.E18*ZZHR(K))
+            IF (AFAR(K).GE.1.) THEN
+               FZDRR(K) = EXP(10.243103+0.46561642*LAR2(K)+1.7270962*  &
+                          LLMR(K)+5.8974032E-3*LAR22(K)-0.34268382*    &
+                          LLMR2(K)+0.10193409*LAR2(K)*LLMR(K)-         &
+                          0.11005788*LAR23(K)+0.015622039*LLMR3(K)-    &
+                          0.038623263*LAR2(K)*LLMR2(K)+0.10413007*     &
+                          LAR22(K)*LLMR(K))/1.E4*ORAR(K)/0.9409
+            ELSE
+               FZDRR(K) = EXP(19.61943+2.743765*LAR2(K)-2.1913656*     &
+                          LLMR(K)+0.067589745*LAR22(K)+0.0588952*      &
+                          LLMR2(K)-0.15553337*LAR2(K)*LLMR(K))/1.E4*   &
+                          ORAR(K)/0.9409
+            ENDIF
+            ZZVR(K)  = 10.**(DBZR(K)/10.-18.-FZDRR(K)/10.)
+            IF (MVDR(K).LT.1.E-4) THEN
+               FKDPR(K) = 1.E-15
+            ELSEIF (MVDR(K).GE.1.E-4.AND.MVDR(K).LT.5.E-4) THEN
+               FKDPR(K) = EXP(35.450715+2.4505311*LAR2(K)-1.4651261*   &
+                          LLMR(K)-0.22974058*LAR2(K)-0.22139098*       &
+                          LLMR(K)**2.+0.29382343*LAR2(K)*LLMR(K))/1.E10
+            ELSE
+               IF (AFAR(K).LE.3.) THEN
+                  FKDPR(K) = EXP(35.450715+2.4505311*LAR2(K)-1.4651261*&
+                             LLMR(K)-0.22974058*LAR2(K)-0.22139098*    &
+                             LLMR(K)**2.+0.29382343*LAR2(K)*LLMR(K))/  &
+                             1.E10
+               ELSE
+                  FKDPR(K) = EXP((38.35738+8.8170679*LAR2(K)-8.971269* &
+                             LLMR(K)+0.49634922*LAR2(K)**2.+0.51897478*&
+                             LLMR(K)**2.-1.0162854*LAR2(K)*LLMR(K))/(  &
+                             1.+0.16321213*LAR2(K)-0.1676006*LLMR(K)+  &
+                             4.0072333E-3*LAR2(K)**2.+4.9701831E-3*    &
+                             LLMR(K)**2.-9.1512549E-3*LAR2(K)*         &
+                             LLMR(K)))/1.E10
+               ENDIF
+            ENDIF
+            KDPR(K) = NR3D(K)*FKDPR(K)*0.11/DBZWL*ORAR(K)/0.9409
+            IF (ZZVR(K).GT.ZZHR(K)) ZZVR(K) = 0.9999*ZZHR(K)
+            ZDRR(K) = 10.*LOG10(ZZHR(K)/ZZVR(K))
          else
-!            rr(k) = 1.E-12
-            L_qr(k) = .false.
             AFAR(k) = 0.
             LAMR(k) = 0.
-            N0R(k) = 0.
          endif
          if (qi1d(k).GE.cmin2) then
-            L_qi(k) = .true.
             esw(k) = MIN(0.99*prez(k),POLYSVP(tk1d(k),0))
             esi(k) = MIN(0.99*prez(k),POLYSVP(tk1d(k),1))
             IF (esi(k).GT.esw(k)) esi(k) = esw(k)
@@ -2122,7 +2113,9 @@ CONTAINS
                   RHOI(k) = -32.332*ssi(k)+900.
                ENDIF
             ENDIF
-            LTK(k)  = LOG(TK1D(k))
+            ADAGR(k) = INHGR(k)**THRD
+            ZETA(k) = (ADAGR(k)-1.)/(ADAGR(k)+2.)
+            LTK(k)  = LOG(tk1d(k))
             LQI(k)  = -1.*LOG(rhoz(k)*qi1d(k))
             LTK2(k) = LTK(k)*LTK(k)
             LQI2(k) = LQI(k)*LQI(k)
@@ -2142,20 +2135,149 @@ CONTAINS
             AFAI(k) = MAX(0.,(6.*KDXI(k)-3.+SQRT(8.*KDXI(k)+1.))/(2.-  &
                       2.*KDXI(k)))
             LAMI(k) = (AFAI(k)+3.)/EFDI(k)*1.E6
-            N0I(k)  = LOG(6.*rhoz(k)*qi1d(k)/PI/RHOI(k))+(4.+AFAI(k))* &
-                      LOG(LAMI(k))-GAMLN(AFAI(k)+4.)
+            NI3D(k) = 6.*qi1d(k)*rhoz(k)*EXP(3.*LOG(LAMI(k))+          &
+                      LGAMMA(AFAI(k)+1.)-LGAMMA(AFAI(k)+4.))/PI/RHOI(k)
+            LLMI(K) = LOG(LAMI(K))
+            LAI2(K) = LOG(AFAI(K)+2.)
+            LROI(K) = LOG(RHOI(K))
+            LMDI(K) = LOG(1.E6*MVDI(K))
+            LLMI2(K) = LLMI(K)*LLMI(K)
+            LLMI3(K) = LLMI2(K)*LLMI(K)
+            LAI22(K) = LAI2(K)*LAI2(K)
+            LAI23(K) = LAI22(K)*LAI2(K)
+            LMDI2(K) = LMDI(K)*LMDI(K)
+            LMDI3(K) = LMDI2(K)*LMDI(K)
+            LROI2(K) = LROI(K)*LROI(K)
+            LROI3(K) = LROI2(K)*LROI(K)
+            ZETA2(K) = ZETA(K)*ZETA(K)
+            ZETA3(K) = ZETA2(K)*ZETA(K)
+            IF ((ADAGR(K)-1.).GE.SLIMIT) THEN
+               ORA0(K)  = 30.
+               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               FDBZI(K) = 389.04082+18.161704*LAI2(K)+1.3401764*       &
+                          LAI22(K)-0.07360894*LAI23(K)-26.137103*LLMI(K)
+               ZHROX(K) = 1.9382E-6*EXP(1.9260732373*LROI(K))
+               LMDI(K)  = LOG(1.E6*MVDI(K))
+               EORA(K)  = EXP(ORA0(K)*PI/180.)
+               ORZHI(K) = 1.0455067-0.078843114*LMDI(K)+0.010633945*   &
+                          EORA(K)+4.5711471E-5*LMDI2(K)-0.03498671*    &
+                          EORA(K)**2.+0.059252519*LMDI(K)*EORA(K)-     &
+                          1.6814661E-6*LMDI3(K)+0.0078095037*          &
+                          EORA(K)**3.-0.0076692047*LMDI(K)*            &
+                          EORA(K)**2.+2.020532E-5*LMDI2(K)*EORA(K)
+               ZHZET(K) = 1.
+               ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*      &
+                          ZHROX(K)*ZHZET(K)*ORZHI(K)
+               DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
+               ZDROX(K) = 0.0585053*LROI3(K)-0.80223023*LROI2(K)+      &
+                          3.75756297*LROI(K)-5.86526003
+               ZDZET(K) = MAX(0.,-0.01644484+0.010454643*LMDI(K)+      &
+                          9.4367973*ZETA(K)-0.0026137203*LMDI2(K)+     &
+                          5.7453232*ZETA2(K)+0.3234453*LMDI(K)*ZETA(K)+&
+                          2.0622912E-4*LMDI3(K)-1.3945604*ZETA3(K)-    &
+                          2.2879493*LMDI(K)*ZETA2(K)-0.013856582*      &
+                          LMDI2(K)*ZETA(K))
+               FZDRI(K) = EXP((15.181145+0.34794935*LAI2(K)+0.11677701*&
+                          LAI22(K)-6.3942628E-3*LAI23(K)-1.0984758*    &
+                          LLMI(K))/(1.+0.022930408*LAI2(K)+            &
+                          7.5639466E-3*LAI22(K)-4.146688E-4*LAI23(K)-  &
+                          0.071648235*LLMI(K)))/1.E6*ORAR(K)/0.5779*   &
+                          ZDZET(K)*ZDROX(K)
+               ZZVI(K)  = 10.**(DBZI(K)/10.-18.+FZDRI(K)/10.)
+               FKDPI(K) = EXP((54.728473+7.4097498*LAI2(K)-7.5413134*  &
+                          LLMI(K)+0.25580463*LAI22(K)+0.25257362*      &
+                          LLMI2(K)-0.50222586*LAI2(K)*LLMI(K))/(1.+    &
+                          0.081702748*LAI2(K)-0.085895343*LLMI(K)+     &
+                          7.6712618E-4*LAI22(K)+4.5412963E-4*LLMI2(K)- &
+                          9.3521894E-4*LAI2(K)*LLMI(K)))/2.E18
+               KDROX(K) = 1.75E-6*EXP(1.93990711*LROI(K))
+               KDZET(K) = MAX(0.,-0.0067191022+0.030489666*LMDI(K)+    &
+                          7.6470878*ZETA(K)-0.01097138*LMDI2(K)+       &
+                          9.8497711*ZETA2(K)+0.83287327*LMDI(K)*       &
+                          ZETA(K)+9.1590015E-4*LMDI3(K)-7.2917335*     &
+                          ZETA3(K)-2.2235781*LMDI(K)*ZETA2(K)-         &
+                          0.053116593*LMDI2(K)*ZETA(K))
+               KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*DBZWL/    &
+                          0.11*ORAR(K)/0.5779
+               IF (ZZVI(K).LT.ZZHI(K)) ZZVI(K) = 1.0001*ZZHI(K)
+               ZDRI(K) = 10.*LOG10(ZZVI(K)/ZZHI(K))
+            ELSEIF ((1.-ADAGR(K)).GE.SLIMIT) THEN
+               ORA0(K)  = 10.
+               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               FDBZI(K) = 390.47265+18.157805*LAI2(K)+1.3558212*       &
+                          LAI22(K)-0.074452587*LAI23(K)-26.228751*     &
+                          LLMI(K)
+               ZHROX(K) = 1.4172E-6*EXP(1.9687416987*LROI(K))
+               LMDI(K)  = LOG(1.E6*MVDI(K))
+               EORA(K)  = EXP(ORA0(K)*PI/180.)
+               ORZHI(K) = 0.67789527-9.5992589E-5*LMDI(K)+0.7382078*   &
+                          EORA(K)-0.0010254973*LMDI2(K)-0.57079919*    &
+                          EORA(K)**2.+0.025474344*LMDI(K)*EORA(K)+     &
+                          5.146872E-7*LMDI3(K)+0.15025366*EORA(K)**3.- &
+                          0.021740747*LMDI(K)*EORA(K)**2.+9.0541117E-4*&
+                          LMDI2(K)*EORA(K)
+               ZHZET(K) = 1.1531946-0.10474946*LMDI(K)+1.3268439*      &
+                          ZETA(K)+0.013483871*LMDI2(K)+3.0239757*      &
+                          ZETA2(K)-0.53774565*LMDI(K)*ZETA(K)-         &
+                          7.6839476E-4*LMDI3(K)+4.3808336*ZETA3(K)+    &
+                          0.080046674*LMDI(K)*ZETA2(K)+0.015810946*    &
+                          LMDI2(K)*ZETA(K)
+               ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*      &
+                          ZHROX(K)*ZHZET(K)*ORZHI(K)
+               DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
+               ZDROX(K) = 0.05683556*LROI3(K)-0.77585835*LROI2(K)+     &
+                          3.62207807*LROI(K)-5.63826259
+               ZDZET(K) = MAX(0.,0.12567123-0.077409338*LMDI(K)-       &
+                          8.3245922*ZETA(K)+0.013440196*LMDI2(K)+      &
+                          8.7068519*ZETA2(K)-0.53878869*LMDI(K)*       &
+                          ZETA(K)-7.0609359E-4*LMDI3(K)+6.371616*      &
+                          ZETA3(K)-1.6563927*LMDI(K)*ZETA2(K)+         &
+                          0.032682807*LMDI2(K)*ZETA(K))
+               FZDRI(K) = EXP((15.587817+0.23578544*LAI2(K)+           &
+                          0.045497555*LAI22(K)-1.0862071*LLMI(K)+      &
+                          3.4688369E-3*LLMI2(K))/(1.+0.015556043*      &
+                          LAI2(K)+2.1779895E-3*LAI22(K)+7.2733931E-5*  &
+                          LAI23(K)-0.064401818*LLMI(K)))/1.E6*ORAR(K)/ &
+                          0.9409*ZDZET(K)*ZDROX(K)
+               ZZVI(K)  = 10.**(DBZI(K)/10.-18.-FZDRI(K)/10.)
+               FKDPI(K) = EXP((55.096057+7.4047265*LAI2(K)-7.6277374*  &
+                          LLMI(K)+0.25324833*LAI22(K)+0.25735457*      &
+                          LLMI2(K)-0.50528828*LAI2(K)*LLMI(K))/(1.+    &
+                          0.078240442*LAI2(K)-0.083742581*LLMI(K)+     &
+                          5.4080817E-4*LAI22(K)+2.9610344E-4*LLMI2(K)- &
+                          5.9621769E-4*LAI2(K)*LLMI(K)))/2.E18
+               KDROX(K) = 1.89E-6*EXP(1.92963337*LROI(K))
+               KDZET(K) = MAX(0.,0.044182106-0.020578987*LMDI(K)-      &
+                          8.8659688*ZETA(K)+0.0022174675*LMDI2(K)+     &
+                          5.2415098*ZETA2(K)-0.40918383*LMDI(K)*       &
+                          ZETA(K)-3.696556E-5*LMDI3(K)+3.5504491*      &
+                          ZETA3(K)-1.4353113*LMDI(K)*ZETA2(K)+         &
+                          0.022796706*LMDI2(K)*ZETA(K))
+               KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*DBZWL/    &
+                          0.11*ORAR(K)/0.9409
+               IF (ZZVI(K).GT.ZZHI(K)) ZZVI(K) = 0.9999*ZZHI(K)
+               ZDRI(K) = 10.*LOG10(ZZHI(K)/ZZVI(K))
+            ELSEIF (ABS(ADAGR(K)-1.).LT.SLIMIT) THEN
+               ORA0(K)  = 45.
+               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               FDBZI(K) = 390.47265+18.157805*LAI2(K)+1.3558212*       &
+                          LAI22(K)-0.074452587*LAI23(K)-26.228751*     &
+                          LLMI(K)
+               ZHROX(K) = 1.9382E-6*EXP(1.9260732373*LROI(K))
+               ORZHI(K) = 1.
+               ZHZET(K) = 1.
+               ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*      &
+                          ZHROX(K)*ZHZET(K)*ORZHI(K)
+               DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
+               ZZVI(K)  = 10.**(DBZI(K)/10.-18.)
+               KDPI(K)  = 0.
+               ZDRI(K)  = 0.
+            ENDIF
          else
-            L_qi(k) = .false.
             AFAI(k) = 0.
             LAMI(k) = 0.
-            N0I(k) = 0.
          endif
          if (qs1d(k).GE.cmin2) then
-!            rs(k) = qs1d(k)
-!            N0_s(k) = xnos*EXP(-alpha*temp_C)
-!            lams = (xam_s(k)*xcsg(3)*N0_s(k)/rs(k))**(1./xcse(1))
-!            ilams(k) = 1./LAMS(k)
-            L_qs(k) = .true.
             LTK(k) = LOG(tk1d(k))
             LQS(k) = -1.*LOG(rhoz(k)*qs1d(k))
             LTK2(k) = LTK(k)*LTK(k)
@@ -2168,488 +2290,253 @@ CONTAINS
             MVDS(k) = EXP(MDS1+MDS2*LTK(k)+MDS3*LQS(k)+MDS4*LTK2(k)+   &
                       MDS5*LQS2(k)+MDS6*LTK(k)*LQS(k))
             EFDS(k) = EXP(EFD1+EFD2*LOG(MVDS(k))+EFD3*LOG(RHOS(k))+    &
-                      EFD4*LOG(MVDS(k))**2.+EFD5*LOG(RHOS(k))**2.+     &
-                      EFD6*LOG(MVDS(k))*LOG(RHOS(k)))
+                      EFD4*LOG(MVDS(k))**2.+EFD5*LOG(RHOS(k))**2.+EFD6*&
+                      LOG(MVDS(k))*LOG(RHOS(k)))
             EFDS(k) = MAX(MIN(EFDS(k),MVDS(k)/KMIN**THRD),MVDS(k)/     &
                       KMAX**THRD)
             KDXS(k) = MAX(KMIN,MIN(KMAX,(MVDS(k)/EFDS(k))**3.))
             AFAS(k) = MAX(0.,(6.*KDXS(k)-3.+SQRT(8.*KDXS(k)+1.))/(2.-  &
                       2.*KDXS(k)))
             LAMS(k) = (AFAS(k)+3.)/EFDS(k)*1.E6
-            N0S(k) = LOG(6.*rhoz(k)*qs1d(k)/PI/RHOS(k))+(4.+AFAS(k))*  &
-                     LOG(LAMS(k))-GAMLN(AFAS(k)+4.)
+            NS3D(k) = 6.*qs1d(k)*rhoz(k)*EXP(3.*LOG(LAMS(k))+          &
+                      LGAMMA(AFAS(k)+1.)-LGAMMA(AFAS(k)+4.))/PI/RHOS(k)
+            SASPR(k) = 0.65
+            IF (SMLF(K).GE.MLIMIT) THEN
+               ORA0(K) = 10.*SMLF(K)+(1.-SMLF(K))*40.
+               ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               ORA1(K) = (3.+4.*ORAR(K)+ORAR(K)**4.)/8.
+               ORA2(K) = (3.-4.*ORAR(K)+ORAR(K)**4.)/8.
+               ORA3(K) = (1.-ORAR(K)**4.)/8.
+               SCA0(K)  = MAX(1.E-6,SQRT(SASPR(K)**(-2.)-1.))
+               SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(1.-            &
+                          ATAN(SCA0(K))/SCA0(K))
+               SCALB(K) = (1.-SCALA(K))/2.
+               SMLV(K)  = (RHOS(K)/(1.E3/SMLF(K)-1.E3+RHOS(K)))**MLRA
+               SCAW1(K) = MIXA+MIXB/SMLV(K)+MIXC*RHOS(K)+MIXD/         &
+                          SMLV(K)**2.+MIXE*RHOS(K)**2.+MIXF*RHOS(K)/   &
+                          SMLV(K)
+               SCAFA(K) = 1./(SCALA(K)+SCAW1(K))
+               SCAFB(K) = 1./(SCALB(K)+SCAW1(K))
+               RADS(K) = NS3D(K)*EXP(LGAMMA(AFAS(K)+7.)-LGAMMA(AFAS(K)+&
+                         1.)-6.*LOG(LAMS(K)))
+               ZZHS(K) = MAX(ZXMIN1,RADS(K)*(ORA1(K)*SCAFB(K)**2.+2.*  &
+                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
+                         SCAFA(K)**2.)/(9.*SCAKW(K)))
+               ZZVS(K) = MAX(ZXMIN1,RADS(K)*(ORA1(K)*SCAFA(K)**2.+2.*  &
+                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
+                         SCAFB(K)**2.)/(9.*SCAKW(K)))
+               DBZS(K) = 10.*LOG10(1.E18*ZZHS(K))
+               KDPS(K) = 3.E4*PI/DBZWL*NS3D(K)*EXP(LGAMMA(AFAS(K)+4.)- &
+                         LGAMMA(AFAS(K)+1.)-3.*LOG(LAMS(K)))*          &
+                         ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
+               IF (ZZVS(K).GT.ZZHS(K)) ZZVS(K) = 0.9999*ZZHS(K)
+               ZDRS(K) = 10.*LOG10(ZZHS(K)/ZZVS(K))
+            ELSE
+               ORA0(K)  = 40.
+               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               LLMS(K)  = LOG(LAMS(K))
+               LAS2(K)  = LOG(AFAS(K)+2.)
+               LROS(K)  = LOG(RHOS(K))
+               LASP(K)  = LOG(200.*MAX(0.01,SASPR(K)))
+               FDBZS(K) = 428.62235+18.226687*LAS2(K)+1.299724*        &
+                          LAS2(K)**2.-0.070558679*LAS2(K)**3.-         &
+                          26.070123*LLMS(K)
+               ZHROX(K) = 1.544E-5*EXP(1.95714566*LROS(K))
+               ZZHS(K)  = NS3D(K)*10.**((FDBZS(K)-250.)/10.-18.)*      &
+                          ZHROX(K)
+               DBZS(K)  = 10.*LOG10(1.E18*ZZHS(K))
+               ZDROX(K) = 0.14542522*LROS(K)**3.-1.97576772*           &
+                          LROS(K)**2.+9.33469066*LROS(K)-14.95051206
+               ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-0.10877652*   &
+                          LASP(K)**2.+0.24567081*LASP(K)+3.06007047)
+               FZDRS(K) = 0.384*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
+               ZZVS(K)  = 10.**(DBZS(K)/10.-18.-FZDRS(K)/10.)
+               FKDPS(K) = EXP(44.30884+2.9903578*LAS2(K)-0.25943237/   &
+                          LAS2(K)-3.0036608*LLMS(K))/1.E15
+               KDROX(K) = 1.974E-5*EXP(1.90820312*LROS(K))
+               KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-0.10043861*   &
+                          LASP(K)**2.+0.22095032*LASP(K)+3.06677159)
+               KDPS(K)  = NS3D(K)*FKDPS(K)*KDROX(K)*KDASP(K)*DBZWL/    &
+                          0.11*ORAR(K)/0.37728
+               IF (ZZVS(K).GT.ZZHS(K)) ZZVS(K) = 0.9999*ZZHS(K)
+               ZDRS(K) = 10.*LOG10(ZZHS(K)/ZZVS(K))
+            ENDIF
          else
-!            rs(k) = 1.E-12
-            L_qs(k) = .false.
             AFAS(k) = 0.
             LAMS(k) = 0.
-            N0S(k) = 0.            
          endif
          if (qg1d(k).GE.cmin2) then
-!            rg(k) = qg1d(k)
-!            N0_g(k) = xnog
-!            lamg = (xam_g(k)*xcgg(3)*N0_g(k)/rg(k))**(1./xcge(1))
-!            ilamg(k) = 1./LAMG(k)
-            L_qg(k) = .true.
-            LTK(k) = LOG(tk1d(k))
-            LQG(k) = -1.*LOG(rhoz(k)*qg1d(k))
-            LTK2(k) = LTK(k)*LTK(k)
-            LQG2(k) = LQG(k)*LQG(k)
-            RHOG(k) = MIN(900.,1.E3*GMLF(k)+(1.-GMLF(k))*MAX(250.,     &
-                      EXP(-0.056433*LQG(k)+6.608048)))
-            MVDG(k) = EXP(MDG1+MDG2*LTK(k)+MDG3*LQG(k)+MDG4*LTK2(k)+   &
-                      MDG5*LQG2(k)+MDG6*LTK(k)*LQG(k))
-            EFDG(k) = EXP(EFD1+EFD2*LOG(MVDG(k))+EFD3*LOG(RHOG(k))+    &
-                      EFD4*LOG(MVDG(k))**2.+EFD5*LOG(RHOG(k))**2.+     &
-                      EFD6*LOG(MVDG(k))*LOG(RHOG(k)))
-            EFDG(k) = MAX(MIN(EFDG(k),MVDG(k)/KMIN**THRD),MVDG(k)/     &
-                      KMAX**THRD)
-            KDXG(k) = MAX(KMIN,MIN(KMAX,(MVDG(k)/EFDG(k))**3.))
-            AFAG(k) = MAX(0.,(6.*KDXG(k)-3.+SQRT(8.*KDXG(k)+1.))/(2.-  &
-                      2.*KDXG(k)))
-            LAMG(k) = (AFAG(k)+3.)/EFDG(k)*1.E6
-            N0G(k) = LOG(6.*rhoz(k)*qg1d(k)/PI/RHOG(k))+(4.+AFAG(k))*  &
-                     LOG(LAMG(k))-GAMLN(AFAG(k)+4.)
+            TC1D(k) = tk1d(k)-t0
+            MVG0(k) = EXP(8.8283+0.25*LOG(rhoz(k)*qg1d(k)))/1.E6
+            DSLL(k) = MAX(1.E-3,MIN(1.,2.*1.E-2*(EXP(MIN(20.,-TC1D(k)/ &
+                      MAX(0.1,(1.1E4*rhoz(k)*(qc1d(k)+qr1d(k))-1.3E3*  &
+                      rhoz(k)*qg1d(k)+1.))))-1.)))
+            if (ihail.eq.2) then
+               IF (MVG0(k).GT.DSLL(k)) THEN
+                  ihail2 = 1
+               ELSE
+                  ihail2 = 0
+               ENDIF
+            ENDIF
+            if (ihail.eq.1.or.ihail2.eq.1) then ! Hail
+               RHOG(k) = rhohail
+               LTK(k) = LOG(tk1d(k))
+               LQG(k) = -1.*LOG(rhoz(k)*qg1d(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQG2(k) = LQG(k)*LQG(k)
+               MVDH(k) = EXP(MDH1+MDH2*LTK(k)+MDH3*LQG(k)+MDH4*LTK2(k)+&
+                         MDH5*LQG2(k)+MDH6*LTK(k)*LQG(k))
+               EFDH(k) = EXP(EFD1+EFD2*LOG(MVDH(k))+EFD3*LOG(9.E2)+    &
+                         EFD4*LOG(MVDH(k))**2.+EFD5*LOG(9.E2)**2.+EFD6*&
+                         LOG(MVDH(k))*LOG(9.E2))
+               EFDH(k) = MAX(MIN(EFDH(k),MVDH(k)/KMIN**THRD),MVDH(k)/  &
+                         KMAX**THRD)
+               KDXH(k) = MAX(KMIN,MIN(KMAX,(MVDH(k)/EFDH(k))**3.))
+               AFAG(k) = MAX(0.,(6.*KDXH(k)-3.+SQRT(8.*KDXH(k)+1.))/(  &
+                         2.-2.*KDXH(k)))
+               LAMG(k) = (AFAG(k)+3.)/EFDH(k)*1.E6
+               NG3D(k) = 6.*qg1d(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
+                         LGAMMA(AFAG(k)+1.)-LGAMMA(AFAG(k)+4.))/PI/    &
+                         RHOG(k)
+               GASPR(k) = 0.85
+            elseif (ihail.eq.0.or.ihail2.eq.0) then  ! Graupel
+               LTK(k) = LOG(tk1d(k))
+               LQG(k) = -1.*LOG(rhoz(k)*qg1d(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQG2(k) = LQG(k)*LQG(k)
+               RHOG(k) = MIN(900.,1.E3*GMLF(k)+(1.-GMLF(k))*MAX(250.,  &
+                         EXP(-0.056433*LQG(k)+6.608048)))
+               MVDG(k) = EXP(MDG1+MDG2*LTK(k)+MDG3*LQG(k)+MDG4*LTK2(k)+&
+                         MDG5*LQG2(k)+MDG6*LTK(k)*LQG(k))
+               EFDG(k) = EXP(EFD1+EFD2*LOG(MVDG(k))+EFD3*LOG(RHOG(k))+ &
+                         EFD4*LOG(MVDG(k))**2.+EFD5*LOG(RHOG(k))**2.+  &
+                         EFD6*LOG(MVDG(k))*LOG(RHOG(k)))
+               EFDG(k) = MAX(MIN(EFDG(k),MVDG(k)/KMIN**THRD),MVDG(k)/  &
+                         KMAX**THRD)
+               KDXG(k) = MAX(KMIN,MIN(KMAX,(MVDG(k)/EFDG(k))**3.))
+               AFAG(k) = MAX(0.,(6.*KDXG(k)-3.+SQRT(8.*KDXG(k)+        &
+                         1.))/(2.-2.*KDXG(k)))
+               LAMG(k) = (AFAG(k)+3.)/EFDG(k)*1.E6
+               NG3D(k) = 6.*qg1d(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
+                         LGAMMA(AFAG(k)+1.)-LGAMMA(AFAG(k)+4.))/PI/    &
+                         RHOG(k)
+               GASPR(k) = 0.75
+            ENDIF
+            IF (GMLF(K).GE.MLIMIT) THEN
+               ORA0(K) = 10.*GMLF(K)+(1.-GMLF(K))*40.
+               ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               ORA1(K) = (3.+4.*ORAR(K)+ORAR(K)**4.)/8.
+               ORA2(K) = (3.-4.*ORAR(K)+ORAR(K)**4.)/8.
+               ORA3(K) = (1.-ORAR(K)**4.)/8.
+               IF (GASPR(K).GT.1.01) THEN
+                  SCA0(K)  = SQRT(1.-GASPR(K)**(-2.))
+                  SCALA(K) = (1.-SCA0(K)**2.)/SCA0(K)**2.*(LOG((1.+    &
+                             SCA0(K))/(1.-SCA0(K)))/2./SCA0(K)-1.)
+               ELSEIF (GASPR(K).LT.0.99) THEN
+                  SCA0(K)  = MAX(1.E-6,SQRT(GASPR(K)**(-2.)-1.))
+                  SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(1.-         &
+                             ATAN(SCA0(K))/SCA0(K))
+               ELSE
+                  SCALA(K) = THRD
+               ENDIF
+               SCALB(K) = (1.-SCALA(K))/2.
+               GMLV(K)  = (RHOG(K)/(1.E3/GMLF(K)-1.E3+RHOG(K)))**MLRA
+               SCAW1(K) = MIXA+MIXB/GMLV(K)+MIXC*RHOG(K)+MIXD/         &
+                          GMLV(K)**2.+MIXE*RHOG(K)**2.+MIXF*RHOG(K)/   &
+                          GMLV(K)
+               SCAFA(K) = 1./(SCALA(K)+SCAW1(K))
+               SCAFB(K) = 1./(SCALB(K)+SCAW1(K))
+               RADG(K) = NG3D(K)*EXP(LGAMMA(AFAG(K)+7.)-LGAMMA(AFAG(K)+&
+                         1.)-6.*LOG(LAMG(K)))
+               ZZHG(K) = MAX(ZXMIN1,RADG(K)*(ORA1(K)*SCAFB(K)**2.+2.*  &
+                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
+                         SCAFA(K)**2.)/(9.*SCAKW(K)))
+               ZZVG(K) = MAX(ZXMIN1,RADG(K)*(ORA1(K)*SCAFA(K)**2.+2.*  &
+                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
+                         SCAFB(K)**2.)/(9.*SCAKW(K)))
+               DBZG(K) = 10.*LOG10(1.E18*ZZHG(K))
+               IF (ZZVG(K).LE.ZZHG(K)) THEN
+                  ZDRG(K) = 10.*LOG10(ZZHG(K)/ZZVG(K))
+               ELSE
+                  ZDRG(K) = 10.*LOG10(ZZVG(K)/ZZHG(K))
+               ENDIF
+               KDPG(K) = 3.E4*PI/DBZWL*NG3D(K)*EXP(LGAMMA(AFAG(K)+4.)- &
+                         LGAMMA(AFAG(K)+1.)-3.*LOG(LAMG(K)))*          &
+                         ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
+            ELSE
+               ORA0(K) = 40.
+               ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               LLMG(K) = LOG(LAMG(K))
+               LAG2(K) = LOG(AFAG(K)+2.)
+               LROG(K) = LOG(RHOG(K))
+               IF (GASPR(K).LE.1.) THEN
+                  LASP(K)  = LOG(200.*MAX(0.01,GASPR(K)))
+                  ZHROX(K) = 1.544E-5*EXP(1.95714566*LROG(K))
+                  FDBZG(K) = 428.62235+18.226687*LAG2(K)+1.299724*     &
+                             LAG2(K)**2.-0.070558679*LAG2(K)**3.-      &
+                             26.070123*LLMG(K)
+                  ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-18.)*   &
+                             ZHROX(K)
+                  DBZG(K)  = 10.*LOG10(1.E18*ZZHG(K))
+                  ZDROX(K) = 0.14542522*LROG(K)**3.-1.97576772*        &
+                             LROG(K)**2.+9.33469066*LROG(K)-14.95051206
+                  ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-0.10877652*&
+                             LASP(K)**2.+0.24567081*LASP(K)+3.06007047)
+                  FZDRG(K) = 0.384*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
+                  ZZVG(K)  = 10.**(DBZG(K)/10.-18.-FZDRG(K)/10.)
+                  FKDPG(K) = EXP(44.30884+2.9903578*LAG2(K)-0.25943237/&
+                             LAG2(K)-3.0036608*LLMG(K))/1.E15
+                  KDROX(K) = 1.974E-5*EXP(1.90820312*LROG(K))
+                  KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-0.10043861*&
+                             LASP(K)**2.+0.22095032*LASP(K)+3.06677159)
+                  KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*  &
+                                  DBZWL/0.11*ORAR(K)/0.37728
+                  IF (ZZVG(K).GT.ZZHG(K)) ZZVG(K) = 0.9999*ZZHG(K)
+                  ZDRG(K) = 10.*LOG10(ZZHG(K)/ZZVG(K))
+               ELSE
+                  LASP(K)  = LOG(200.*MIN(1.E2,GASPR(K)))
+                  FDBZG(K) = 428.57273+18.226687*LAG2(K)+1.299724*     &
+                             LAG2(K)**2.-0.070558679*LAG2(K)**3.-      &
+                             26.070123*LLMG(K)
+                  ZHROX(K) = 1.63247E-5*EXP(1.9461111336*LROG(K))
+                  ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-18.)*   &
+                             ZHROX(K)
+                  DBZG(K)  = 10.*LOG10(1.E18*ZZHG(K))
+                  ZDROX(K) = 0.21196364*LROG(K)**3.-2.99793531*        &
+                             LROG(K)**2.+14.49837419*LROG(K)-23.49571954
+                  ZDASP(K) = MAX(0.,0.04602081*LASP(K)**3.-1.22524043* &
+                             LASP(K)**2.+10.864809*LASP(K)-30.01372544)
+                  FZDRG(K) = 0.328*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
+                  ZZVG(K)  = 10.**(DBZG(K)/10.-18.+FZDRG(K)/10.)
+                  FKDPG(K) = EXP(44.18702+2.9903578*LAG2(K)-0.25943237/&
+                             LAG2(K)-3.0036608*LLMG(K))/1.E15
+                  KDROX(K) = 1.424E-5*EXP(1.97240205*LROG(K))
+                  KDASP(K) = MAX(0.,0.043095*LASP(K)**3.-1.16143866*   &
+                             LASP(K)**2.+10.43169617*LASP(K)-          &
+                             29.07639304)
+                  KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*DBZWL/  &
+                            0.11*ORAR(K)/0.37728
+                  IF (ZZVG(K).LT.ZZHG(K)) ZZVG(K) = 1.0001*ZZHG(K)
+                  ZDRG(K) = 10.*LOG10(ZZVG(K)/ZZHG(K))
+               ENDIF
+            ENDIF
          else
-!            rg(k) = 1.E-12
-            L_qg(k) = .false.
             AFAG(k) = 0.
             LAMG(k) = 0.
-            N0G(k) = 0.
          endif
-      enddo
-!+---+-----------------------------------------------------------------+
-!..Locate K-level of start of melting (k_0 is level above).
-!+---+-----------------------------------------------------------------+
-      melti = .false.
-      k_0 = kts
-      do k = kte-1,kts,-1
-         if ((tk1d(k).gt.273.15).and.L_qr(k).and.(L_qs(k+1).or.        &
-         L_qg(k+1))) then
-            k_0 = MAX(k+1,k_0)
-            melti = .true.
-            goto 195
-         endif
-      enddo
- 195  continue
-!+---+-----------------------------------------------------------------+
-!..Assume Rayleigh approximation at 10 cm wavelength. Rain (all temps)
-!.. and non-water-coated snow and graupel when below freezing are
-!.. simple. Integrations of m(D)*m(D)*N(D)*dD.
-!+---+-----------------------------------------------------------------+
-      DO k = kts,kte
-         ze_rain(k) = 1.E-22
-         ze_ice(k)  = 1.E-22
-         ze_snow(k) = 1.E-22
-         ze_graupel(k) = 1.E-22
-!         if (L_qr(k)) ze_rain(k) = N0_r(k)*xcrg(4)*ilamr(k)**xcre(4)
-         if (L_qr(k)) ze_rain(k) = EXP(N0R(k)+GAMLN(AFAR(k)+7.)-(      &
-            AFAR(k)+7.)*LOG(LAMR(k)))
-         if (L_qi(k)) ze_ice(k) = (0.176/0.93)*EXP(N0I(k)+GAMLN(       &
-            AFAI(k)+7.)-(AFAI(k)+7.)*LOG(LAMI(k)))*(RHOI(k)/900.)**2.
-!         if (L_qs(k)) ze_snow(k) = (0.176/0.93)*(6./PI)*(6./PI)*(      &
-!                                   xam_s(k)/900.)*(xam_s(k)/900.)*     &
-!                                   N0_s(k)*xcsg(4)*ilams(k)**xcse(4)
-         if (L_qs(k)) ze_snow(k) = (0.176/0.93)*EXP(N0S(k)+GAMLN(      &
-            AFAS(k)+7.)-(AFAS(k)+7.)*LOG(LAMS(k)))*(RHOS(k)/900.)**2.
-!         if (L_qg(k)) ze_graupel(k) = (0.176/0.93)*(6./PI)*(6./PI)*(   &
-!                                      xam_g(k)/900.)*(xam_g(k)/900.)*  &
-!                                      N0_g(k)*xcgg(4)*ilamg(k)**xcge(4)
-         if (L_qg(k)) ze_graupel(k) = (0.176/0.93)*EXP(N0G(k)+GAMLN(   &
-            AFAG(k)+7.)-(AFAG(k)+7.)*LOG(LAMG(k)))*(RHOG(k)/900.)**2.
-      ENDDO
-!+---+-----------------------------------------------------------------+
-!..Special case of melting ice (snow/graupel) particles.  Assume the
-!.. ice is surrounded by the liquid water.  Fraction of meltwater is
-!.. extremely simple based on amount found above the melting level.
-!.. Uses code from Uli Blahak (rayleigh_soak_wetgraupel and supporting
-!.. routines).
-!+---+-----------------------------------------------------------------+
-      if (melti.AND.k_0.GE.kts+1) then
-         do k = k_0-1,kts,-1
-!..Reflectivity contributed by melting snow
-            if (L_qs(k).AND.L_qs(k_0)) then
-!               fmelt_s = MAX(0.005d0,MIN(1.0d0-rs(k)/rs(k_0),0.99d0))
-               fmelt_s = MAX(0.005d0,MIN(SMLF(k),0.99d0))
-               eta = 0.d0
-!               lams = 1./ilams(k)
-               DO n = 1,nrbins
-                  x = xam_s(k)*xxDs(n)**xbm_s
-                  CALL rayleigh_soak_wetgraupel(x,DBLE(xocms(k)),      &
-                       DBLE(xobms),fmelt_s,melt_outside_s,m_w_0,m_i_0, &
-                       lamda_radar,CBACK,mixingrulestring_s,           &
-                       matrixstring_s,inclusionstring_s,hoststring_s,  &
-                       hostmatrixstring_s,hostinclusionstring_s,lamda4)
-                  f_d = N0S(k)*xxDs(n)**xmu_s(k)*DEXP(-lams(k)*xxDs(n))
-                  eta = eta+f_d*CBACK*simpson(n)*xdts(n)
-               ENDDO
-               ze_snow(k) = SNGL(lamda4/(PI5*K_w)*eta)
-            endif
-!..Reflectivity contributed by melting graupel
-            if (L_qg(k).and.L_qg(k_0)) then
-!               fmelt_g = MAX(0.005d0,MIN(1.0d0-rg(k)/rg(k_0),0.99d0))
-               fmelt_g = MAX(0.005d0,MIN(GMLF(k),0.99d0))
-               eta = 0.d0
-!               lamg = 1./ilamg(k)
-               do n = 1,nrbins
-                  x = xam_g(k)*xxDg(n)**xbm_g
-                  CALL rayleigh_soak_wetgraupel(x,DBLE(xocmg(k)),      &
-                       DBLE(xobmg),fmelt_g,melt_outside_g,m_w_0,m_i_0, &
-                       lamda_radar,CBACK,mixingrulestring_g,           &
-                       matrixstring_g,inclusionstring_g,hoststring_g,  &
-                       hostmatrixstring_g,hostinclusionstring_g,lamda4)
-                  f_d = N0G(k)*xxDg(n)**xmu_g(k)*DEXP(-lamg(k)*xxDg(n))
-                  eta = eta+f_d*CBACK*simpson(n)*xdtg(n)
-               enddo
-               ze_graupel(k) = SNGL(lamda4/(PI5*K_w)*eta)
-            endif
-         enddo
-      endif
-      DO k = kte,kts,-1
-         dBZ(k) = 10.*LOG10((ze_rain(k)+ze_ice(k)+ze_snow(k)+          &
-                  ze_graupel(k))*1.d18)
+         IF ((ZZHR(K)+ZZHI(K)+ZZHS(K)+ZZHG(K)).GE.ZXMIN1) THEN
+            DBZM(K) = MAX(-60.,10.*LOG10(1.E18*(ZZHR(K)+ZZHI(K)+       &
+                      ZZHS(K)+ZZHG(K))))
+            ZDR(K)  = MAX(0.,10.*LOG10((ZZHR(K)+MAX(ZZHI(K),ZZVI(K))+  &
+                      ZZHS(K)+MAX(ZZHG(K),ZZVG(K)))/(ZZVR(K)+MIN(      &
+                      ZZVI(K),ZZHI(K))+ZZVS(K)+MIN(ZZVG(K),ZZHG(K)))))
+            KDP(K)  = MAX(0.,KDPR(K)+KDPI(K)+KDPS(K)+KDPG(K))
+         ENDIF
       ENDDO
 
       END SUBROUTINE REFL10CM_TCWA
 !======================================================================
 !
-!=======================================================================
-      COMPLEX*16 FUNCTION m_complex_water_ray(lambda,T)
-!======================================================================
-!      Complex refractive Index of Water as function of Temperature T
-!      [deg C] and radar wavelength lambda [m]; valid for
-!      lambda in [0.001,1.0] m; T in [-10.0,30.0] deg C after Ray (1972)
-      IMPLICIT NONE
-      DOUBLE PRECISION, INTENT(IN) :: T,lambda
-      DOUBLE PRECISION :: epsinf,epss,epsr,epsi,alpha,lambdas,sigma,   &
-                          nenner
-      COMPLEX*16, PARAMETER :: i = (0d0,1d0)
-      DOUBLE PRECISION, PARAMETER :: PIx = 3.1415926535897932384626434d0
-
-      epsinf = 5.27137d0+0.02164740d0*T-0.00131198d0*T*T
-      epss   = 78.54d+0*(1.-4.579d-3*(T-25.)+1.190d-5*(T-25.)*(T-25.)- &
-               2.800d-8*(T-25.)*(T-25.)*(T-25.))
-      alpha  = -16.8129d0/(T+273.16)+0.0609265d0
-      lambdas = 0.00033836d0*EXP(2513.98d0/(T+273.16))*1e-2
-      nenner = 1.d0+2.d0*(lambdas/lambda)**(1d0-alpha)*sin(alpha*PIx*  &
-               0.5)+(lambdas/lambda)**(2d0-2d0*alpha)
-      epsr = epsinf+((epss-epsinf)*((lambdas/lambda)**(1d0-alpha)*     &
-             sin(alpha*PIx*0.5)+1d0))/nenner
-      epsi = ((epss-epsinf)*((lambdas/lambda)**(1d0-alpha)*cos(alpha*  &
-             PIx*0.5)+0d0))/nenner+lambda*1.25664/1.88496
-      m_complex_water_ray = SQRT(CMPLX(epsr,-epsi))
-
-      END FUNCTION m_complex_water_ray
-!=======================================================================
-!
-!=======================================================================
-      COMPLEX*16 FUNCTION m_complex_ice_maetzler(lambda,T)
-!=======================================================================
-!      complex refractive index of ice as function of Temperature T
-!      [deg C] and radar wavelength lambda [m]; valid for
-!      lambda in [0.0001,30] m; T in [-250.0,0.0] C
-!      Original comment from the Matlab-routine of Prof. Maetzler:
-!      Function for calculating the relative permittivity of pure ice in
-!      the microwave region, according to C. Maetzler, "Microwave
-!      properties of ice and snow", in B. Schmitt et al. (eds.) Solar
-!      System Ices, Astrophys. and Space Sci. Library, Vol. 227, Kluwer
-!      Academic Publishers, Dordrecht, pp. 241-257 (1998). Input:
-!      TK = temperature (K), range 20 to 273.15
-!      f = frequency in GHz, range 0.01 to 3000
-      IMPLICIT NONE
-      DOUBLE PRECISION, INTENT(IN) :: T,lambda
-      DOUBLE PRECISION :: f,c,TK,B1,B2,b,deltabeta,betam,beta,theta,alfa
-
-      c = 2.99d8
-      TK = T+273.16
-      f = c/lambda*1d-9
-      B1 = 0.0207
-      B2 = 1.16d-11
-      b = 335.0d0
-      deltabeta = EXP(-10.02+0.0364*(TK-273.16))
-      betam = (B1/TK)*(EXP(b/TK)/((EXP(b/TK)-1)**2))+B2*f*f
-      beta = betam+deltabeta
-      theta = 300./TK-1.
-      alfa = (0.00504d0+0.0062d0*theta)*EXP(-22.1d0*theta)
-      m_complex_ice_maetzler = 3.1884+9.1e-4*(TK-273.16)
-      m_complex_ice_maetzler = m_complex_ice_maetzler+CMPLX(0.0d0,     &
-                               (alfa/f + beta*f))
-      m_complex_ice_maetzler = SQRT(CONJG(m_complex_ice_maetzler))
-
-      END FUNCTION m_complex_ice_maetzler
-!=======================================================================
-!
-!=======================================================================
-      SUBROUTINE rayleigh_soak_wetgraupel(x_g,a_geo,b_geo,fmelt,       &
-                 meltratio_outside,m_w,m_i,lambda,C_back,mixingrule,   &
-                 matrix,inclusion,host,hostmatrix,hostinclusion,lamda4)
-!=======================================================================
-      IMPLICIT NONE
-      DOUBLE PRECISION, INTENT(IN) :: x_g,a_geo,b_geo,fmelt,lambda,    &
-                                      meltratio_outside,lamda4
-      DOUBLE PRECISION, INTENT(OUT) :: C_back
-      COMPLEX*16, INTENT(IN) :: m_w,m_i
-      CHARACTER(len=*), INTENT(IN) :: mixingrule,matrix,inclusion,     &
-                                      host,hostmatrix,hostinclusion
-      COMPLEX*16 :: m_core,m_air
-      DOUBLE PRECISION :: D_large,D_g,rhog,x_w,xw_a,fm,fmgrenz,volg,   &
-                          vg,volair,volice,volwater,                   &
-                          meltratio_outside_grenz,mra
-      INTEGER :: error
-      REAL :: PI5 = PI*PI*PI*PI*PI
-
-!     refractive index of air:
-      m_air = (1.0d0,0.0d0)
-!     Limiting the degree of melting --- for safety: 
-      fm = DMAX1(DMIN1(fmelt,1.0d0),0.0d0)
-!     Limiting the ratio of (melting on outside)/(melting on inside):
-      mra = DMAX1(DMIN1(meltratio_outside,1.0d0),0.0d0)
-!    ! The relative portion of meltwater melting at outside should increase
-!    ! from the given input value (between 0 and 1)
-!    ! to 1 as the degree of melting approaches 1,
-!    ! so that the melting particle "converges" to a water drop.
-!    ! Simplest assumption is linear:
-      mra = mra+(1.0d0-mra)*fm
-      x_w = x_g*fm
-      D_g = a_geo*x_g**b_geo
-      if (D_g.GE.1d-12) then
-         vg = PI/6.*D_g**3
-         rhog = DMAX1(DMIN1(x_g/vg,900.0d0),10.0d0)
-         vg = x_g/rhog
-         meltratio_outside_grenz = 1.0d0-rhog/1000.
-         if (mra.LE.meltratio_outside_grenz) then
-        !..In this case, it cannot happen that, during melting, all the
-        !.. air inclusions within the ice particle get filled with
-        !.. meltwater. This only happens at the end of all melting.
-            volg = vg*(1.0d0-mra*fm)
-         else
-        !..In this case, at some melting degree fm, all the air
-        !.. inclusions get filled with meltwater.
-            fmgrenz = (900.-rhog)/(mra*900.-rhog+900.*rhog/1000.)
-            if (fm.LE.fmgrenz) then
-         !.. not all air pockets are filled:
-               volg = (1.-mra*fm)*vg
-            else
-         !..all air pockets are filled with meltwater, now the
-         !.. entire ice sceleton melts homogeneously:
-               volg = (x_g-x_w)/900.+x_w/1000.
-            endif
-         endif
-         D_large = (6./PI*volg)**(1./3.)
-         volice = (x_g-x_w)/(volg*900.)
-         volwater = x_w/(1000.*volg)
-         volair = 1.-volice-volwater
-       !..complex index of refraction for the ice-air-water mixture
-       !.. of the particle:
-         m_core = get_m_mix_nested(m_air,m_i,m_w,volair,volice,        &
-                  volwater,mixingrule,host,matrix,inclusion,hostmatrix,&
-                  hostinclusion,error)
-         if (error.NE.0) then
-            C_back = 0.0d0
-            return
-         endif
-       !..Rayleigh-backscattering coefficient of melting particle: 
-         C_back = (ABS((m_core**2-1.0d0)/(m_core**2+2.0d0)))**2*PI5*   &
-                  D_large**6/lamda4
-      else
-         C_back = 0.0d0
-      endif
-
-      END SUBROUTINE rayleigh_soak_wetgraupel
-!======================================================================
-!
-!======================================================================
-      complex*16 function get_m_mix_nested(m_a,m_i,m_w,volair,volice,  &
-                          volwater,mixingrule,host,matrix,inclusion,   &
-                          hostmatrix,hostinclusion,cumulerror)
-!======================================================================
-      IMPLICIT NONE
-      DOUBLE PRECISION, INTENT(IN) :: volice,volair,volwater
-      COMPLEX*16, INTENT(IN) :: m_a,m_i,m_w
-      CHARACTER(len=*), INTENT(IN) :: mixingrule,host,matrix,inclusion,&
-                                      hostmatrix,hostinclusion
-      INTEGER, INTENT(OUT) :: cumulerror
-      DOUBLE PRECISION :: vol1,vol2
-      COMPLEX*16 :: mtmp
-      INTEGER :: error
-      CHARACTER*256 :: radar_debug
-
-!..Folded: ((m1+m2)+m3), where m1,m2,m3 could each be air, ice, or water
-      cumulerror = 0
-      get_m_mix_nested = CMPLX(1.0d0,0.0d0)
-      if (host.EQ.'air') then
-         if (matrix.EQ.'air') then
-            write(radar_debug,*) 'GET_M_MIX_NESTED: bad matrix:',matrix
-            cumulerror = cumulerror + 1
-         else
-            vol1 = volice/MAX(volice+volwater,1d-10)
-            vol2 = 1.0d0-vol1
-            mtmp = get_m_mix(m_a,m_i,m_w,0.0d0,vol1,vol2,mixingrule,   &
-                             matrix,inclusion,error)
-            cumulerror = cumulerror+error
-            if (hostmatrix.EQ.'air') then
-               get_m_mix_nested = get_m_mix(m_a,mtmp,2.0*m_a,volair,(  &
-                                  1.0d0-volair),0.0d0,mixingrule,      &
-                                  hostmatrix,hostinclusion,error)
-               cumulerror = cumulerror+error
-            elseif (hostmatrix.EQ.'icewater') then
-               get_m_mix_nested = get_m_mix(m_a,mtmp,2.0*m_a,volair,(  &
-                                  1.0d0-volair),0.0d0,mixingrule,      &
-                                  'ice',hostinclusion,error)
-               cumulerror = cumulerror+error
-            else
-               write(radar_debug,*) 'GET_M_MIX_NESTED:bad hostmatrix:',&
-                                    hostmatrix
-               cumulerror = cumulerror+1
-            endif
-         endif
-      elseif (host.EQ.'ice') then
-         if (matrix.EQ.'ice') then
-            write(radar_debug,*) 'GET_M_MIX_NESTED:bad matrix:',matrix
-            cumulerror = cumulerror+1
-         else
-            vol1 = volair/MAX(volair+volwater,1d-10)
-            vol2 = 1.0d0-vol1
-            mtmp = get_m_mix(m_a,m_i,m_w,vol1,0.0d0,vol2,mixingrule,   &
-                             matrix,inclusion,error)
-            cumulerror = cumulerror+error
-            if (hostmatrix.EQ.'ice') then
-               get_m_mix_nested = get_m_mix(mtmp,m_i,2.0*m_a,(1.0d0-   &
-                                  volice),volice,0.0d0,mixingrule,     &
-                                  hostmatrix,hostinclusion,error)
-               cumulerror = cumulerror+error
-            elseif (hostmatrix.EQ.'airwater') then
-               get_m_mix_nested = get_m_mix(mtmp,m_i,2.0*m_a,(1.0d0-   &
-                                  volice),volice,0.0d0,mixingrule,     &
-                                  'air',hostinclusion,error)
-               cumulerror = cumulerror+error          
-            else
-               write(radar_debug,*) 'GET_M_MIX_NESTED:bad hostmatrix:',&
-                                    hostmatrix
-               cumulerror = cumulerror+1
-            endif
-         endif
-      elseif (host.EQ.'water') then
-         if (matrix.EQ.'water') then
-            write(radar_debug,*) 'GET_M_MIX_NESTED:bad matrix:',matrix
-            cumulerror = cumulerror+1
-         else
-            vol1 = volair/MAX(volice+volair,1d-10)
-            vol2 = 1.0d0-vol1
-            mtmp = get_m_mix(m_a,m_i,m_w,vol1,vol2,0.0d0,mixingrule,   &
-                             matrix,inclusion,error)
-            cumulerror = cumulerror+error
-            if (hostmatrix.EQ.'water') then
-               get_m_mix_nested = get_m_mix(2*m_a,mtmp,m_w,0.0d0,(     &
-                                  1.0d0-volwater),volwater,mixingrule, &
-                                  hostmatrix,hostinclusion,error)
-               cumulerror = cumulerror+error
-            elseif (hostmatrix.EQ.'airice') then
-               get_m_mix_nested = get_m_mix(2*m_a,mtmp,m_w,0.0d0,(     &
-                                  1.0d0-volwater),volwater,mixingrule, &
-                                  'ice',hostinclusion,error)
-               cumulerror = cumulerror+error          
-            else
-               write(radar_debug,*) 'GET_M_MIX_NESTED:bad hostmatrix:',&
-                                    hostmatrix
-               cumulerror = cumulerror+1
-            endif
-         endif
-      elseif (host.EQ.'none') then
-         get_m_mix_nested = get_m_mix(m_a,m_i,m_w,volair,volice,       &
-                            volwater,mixingrule,matrix,inclusion,error)
-         cumulerror = cumulerror+error
-      else
-         write(radar_debug,*) 'GET_M_MIX_NESTED: unknown matrix:',host
-         cumulerror = cumulerror+1
-      endif
-      IF (cumulerror.NE.0) THEN
-         write(radar_debug,*) 'GET_M_MIX_NESTED: error encountered'
-         get_m_mix_nested = CMPLX(1.0d0,0.0d0)    
-      endif
-
-      end function get_m_mix_nested
-!=======================================================================
-!
-!=======================================================================
-      COMPLEX*16 FUNCTION get_m_mix(m_a,m_i,m_w,volair,volice,volwater,&
-                          mixingrule,matrix,inclusion,error)
-!=======================================================================
-      IMPLICIT NONE
-      DOUBLE PRECISION, INTENT(IN) :: volice,volair,volwater
-      COMPLEX*16, INTENT(IN) :: m_a,m_i,m_w
-      CHARACTER(len=*), INTENT(IN) :: mixingrule,matrix,inclusion
-      INTEGER, INTENT(OUT) :: error
-      CHARACTER*256 :: radar_debug
-
-      error = 0
-      get_m_mix = CMPLX(1.0d0,0.0d0)
-      if (mixingrule.EQ.'maxwellgarnett') then
-         if (matrix.EQ.'ice') then
-            get_m_mix = m_complex_maxwellgarnett(volice,volair,        &
-                        volwater,m_i,m_a,m_w,inclusion,error)
-         elseif (matrix.EQ.'water') then
-            get_m_mix = m_complex_maxwellgarnett(volwater,volair,      &
-                        volice,m_w,m_a,m_i,inclusion,error)
-         elseif (matrix.EQ.'air') then
-            get_m_mix = m_complex_maxwellgarnett(volair,volwater,      &
-                        volice,m_a,m_w,m_i,inclusion,error)
-         else
-            write(radar_debug,*) 'GET_M_MIX: unknown matrix:',matrix
-            error = 1
-         endif
-      else
-         write(radar_debug,*) 'GET_M_MIX:unknown mixingrule:',mixingrule
-         error = 2
-      endif
-      if (error.NE.0) then
-         write(radar_debug,*) 'GET_M_MIX: error encountered'
-      endif
-
-      END FUNCTION get_m_mix
-!=======================================================================
-!
-!=======================================================================
-      COMPLEX*16 FUNCTION m_complex_maxwellgarnett(vol1,vol2,vol3,m1,  &
-                          m2,m3,inclusion,error)
-!=======================================================================
-      IMPLICIT NONE
-      COMPLEX*16 :: m1,m2,m3,beta2,beta3,m1t,m2t,m3t
-      DOUBLE PRECISION :: vol1,vol2,vol3
-      CHARACTER(len=*) :: inclusion
-      INTEGER, INTENT(OUT) :: error
-      CHARACTER*256 :: radar_debug
-
-      error = 0
-      IF (DABS(vol1+vol2+vol3-1.0d0).GT.1d-6) THEN
-         write(radar_debug,*) 'M_COMPLEX_MAXWELLGARNETT: sum of the ', &
-         'partial volume fractions is not 1...ERROR'
-         m_complex_maxwellgarnett = CMPLX(-999.99d0,-999.99d0)
-         error = 1
-         return
-      ENDIF
-      m1t = m1**2
-      m2t = m2**2
-      m3t = m3**2
-      if (inclusion.EQ.'spherical') then
-         beta2 = 3.0d0*m1t/(m2t+2.0d0*m1t)
-         beta3 = 3.0d0*m1t/(m3t+2.0d0*m1t)
-      elseif (inclusion.EQ.'spheroidal') then
-         beta2 = 2.0d0*m1t/(m2t-m1t)*(m2t/(m2t-m1t)*LOG(m2t/m1t)-1.0d0)
-         beta3 = 2.0d0*m1t/(m3t-m1t)*(m3t/(m3t-m1t)*LOG(m3t/m1t)-1.0d0)
-      else
-         write(radar_debug,*) 'M_COMPLEX_MAXWELLGARNETT: ',            &
-                              'unknown inclusion: ',inclusion
-         m_complex_maxwellgarnett = DCMPLX(-999.99d0,-999.99d0)
-         error = 1
-         return
-      endif
-      m_complex_maxwellgarnett = SQRT(((1.0d0-vol2-vol3)*m1t+vol2*     &
-      beta2*m2t+vol3*beta3*m3t)/(1.0d0-vol2-vol3+vol2*beta2+vol3*beta3))
-
-      END FUNCTION m_complex_maxwellgarnett
-!======================================================================
-!      
 !======================================================================
       END MODULE  module_mp_tcwa1
 !======================================================================

@@ -179,6 +179,8 @@
        case("mp_tcwa1")
           if(.not.allocated(xland_p)) allocate(xland_p(ims:ime,jms:jme))
           if(.not.allocated(zmid_p)) allocate(zmid_p(ims:ime,kms:kme,jms:jme))
+          if(.not.allocated(ZDR_p)) allocate(ZDR_p(ims:ime,kms:kme,jms:jme))
+          if(.not.allocated(KDP_p)) allocate(KDP_p(ims:ime,kms:kme,jms:jme))
 
        case("mp_tcwa2")
           if(.not.allocated(nc_p) ) allocate(nc_p(ims:ime,kms:kme,jms:jme))
@@ -307,6 +309,8 @@
        case("mp_tcwa1")
           if(allocated(xland_p)) deallocate(xland_p)
           if(.not.allocated(zmid_p)) allocate(zmid_p(ims:ime,kms:kme,jms:jme))
+          if(allocated(ZDR_p))  deallocate(ZDR_p)
+          if(allocated(KDP_p))  deallocate(KDP_p)
 
        case("mp_tcwa2")
           if(allocated(nc_p) ) deallocate(nc_p )
@@ -596,11 +600,11 @@
        call mp_tcwa1(th = th_p, qv = qv_p, qc = qc_p, qr = qr_p, qi = qi_p, qs = qs_p,        &
                      qg = qg_p, rho = rho_p, pii = pi_p, p = pres_p, w = w_p,                 &
                      dt_in = dt_microp, z = zmid_p, ht = z_p(:,1,:), dz8w = dz_p,             &
-                     xland = xland_p, DBZM = refl10cm_p, re_cloud = recloud_p,                &
-                     re_ice = reice_p, re_snow = resnow_p, has_reqc = has_reqc,               &
-                     has_reqi = has_reqi, has_reqs = has_reqs, sr = sr_p, rainnc = rainnc_p,  &
-                     rainncv = rainncv_p, snownc = snownc_p, snowncv = snowncv_p,             &
-                     graupelnc = graupelnc_p, graupelncv = graupelncv_p,                      &
+                     xland = xland_p, DBZM = refl10cm_p, ZDR = ZDR_p, KDP = KDP_p,            &
+                     re_cloud = recloud_p, re_ice = reice_p, re_snow = resnow_p,              &
+                     has_reqc = has_reqc, has_reqi = has_reqi, has_reqs = has_reqs, sr = sr_p,&
+                     rainnc = rainnc_p, rainncv = rainncv_p, snownc = snownc_p,               &
+                     snowncv = snowncv_p, graupelnc = graupelnc_p, graupelncv = graupelncv_p, &
                      IDS = ids, IDE = ide, JDS = jds, JDE = jde, KDS = kds, KDE = kde,        &
                      IMS = ims, IME = ime, JMS = jms, JME = jme, KMS = kms, KME = kme,        &
                      ITS = its, ITE = ite, JTS = jts, JTE = jte, KTS = kts, KTE = kte)
@@ -772,6 +776,22 @@
        ENDIF
 
     microp2_select: select case(microp_scheme)
+       case("mp_tcwa1")
+          do i = its, ite
+          do k = kts, kte
+             ZDR(k,i) = 0._RKIND
+             KDP(k,i) = 0._RKIND
+          enddo
+          enddo
+          do j = jts, jte
+          do k = kts, kte
+          do i = its, ite
+             ZDR_p(i,k,j) = 0._RKIND
+             KDP_p(i,k,j) = 0._RKIND
+          enddo
+          enddo
+          enddo
+
        case("mp_tcwa2")
           do i = its, ite
           do k = kts, kte

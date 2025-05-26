@@ -2600,11 +2600,11 @@
 
                 <var name="ZDR" type="real" dimensions="nVertLevels nCells Time" units="dB"
                      description="Differential reflectivity"
-                     packages="mp_tcwa2_in"/>
+                     packages="mp_tcwa1_in;mp_tcwa2_in"/>
 
                 <var name="KDP" type="real" dimensions="nVertLevels nCells Time" units="deg/km"
                      description="Specific differential phase"
-                     packages="mp_tcwa2_in"/>
+                     packages="mp_tcwa1_in;mp_tcwa2_in"/>
 
                 <var name="LDR" type="real" dimensions="nVertLevels nCells Time" units="dB"
                      description="Linear depolarization ratio"
