@@ -164,7 +164,7 @@ CONTAINS
             KDPS,KDPG,SCAKW,SCAW0,SCAW1,SCAWA,SCAWB,EPSIN,EPSS,ALPHE,  &
             LAMDZ,NEREL,ORA0,ORAR,ORA1,ORA2,ORA3,ORA4,SCA0,SCALA,SCALB,&
             SCA2,SCAFA,SCAFB,SCFAA,SCFAB,SCFBB,SMLV,GMLV,ZZHR,ZZHI,    &
-            ZZHS,ZZHG,ZZVR,ZZVI,ZZVS,ZZVG,LMDR,EORA,ORZHR,FDBZR,FZDRR, &
+            ZZHS,ZZHG,ZZVR,ZZVI,ZZVS,ZZVG,EORA,ORZHR,FDBZR,FZDRR, &
             FKDPR,KDPR1,FDBZS,ZHROX,FZDRS,ZDROX,ZDASP,LASP,FKDPS,KDROX,&
             KDASP,FDBZG,FZDRG,FKDPG,ZHASP,RHASP,ORZHI,ZHZET,FDBZI,     &
             ZDZET,FZDRI,FKDPI,KDZET,RADS,RADG
@@ -2327,66 +2327,6 @@ CONTAINS
       END FUNCTION GAMLN
 !  (C) Copr. 1986-92 Numerical Recipes Software 2.02
 !=======================================================================
-!
-!========================================================================
-      REAL FUNCTION CHEN(RHO,AFAR,LAMR)                                 ! Raindrops terminal velocity
-!========================================================================
-      IMPLICIT NONE
-      REAL, INTENT(IN) :: RHO,AFAR,LAMR
-      REAL :: RHOQ,VRA1,VRA2,VRA3,VRB1,VRB2,VRB3,VRC1,VRC2,VRC3,LAMM
-
-      RHOQ  = EXP(0.115231*RHO)
-      VRA1  = 0.044612*RHOQ
-      VRA2  = -0.263166*RHOQ
-      VRA3  = 4.7178*RHOQ*RHO**(-0.47335)
-      VRB1  = 2.2955-0.038465*RHO
-      VRB2  = 2.2955-0.038465*RHO
-      VRB3  = 1.1451-0.038465*RHO
-      VRC1  = 0.
-      VRC2  = 0.184325
-      VRC3  = 0.184325
-      LAMM  = LAMR/1.E3
-      CHEN  = VRA1*EXP((AFAR+1.)*LOG(LAMM)+GAMLN(VRB1+AFAR+1.)-(VRB1+ &
-              AFAR+1.)*LOG(LAMM+VRC1)-GAMLN(AFAR+1.))+VRA2*EXP((AFAR+ &
-              1.)*LOG(LAMM)+GAMLN(VRB2+AFAR+1.)-(VRB2+AFAR+1.)*       &
-              LOG(LAMM+VRC2)-GAMLN(AFAR+1.))+VRA3*EXP((AFAR+1.)*      &
-              LOG(LAMM)+GAMLN(VRB3+AFAR+1.)-(VRB3+AFAR+1.)*LOG(LAMM+  &
-              VRC3)-GAMLN(AFAR+1.))
-
-      END FUNCTION CHEN
-!=======================================================================
-!
-!======================================================================
-      REAL FUNCTION GAMLN(XX)
-!======================================================================
-!  Returns value of ln(GAMMA(XX)) for XX>0 (modified from "Numerical Recipes")
-      IMPLICIT NONE
-      REAL, INTENT(IN) :: XX
-      INTEGER :: J
-      DOUBLE PRECISION :: ser,stp,TMP,X,y,cof(6)
-      SAVE cof,stp
-      DATA cof,stp/76.18009172947146d0,-86.50532032941677d0,24.01409824083091d0,&
-                  -1.231739572450155d0,.1208650973866179d-2,-.5395239384953d-5,2.5066282746310005d0/
-
-      X = DBLE(XX)
-      y = X
-      TMP = X+5.5D0
-      TMP = (X+0.5D0)*LOG(TMP)-TMP
-      ser = 1.000000000190015d0
-      DO J = 1,6   !original
-         y = y+1.D0
-         ser = ser+cof(J)/y
-      ENDDO
-#if (DWORDSIZE == 8 && RWORDSIZE == 8)
-      GAMLN = TMP+LOG(stp*ser/X)
-#elif (DWORDSIZE == 8 && RWORDSIZE == 4)
-      GAMLN = SNGL(TMP+LOG(stp*ser/X))
-#else
-!      This is a temporary hack assuming double precision is 8 bytes.
-#endif
-
-      END FUNCTION GAMLN
-!======================================================================
 !
 !======================================================================
       END MODULE  module_mp_tcwa1
