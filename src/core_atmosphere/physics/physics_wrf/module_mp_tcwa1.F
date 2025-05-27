@@ -472,7 +472,7 @@ CONTAINS
             else
                del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vts(k))
             endif
-            NS3D(k) = 6.*qs1d(k)*rhoz(k)*EXP(3.*LOG(LAMS(k))+          &
+            NS3D(k) = 6.*qsz(k)*rhoz(k)*EXP(3.*LOG(LAMS(k))+          &
                       GAMLN(AFAS(k)+1.)-GAMLN(AFAS(k)+4.))/PI/RHOS(k)
             SASPR(k) = 0.65
             IF (SMLF(K).GE.MLIMIT) THEN
@@ -616,7 +616,7 @@ CONTAINS
                else
                   del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtg(k))
                endif !k
-               NG3D(k) = 6.*qg1d(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
+               NG3D(k) = 6.*qgz(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
                          GAMLN(AFAG(k)+1.)-GAMLN(AFAG(k)+4.))/PI/    &
                          RHOG(k)
                GASPR(k) = 0.85
@@ -651,7 +651,7 @@ CONTAINS
                else
                   del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtg(k))
                endif !k
-               NG3D(k) = 6.*qg1d(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
+               NG3D(k) = 6.*qgz(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
                          GAMLN(AFAG(k)+1.)-GAMLN(AFAG(k)+4.))/PI/    &
                          RHOG(k)
                GASPR(k) = 0.75
@@ -868,7 +868,7 @@ CONTAINS
             else
                del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vti(k))
             endif
-            NI3D(k) = 6.*qi1d(k)*rhoz(k)*EXP(3.*LOG(LAMI(k))+          &
+            NI3D(k) = 6.*qiz(k)*rhoz(k)*EXP(3.*LOG(LAMI(k))+          &
                       GAMLN(AFAI(k)+1.)-GAMLN(AFAI(k)+4.))/PI/RHOI(k)
             LLMI(K) = LOG(LAMI(K))
             LAI2(K) = LOG(AFAI(K)+2.)
