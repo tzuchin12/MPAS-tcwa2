@@ -648,6 +648,14 @@ CONTAINS
          DBZM3D(i,k,j) = MAX(-35.,DBZM(k))
          ZDR3D(i,k,j) = ZDR(k)
          KDP3D(i,k,j) = KDP(k)
+
+      IF (ZDR(k).GT.0.1) THEN
+         PRINT *, 'ZDR=',ZDR(k)
+      ENDIF
+      IF (KDP(k).GT.0.1) THEN
+         PRINT *, 'KDP=',KDP(k)
+      ENDIF
+
       ENDDO
 
       snowncv(i,j) = pptice+pptsnow
