@@ -1046,14 +1046,14 @@ CONTAINS
          EFRC3D(i,k,j) = EFRC(k)
          EFRI3D(i,k,j) = EFRI(k)
          EFRS3D(i,k,j) = EFRS(k)
-         IF ((ZZHR(K)+ZZHI(K)+ZZHS(K)+ZZHG(K)).GE.ZXMIN1) THEN
+!         IF ((ZZHR(K)+ZZHI(K)+ZZHS(K)+ZZHG(K)).GE.ZXMIN1) THEN
             DBZM(K) = MAX(-60.,10.*LOG10(1.E18*(ZZHR(K)+ZZHI(K)+       &
                       ZZHS(K)+ZZHG(K))))
             ZDR(K)  = MAX(0.,10.*LOG10((ZZHR(K)+MAX(ZZHI(K),ZZVI(K))+  &
                       ZZHS(K)+MAX(ZZHG(K),ZZVG(K)))/(ZZVR(K)+MIN(      &
                       ZZVI(K),ZZHI(K))+ZZVS(K)+MIN(ZZVG(K),ZZHG(K)))))
             KDP(K)  = MAX(0.,KDPR(K)+KDPI(K)+KDPS(K)+KDPG(K))
-         ENDIF
+!         ENDIF
       ENDDO
 
       snowncv(i,j) = pptice+pptsnow
