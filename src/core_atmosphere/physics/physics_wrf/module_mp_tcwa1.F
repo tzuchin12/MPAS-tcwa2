@@ -645,6 +645,9 @@ CONTAINS
       CALL REFL10CM_TCWA(qvz,qcz,qiz,qrz,qsz,qgz,TK1D,rhoz,SMLF,GMLF,  &
            DBZM,ZDR,KDP,ihail,prez,lan1D,kts,kte)
       DO k = kts,kte
+
+      PRINT *, 'ZDR1=',ZDR(k),'KDP1=',KDP(k)
+
          DBZM3D(i,k,j) = MAX(-35.,DBZM(k))
          ZDR3D(i,k,j) = ZDR(k)
          KDP3D(i,k,j) = KDP(k)
@@ -2517,6 +2520,9 @@ CONTAINS
                       ZZHS(K)+MAX(ZZHG(K),ZZVG(K)))/(ZZVR(K)+MIN(      &
                       ZZVI(K),ZZHI(K))+ZZVS(K)+MIN(ZZVG(K),ZZHG(K)))))
             KDP(K)  = MAX(0.,KDPR(K)+KDPI(K)+KDPS(K)+KDPG(K))
+
+      PRINT *, 'ZDR0=',ZDR(K),'KDP0=',KDP(K),'ZZVR=',ZZVR(K)
+
          ENDIF
       ENDDO
 
