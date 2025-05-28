@@ -157,22 +157,6 @@ CONTAINS
               flux,fluxin,fluxout
 ! for terminal velocity flux
       LOGICAL :: notlast
-      REAL, DIMENSION(kts:kte) :: NR3D,NI3D,NS3D,NG3D,LROI2,LROI3,LLMI,&
-            LLMI2,LLMI3,LAI2,LAI22,LAI23,LMDI2,LMDI3,ZETA3,LAR2,LAR22, &
-            LAR23,LLMR,LLMR2,LLMR3,LAS2,LLMS,LAG2,LLMG,SASPR,GASPR,    &
-            ZETA2,DBZR,DBZI,DBZS,DBZG,ZDRR,ZDRI,ZDRS,ZDRG,KDPR,KDPI,   &
-            KDPS,KDPG,SCAKW,SCAW0,SCAW1,SCAWA,SCAWB,EPSIN,EPSS,ALPHE,  &
-            LAMDZ,NEREL,ORA0,ORAR,ORA1,ORA2,ORA3,ORA4,SCA0,SCALA,SCALB,&
-            SCA2,SCAFA,SCAFB,SCFAA,SCFAB,SCFBB,SMLV,GMLV,ZZHR,ZZHI,    &
-            ZZHS,ZZHG,ZZVR,ZZVI,ZZVS,ZZVG,EORA,ORZHR,FDBZR,FZDRR, &
-            FKDPR,KDPR1,FDBZS,ZHROX,FZDRS,ZDROX,ZDASP,LASP,FKDPS,KDROX,&
-            KDASP,FDBZG,FZDRG,FKDPG,ZHASP,RHASP,ORZHI,ZHZET,FDBZI,     &
-            ZDZET,FZDRI,FKDPI,KDZET,RADS,RADG
-      REAL, PARAMETER :: ZXMIN1 = 1.E-28, DBZWL = 0.11, MLRA = 0.3
-      REAL, PARAMETER :: MIXA = -1.0892332E-2, MIXB = 2.0820143E-2
-      REAL, PARAMETER :: MIXC = 4.8553456E-6,  MIXD = -7.6529057E-5
-      REAL, PARAMETER :: MIXE = -1.1783334E-9, MIXF = -2.9599665E-6
-      REAL, PARAMETER :: MLIMIT = 1.E-2, SLIMIT = 1.E-2
 
       DO j = jts,jte   ! j_loop
       DO i = its,ite   ! i_loop:
@@ -201,30 +185,9 @@ CONTAINS
          EFRC(k) = 0.
          EFRI(k) = 0.
          EFRS(k) = 0.
-         ZZHR(K) = ZXMIN1;  ZZHI(K) = ZXMIN1;  ZZHS(K) = ZXMIN1
-         ZZHG(K) = ZXMIN1;  ZZVR(K) = ZXMIN1;  ZZVI(K) = ZXMIN1
-         ZZVS(K) = ZXMIN1;  ZZVG(K) = ZXMIN1;  KDPG(K) = 0.
-         RADS(K) = 0.; RADG(K) = 0.; DBZM(K) = -60.; ZDR(K) = 0.
-         KDP(K) = 0.;  KDPR(K) = 0.; KDPI(K) = 0.; KDPS(K) = 0.
-         TC1D(K)  = tk1d(K)-t0
-         EPSIN(K) = 5.27137+2.16474E-2*TC1D(K)-1.31198E-3*TC1D(K)**2.
-         EPSS(K)  = 78.54*(1.-4.579E-3*(TC1D(K)-25.)+1.19E-5*(TC1D(K)- &
-                    25.)**2.-2.8E-8*(TC1D(K)-25.)**3.)
-         ALPHE(K) = -16.8129/tk1d(K)+6.09265E-2
-         LAMDZ(K) = 3.3836E-4*EXP(2513.98/tk1d(K))*1.E-2
-         NEREL(K) = 1.+2.*(LAMDZ(K)/DBZWL)**(1.-ALPHE(K))*SIN(PI*      &
-                    ALPHE(K)/2.)+(LAMDZ(K)/DBZWL)**(2.-2.*ALPHE(K))
-         SCAWA(K) = EPSIN(K)+((EPSS(K)-EPSIN(K))*((LAMDZ(K)/DBZWL)**(  &
-                    1.-ALPHE(K))*SIN(ALPHE(K)*PI/2.)+1.))/NEREL(K)
-         SCAWB(K) = ((EPSS(K)-EPSIN(K))*((LAMDZ(K)/DBZWL)**(1.-        &
-                    ALPHE(K))*COS(ALPHE(K)*PI/2.)))/NEREL(K)+1.25664*  &
-                    DBZWL/1.88496
-         SCAW0(K) = SCAWA(K)**2.+4.*SCAWA(K)+4.+SCAWB(K)**2.
-         SCAKW(K) = ((SCAWA(K)**2.+SCAWA(K)-2.+SCAWB(K)**2.)/          &
-                    SCAW0(K))**2.+(3.*SCAWB(K)/SCAW0(K))**2.
-         SCAW1(K) = SQRT(((SCAWA(K)-1.)/((SCAWA(K)-1.)**2.+SCAWB(K)**  &
-                    2.))**2.+(SCAWB(K)/((SCAWA(K)-1.)**2.+SCAWB(K)**   &
-                    2.)**2.))
+         DBZM(k) = -99.
+         ZDR(k) = 0.
+         KDP(k) = 0.
       ENDDO
 !-------- cloud ----------------------------------------------
       t_del_tv = 0.
@@ -334,68 +297,6 @@ CONTAINS
             else
                del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtr(k))
             endif
-            NR3D(k) = 6.*qrz(k)*rhoz(k)*EXP(3.*LOG(LAMR(k))+           &
-                      GAMLN(AFAR(k)+1.)-GAMLN(AFAR(k)+4.))/PI/1.E3
-            ORA0(K) = 10.
-            ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
-            LLMR(K) = LOG(LAMR(K))
-            LAR2(K) = LOG(AFAR(K)+2.)
-            LLMR2(K) = LLMR(K)*LLMR(K)
-            LLMR3(K) = LLMR2(K)*LLMR(K)
-            LAR22(K) = LAR2(K)*LAR2(K)
-            LAR23(K) = LAR22(K)*LAR2(K)
-            LMDR(K) = LOG(1.E6*MVDR(K))
-            EORA(K) = EXP(ORA0(K)*PI/180.)
-            ORZHR(K) = 0.90655197-0.22828439*LMDR(K)+0.72204255*       &
-                       EORA(K)+0.038145645*LMDR(K)**2.-0.55980115*     &
-                       EORA(K)**2.+0.10191288*LMDR(K)*EORA(K)-         &
-                       1.1570334E-3*LMDR(K)**3.+0.1019446*EORA(K)**3.+ &
-                       0.010382487*LMDR(K)*EORA(K)**2.-0.01654166*     &
-                       LMDR(K)**2.*EORA(K)
-            FDBZR(K) = 1950.2082+29.685692*LAR2(K)-17.761215*          &
-                       SQRT(LAR2(K))+328.61414*LOG(LLMR(K))**2.-       &
-                       1122.8963*SQRT(LLMR(K))
-            ZZHR(K) = NR3D(K)*10.**((FDBZR(K)-200.)/10.-18.)*ORZHR(K)
-            DBZR(K) = 10.*LOG10(1.E18*ZZHR(K))
-            IF (AFAR(K).GE.1.) THEN
-               FZDRR(K) = EXP(10.243103+0.46561642*LAR2(K)+1.7270962*  &
-                          LLMR(K)+5.8974032E-3*LAR22(K)-0.34268382*    &
-                          LLMR2(K)+0.10193409*LAR2(K)*LLMR(K)-         &
-                          0.11005788*LAR23(K)+0.015622039*LLMR3(K)-    &
-                          0.038623263*LAR2(K)*LLMR2(K)+0.10413007*     &
-                          LAR22(K)*LLMR(K))/1.E4*ORAR(K)/0.9409
-            ELSE
-               FZDRR(K) = EXP(19.61943+2.743765*LAR2(K)-2.1913656*     &
-                          LLMR(K)+0.067589745*LAR22(K)+0.0588952*      &
-                          LLMR2(K)-0.15553337*LAR2(K)*LLMR(K))/1.E4*   &
-                          ORAR(K)/0.9409
-            ENDIF
-            ZZVR(K)  = 10.**(DBZR(K)/10.-18.-FZDRR(K)/10.)
-            IF (MVDR(K).LT.1.E-4) THEN
-               FKDPR(K) = 1.E-15
-            ELSEIF (MVDR(K).GE.1.E-4.AND.MVDR(K).LT.5.E-4) THEN
-               FKDPR(K) = EXP(35.450715+2.4505311*LAR2(K)-1.4651261*   &
-                          LLMR(K)-0.22974058*LAR2(K)-0.22139098*       &
-                          LLMR(K)**2.+0.29382343*LAR2(K)*LLMR(K))/1.E10
-            ELSE
-               IF (AFAR(K).LE.3.) THEN
-                  FKDPR(K) = EXP(35.450715+2.4505311*LAR2(K)-1.4651261*&
-                             LLMR(K)-0.22974058*LAR2(K)-0.22139098*    &
-                             LLMR(K)**2.+0.29382343*LAR2(K)*LLMR(K))/  &
-                             1.E10
-               ELSE
-                  FKDPR(K) = EXP((38.35738+8.8170679*LAR2(K)-8.971269* &
-                             LLMR(K)+0.49634922*LAR2(K)**2.+0.51897478*&
-                             LLMR(K)**2.-1.0162854*LAR2(K)*LLMR(K))/(  &
-                             1.+0.16321213*LAR2(K)-0.1676006*LLMR(K)+  &
-                             4.0072333E-3*LAR2(K)**2.+4.9701831E-3*    &
-                             LLMR(K)**2.-9.1512549E-3*LAR2(K)*         &
-                             LLMR(K)))/1.E10
-               ENDIF
-            ENDIF
-            KDPR(K) = NR3D(K)*FKDPR(K)*0.11/DBZWL*ORAR(K)/0.9409
-            IF (ZZVR(K).GT.ZZHR(K)) ZZVR(K) = 0.9999*ZZHR(K)
-            ZDRR(K) = 10.*LOG10(ZZHR(K)/ZZVR(K))
          else
             vtr(k) = 0.
          endif  ! qrz
@@ -472,69 +373,6 @@ CONTAINS
             else
                del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vts(k))
             endif
-            NS3D(k) = 6.*qsz(k)*rhoz(k)*EXP(3.*LOG(LAMS(k))+          &
-                      GAMLN(AFAS(k)+1.)-GAMLN(AFAS(k)+4.))/PI/RHOS(k)
-            SASPR(k) = 0.65
-            IF (SMLF(K).GE.MLIMIT) THEN
-               ORA0(K) = 10.*SMLF(K)+(1.-SMLF(K))*40.
-               ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
-               ORA1(K) = (3.+4.*ORAR(K)+ORAR(K)**4.)/8.
-               ORA2(K) = (3.-4.*ORAR(K)+ORAR(K)**4.)/8.
-               ORA3(K) = (1.-ORAR(K)**4.)/8.
-               SCA0(K)  = MAX(1.E-6,SQRT(SASPR(K)**(-2.)-1.))
-               SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(1.-            &
-                          ATAN(SCA0(K))/SCA0(K))
-               SCALB(K) = (1.-SCALA(K))/2.
-               SMLV(K)  = (RHOS(K)/(1.E3/SMLF(K)-1.E3+RHOS(K)))**MLRA
-               SCAW1(K) = MIXA+MIXB/SMLV(K)+MIXC*RHOS(K)+MIXD/         &
-                          SMLV(K)**2.+MIXE*RHOS(K)**2.+MIXF*RHOS(K)/   &
-                          SMLV(K)
-               SCAFA(K) = 1./(SCALA(K)+SCAW1(K))
-               SCAFB(K) = 1./(SCALB(K)+SCAW1(K))
-               RADS(K) = NS3D(K)*EXP(GAMLN(AFAS(K)+7.)-GAMLN(AFAS(K)+&
-                         1.)-6.*LOG(LAMS(K)))
-               ZZHS(K) = MAX(ZXMIN1,RADS(K)*(ORA1(K)*SCAFB(K)**2.+2.*  &
-                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
-                         SCAFA(K)**2.)/(9.*SCAKW(K)))
-               ZZVS(K) = MAX(ZXMIN1,RADS(K)*(ORA1(K)*SCAFA(K)**2.+2.*  &
-                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
-                         SCAFB(K)**2.)/(9.*SCAKW(K)))
-               DBZS(K) = 10.*LOG10(1.E18*ZZHS(K))
-               KDPS(K) = 3.E4*PI/DBZWL*NS3D(K)*EXP(GAMLN(AFAS(K)+4.)- &
-                         GAMLN(AFAS(K)+1.)-3.*LOG(LAMS(K)))*          &
-                         ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
-               IF (ZZVS(K).GT.ZZHS(K)) ZZVS(K) = 0.9999*ZZHS(K)
-               ZDRS(K) = 10.*LOG10(ZZHS(K)/ZZVS(K))
-            ELSE
-               ORA0(K)  = 40.
-               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
-               LLMS(K)  = LOG(LAMS(K))
-               LAS2(K)  = LOG(AFAS(K)+2.)
-               LROS(K)  = LOG(RHOS(K))
-               LASP(K)  = LOG(200.*MAX(0.01,SASPR(K)))
-               FDBZS(K) = 428.62235+18.226687*LAS2(K)+1.299724*        &
-                          LAS2(K)**2.-0.070558679*LAS2(K)**3.-         &
-                          26.070123*LLMS(K)
-               ZHROX(K) = 1.544E-5*EXP(1.95714566*LROS(K))
-               ZZHS(K)  = NS3D(K)*10.**((FDBZS(K)-250.)/10.-18.)*      &
-                          ZHROX(K)
-               DBZS(K)  = 10.*LOG10(1.E18*ZZHS(K))
-               ZDROX(K) = 0.14542522*LROS(K)**3.-1.97576772*           &
-                          LROS(K)**2.+9.33469066*LROS(K)-14.95051206
-               ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-0.10877652*   &
-                          LASP(K)**2.+0.24567081*LASP(K)+3.06007047)
-               FZDRS(K) = 0.384*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
-               ZZVS(K)  = 10.**(DBZS(K)/10.-18.-FZDRS(K)/10.)
-               FKDPS(K) = EXP(44.30884+2.9903578*LAS2(K)-0.25943237/   &
-                          LAS2(K)-3.0036608*LLMS(K))/1.E15
-               KDROX(K) = 1.974E-5*EXP(1.90820312*LROS(K))
-               KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-0.10043861*   &
-                          LASP(K)**2.+0.22095032*LASP(K)+3.06677159)
-               KDPS(K)  = NS3D(K)*FKDPS(K)*KDROX(K)*KDASP(K)*DBZWL/    &
-                          0.11*ORAR(K)/0.37728
-               IF (ZZVS(K).GT.ZZHS(K)) ZZVS(K) = 0.9999*ZZHS(K)
-               ZDRS(K) = 10.*LOG10(ZZHS(K)/ZZVS(K))
-            ENDIF
          else
             vts(k) = 0.
          endif
@@ -616,10 +454,6 @@ CONTAINS
                else
                   del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtg(k))
                endif !k
-               NG3D(k) = 6.*qgz(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
-                         GAMLN(AFAG(k)+1.)-GAMLN(AFAG(k)+4.))/PI/    &
-                         RHOG(k)
-               GASPR(k) = 0.85
             elseif (ihail.eq.0) then  ! Graupel
                min_q = MIN0(min_q,k)
                max_q = MAX0(max_q,k)
@@ -651,109 +485,7 @@ CONTAINS
                else
                   del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vtg(k))
                endif !k
-               NG3D(k) = 6.*qgz(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
-                         GAMLN(AFAG(k)+1.)-GAMLN(AFAG(k)+4.))/PI/    &
-                         RHOG(k)
-               GASPR(k) = 0.75
             endif !ihail
-            IF (GMLF(K).GE.MLIMIT) THEN
-               ORA0(K) = 10.*GMLF(K)+(1.-GMLF(K))*40.
-               ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
-               ORA1(K) = (3.+4.*ORAR(K)+ORAR(K)**4.)/8.
-               ORA2(K) = (3.-4.*ORAR(K)+ORAR(K)**4.)/8.
-               ORA3(K) = (1.-ORAR(K)**4.)/8.
-               IF (GASPR(K).GT.1.01) THEN
-                  SCA0(K)  = SQRT(1.-GASPR(K)**(-2.))
-                  SCALA(K) = (1.-SCA0(K)**2.)/SCA0(K)**2.*(LOG((1.+    &
-                             SCA0(K))/(1.-SCA0(K)))/2./SCA0(K)-1.)
-               ELSEIF (GASPR(K).LT.0.99) THEN
-                  SCA0(K)  = MAX(1.E-6,SQRT(GASPR(K)**(-2.)-1.))
-                  SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(1.-         &
-                             ATAN(SCA0(K))/SCA0(K))
-               ELSE
-                  SCALA(K) = THRD
-               ENDIF
-               SCALB(K) = (1.-SCALA(K))/2.
-               GMLV(K)  = (RHOG(K)/(1.E3/GMLF(K)-1.E3+RHOG(K)))**MLRA
-               SCAW1(K) = MIXA+MIXB/GMLV(K)+MIXC*RHOG(K)+MIXD/         &
-                          GMLV(K)**2.+MIXE*RHOG(K)**2.+MIXF*RHOG(K)/   &
-                          GMLV(K)
-               SCAFA(K) = 1./(SCALA(K)+SCAW1(K))
-               SCAFB(K) = 1./(SCALB(K)+SCAW1(K))
-               RADG(K) = NG3D(K)*EXP(GAMLN(AFAG(K)+7.)-GAMLN(AFAG(K)+&
-                         1.)-6.*LOG(LAMG(K)))
-               ZZHG(K) = MAX(ZXMIN1,RADG(K)*(ORA1(K)*SCAFB(K)**2.+2.*  &
-                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
-                         SCAFA(K)**2.)/(9.*SCAKW(K)))
-               ZZVG(K) = MAX(ZXMIN1,RADG(K)*(ORA1(K)*SCAFA(K)**2.+2.*  &
-                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
-                         SCAFB(K)**2.)/(9.*SCAKW(K)))
-               DBZG(K) = 10.*LOG10(1.E18*ZZHG(K))
-               IF (ZZVG(K).LE.ZZHG(K)) THEN
-                  ZDRG(K) = 10.*LOG10(ZZHG(K)/ZZVG(K))
-               ELSE
-                  ZDRG(K) = 10.*LOG10(ZZVG(K)/ZZHG(K))
-               ENDIF
-               KDPG(K) = 3.E4*PI/DBZWL*NG3D(K)*EXP(GAMLN(AFAG(K)+4.)- &
-                         GAMLN(AFAG(K)+1.)-3.*LOG(LAMG(K)))*          &
-                         ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
-            ELSE
-               ORA0(K) = 40.
-               ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
-               LLMG(K) = LOG(LAMG(K))
-               LAG2(K) = LOG(AFAG(K)+2.)
-               LROG(K) = LOG(RHOG(K))
-               IF (GASPR(K).LE.1.) THEN
-                  LASP(K)  = LOG(200.*MAX(0.01,GASPR(K)))
-                  ZHROX(K) = 1.544E-5*EXP(1.95714566*LROG(K))
-                  FDBZG(K) = 428.62235+18.226687*LAG2(K)+1.299724*     &
-                             LAG2(K)**2.-0.070558679*LAG2(K)**3.-      &
-                             26.070123*LLMG(K)
-                  ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-18.)*   &
-                             ZHROX(K)
-                  DBZG(K)  = 10.*LOG10(1.E18*ZZHG(K))
-                  ZDROX(K) = 0.14542522*LROG(K)**3.-1.97576772*        &
-                             LROG(K)**2.+9.33469066*LROG(K)-14.95051206
-                  ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-0.10877652*&
-                             LASP(K)**2.+0.24567081*LASP(K)+3.06007047)
-                  FZDRG(K) = 0.384*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
-                  ZZVG(K)  = 10.**(DBZG(K)/10.-18.-FZDRG(K)/10.)
-                  FKDPG(K) = EXP(44.30884+2.9903578*LAG2(K)-0.25943237/&
-                             LAG2(K)-3.0036608*LLMG(K))/1.E15
-                  KDROX(K) = 1.974E-5*EXP(1.90820312*LROG(K))
-                  KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-0.10043861*&
-                             LASP(K)**2.+0.22095032*LASP(K)+3.06677159)
-                  KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*  &
-                                  DBZWL/0.11*ORAR(K)/0.37728
-                  IF (ZZVG(K).GT.ZZHG(K)) ZZVG(K) = 0.9999*ZZHG(K)
-                  ZDRG(K) = 10.*LOG10(ZZHG(K)/ZZVG(K))
-               ELSE
-                  LASP(K)  = LOG(200.*MIN(1.E2,GASPR(K)))
-                  FDBZG(K) = 428.57273+18.226687*LAG2(K)+1.299724*     &
-                             LAG2(K)**2.-0.070558679*LAG2(K)**3.-      &
-                             26.070123*LLMG(K)
-                  ZHROX(K) = 1.63247E-5*EXP(1.9461111336*LROG(K))
-                  ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-18.)*   &
-                             ZHROX(K)
-                  DBZG(K)  = 10.*LOG10(1.E18*ZZHG(K))
-                  ZDROX(K) = 0.21196364*LROG(K)**3.-2.99793531*        &
-                             LROG(K)**2.+14.49837419*LROG(K)-23.49571954
-                  ZDASP(K) = MAX(0.,0.04602081*LASP(K)**3.-1.22524043* &
-                             LASP(K)**2.+10.864809*LASP(K)-30.01372544)
-                  FZDRG(K) = 0.328*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
-                  ZZVG(K)  = 10.**(DBZG(K)/10.-18.+FZDRG(K)/10.)
-                  FKDPG(K) = EXP(44.18702+2.9903578*LAG2(K)-0.25943237/&
-                             LAG2(K)-3.0036608*LLMG(K))/1.E15
-                  KDROX(K) = 1.424E-5*EXP(1.97240205*LROG(K))
-                  KDASP(K) = MAX(0.,0.043095*LASP(K)**3.-1.16143866*   &
-                             LASP(K)**2.+10.43169617*LASP(K)-          &
-                             29.07639304)
-                  KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*DBZWL/  &
-                            0.11*ORAR(K)/0.37728
-                  IF (ZZVG(K).LT.ZZHG(K)) ZZVG(K) = 1.0001*ZZHG(K)
-                  ZDRG(K) = 10.*LOG10(ZZVG(K)/ZZHG(K))
-               ENDIF
-            ENDIF
          else
             vtg(k) = 0.
          endif !qgz
@@ -868,144 +600,6 @@ CONTAINS
             else
                del_tv = AMIN1(del_tv,0.9*(zz(k)-zz(k-1))/vti(k))
             endif
-            NI3D(k) = 6.*qiz(k)*rhoz(k)*EXP(3.*LOG(LAMI(k))+          &
-                      GAMLN(AFAI(k)+1.)-GAMLN(AFAI(k)+4.))/PI/RHOI(k)
-            LLMI(K) = LOG(LAMI(K))
-            LAI2(K) = LOG(AFAI(K)+2.)
-            LROI(K) = LOG(RHOI(K))
-            LMDI(K) = LOG(1.E6*MVDI(K))
-            LLMI2(K) = LLMI(K)*LLMI(K)
-            LLMI3(K) = LLMI2(K)*LLMI(K)
-            LAI22(K) = LAI2(K)*LAI2(K)
-            LAI23(K) = LAI22(K)*LAI2(K)
-            LMDI2(K) = LMDI(K)*LMDI(K)
-            LMDI3(K) = LMDI2(K)*LMDI(K)
-            LROI2(K) = LROI(K)*LROI(K)
-            LROI3(K) = LROI2(K)*LROI(K)
-            ZETA2(K) = ZETA(K)*ZETA(K)
-            ZETA3(K) = ZETA2(K)*ZETA(K)
-            IF ((ADAGR(K)-1.).GE.SLIMIT) THEN
-               ORA0(K)  = 30.
-               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
-               FDBZI(K) = 389.04082+18.161704*LAI2(K)+1.3401764*       &
-                          LAI22(K)-0.07360894*LAI23(K)-26.137103*LLMI(K)
-               ZHROX(K) = 1.9382E-6*EXP(1.9260732373*LROI(K))
-               LMDI(K)  = LOG(1.E6*MVDI(K))
-               EORA(K)  = EXP(ORA0(K)*PI/180.)
-               ORZHI(K) = 1.0455067-0.078843114*LMDI(K)+0.010633945*   &
-                          EORA(K)+4.5711471E-5*LMDI2(K)-0.03498671*    &
-                          EORA(K)**2.+0.059252519*LMDI(K)*EORA(K)-     &
-                          1.6814661E-6*LMDI3(K)+0.0078095037*          &
-                          EORA(K)**3.-0.0076692047*LMDI(K)*            &
-                          EORA(K)**2.+2.020532E-5*LMDI2(K)*EORA(K)
-               ZHZET(K) = 1.
-               ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*      &
-                          ZHROX(K)*ZHZET(K)*ORZHI(K)
-               DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
-               ZDROX(K) = 0.0585053*LROI3(K)-0.80223023*LROI2(K)+      &
-                          3.75756297*LROI(K)-5.86526003
-               ZDZET(K) = MAX(0.,-0.01644484+0.010454643*LMDI(K)+      &
-                          9.4367973*ZETA(K)-0.0026137203*LMDI2(K)+     &
-                          5.7453232*ZETA2(K)+0.3234453*LMDI(K)*ZETA(K)+&
-                          2.0622912E-4*LMDI3(K)-1.3945604*ZETA3(K)-    &
-                          2.2879493*LMDI(K)*ZETA2(K)-0.013856582*      &
-                          LMDI2(K)*ZETA(K))
-               FZDRI(K) = EXP((15.181145+0.34794935*LAI2(K)+0.11677701*&
-                          LAI22(K)-6.3942628E-3*LAI23(K)-1.0984758*    &
-                          LLMI(K))/(1.+0.022930408*LAI2(K)+            &
-                          7.5639466E-3*LAI22(K)-4.146688E-4*LAI23(K)-  &
-                          0.071648235*LLMI(K)))/1.E6*ORAR(K)/0.5779*   &
-                          ZDZET(K)*ZDROX(K)
-               ZZVI(K)  = 10.**(DBZI(K)/10.-18.+FZDRI(K)/10.)
-               FKDPI(K) = EXP((54.728473+7.4097498*LAI2(K)-7.5413134*  &
-                          LLMI(K)+0.25580463*LAI22(K)+0.25257362*      &
-                          LLMI2(K)-0.50222586*LAI2(K)*LLMI(K))/(1.+    &
-                          0.081702748*LAI2(K)-0.085895343*LLMI(K)+     &
-                          7.6712618E-4*LAI22(K)+4.5412963E-4*LLMI2(K)- &
-                          9.3521894E-4*LAI2(K)*LLMI(K)))/2.E18
-               KDROX(K) = 1.75E-6*EXP(1.93990711*LROI(K))
-               KDZET(K) = MAX(0.,-0.0067191022+0.030489666*LMDI(K)+    &
-                          7.6470878*ZETA(K)-0.01097138*LMDI2(K)+       &
-                          9.8497711*ZETA2(K)+0.83287327*LMDI(K)*       &
-                          ZETA(K)+9.1590015E-4*LMDI3(K)-7.2917335*     &
-                          ZETA3(K)-2.2235781*LMDI(K)*ZETA2(K)-         &
-                          0.053116593*LMDI2(K)*ZETA(K))
-               KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*DBZWL/    &
-                          0.11*ORAR(K)/0.5779
-               IF (ZZVI(K).LT.ZZHI(K)) ZZVI(K) = 1.0001*ZZHI(K)
-               ZDRI(K) = 10.*LOG10(ZZVI(K)/ZZHI(K))
-            ELSEIF ((1.-ADAGR(K)).GE.SLIMIT) THEN
-               ORA0(K)  = 10.
-               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
-               FDBZI(K) = 390.47265+18.157805*LAI2(K)+1.3558212*       &
-                          LAI22(K)-0.074452587*LAI23(K)-26.228751*     &
-                          LLMI(K)
-               ZHROX(K) = 1.4172E-6*EXP(1.9687416987*LROI(K))
-               LMDI(K)  = LOG(1.E6*MVDI(K))
-               EORA(K)  = EXP(ORA0(K)*PI/180.)
-               ORZHI(K) = 0.67789527-9.5992589E-5*LMDI(K)+0.7382078*   &
-                          EORA(K)-0.0010254973*LMDI2(K)-0.57079919*    &
-                          EORA(K)**2.+0.025474344*LMDI(K)*EORA(K)+     &
-                          5.146872E-7*LMDI3(K)+0.15025366*EORA(K)**3.- &
-                          0.021740747*LMDI(K)*EORA(K)**2.+9.0541117E-4*&
-                          LMDI2(K)*EORA(K)
-               ZHZET(K) = 1.1531946-0.10474946*LMDI(K)+1.3268439*      &
-                          ZETA(K)+0.013483871*LMDI2(K)+3.0239757*      &
-                          ZETA2(K)-0.53774565*LMDI(K)*ZETA(K)-         &
-                          7.6839476E-4*LMDI3(K)+4.3808336*ZETA3(K)+    &
-                          0.080046674*LMDI(K)*ZETA2(K)+0.015810946*    &
-                          LMDI2(K)*ZETA(K)
-               ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*      &
-                          ZHROX(K)*ZHZET(K)*ORZHI(K)
-               DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
-               ZDROX(K) = 0.05683556*LROI3(K)-0.77585835*LROI2(K)+     &
-                          3.62207807*LROI(K)-5.63826259
-               ZDZET(K) = MAX(0.,0.12567123-0.077409338*LMDI(K)-       &
-                          8.3245922*ZETA(K)+0.013440196*LMDI2(K)+      &
-                          8.7068519*ZETA2(K)-0.53878869*LMDI(K)*       &
-                          ZETA(K)-7.0609359E-4*LMDI3(K)+6.371616*      &
-                          ZETA3(K)-1.6563927*LMDI(K)*ZETA2(K)+         &
-                          0.032682807*LMDI2(K)*ZETA(K))
-               FZDRI(K) = EXP((15.587817+0.23578544*LAI2(K)+           &
-                          0.045497555*LAI22(K)-1.0862071*LLMI(K)+      &
-                          3.4688369E-3*LLMI2(K))/(1.+0.015556043*      &
-                          LAI2(K)+2.1779895E-3*LAI22(K)+7.2733931E-5*  &
-                          LAI23(K)-0.064401818*LLMI(K)))/1.E6*ORAR(K)/ &
-                          0.9409*ZDZET(K)*ZDROX(K)
-               ZZVI(K)  = 10.**(DBZI(K)/10.-18.-FZDRI(K)/10.)
-               FKDPI(K) = EXP((55.096057+7.4047265*LAI2(K)-7.6277374*  &
-                          LLMI(K)+0.25324833*LAI22(K)+0.25735457*      &
-                          LLMI2(K)-0.50528828*LAI2(K)*LLMI(K))/(1.+    &
-                          0.078240442*LAI2(K)-0.083742581*LLMI(K)+     &
-                          5.4080817E-4*LAI22(K)+2.9610344E-4*LLMI2(K)- &
-                          5.9621769E-4*LAI2(K)*LLMI(K)))/2.E18
-               KDROX(K) = 1.89E-6*EXP(1.92963337*LROI(K))
-               KDZET(K) = MAX(0.,0.044182106-0.020578987*LMDI(K)-      &
-                          8.8659688*ZETA(K)+0.0022174675*LMDI2(K)+     &
-                          5.2415098*ZETA2(K)-0.40918383*LMDI(K)*       &
-                          ZETA(K)-3.696556E-5*LMDI3(K)+3.5504491*      &
-                          ZETA3(K)-1.4353113*LMDI(K)*ZETA2(K)+         &
-                          0.022796706*LMDI2(K)*ZETA(K))
-               KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*DBZWL/    &
-                          0.11*ORAR(K)/0.9409
-               IF (ZZVI(K).GT.ZZHI(K)) ZZVI(K) = 0.9999*ZZHI(K)
-               ZDRI(K) = 10.*LOG10(ZZHI(K)/ZZVI(K))
-            ELSEIF (ABS(ADAGR(K)-1.).LT.SLIMIT) THEN
-               ORA0(K)  = 45.
-               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
-               FDBZI(K) = 390.47265+18.157805*LAI2(K)+1.3558212*       &
-                          LAI22(K)-0.074452587*LAI23(K)-26.228751*     &
-                          LLMI(K)
-               ZHROX(K) = 1.9382E-6*EXP(1.9260732373*LROI(K))
-               ORZHI(K) = 1.
-               ZHZET(K) = 1.
-               ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*      &
-                          ZHROX(K)*ZHZET(K)*ORZHI(K)
-               DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
-               ZZVI(K)  = 10.**(DBZI(K)/10.-18.)
-               KDPI(K)  = 0.
-               ZDRI(K)  = 0.
-            ENDIF
          else
             vti(k) = 0.
          endif
@@ -1046,14 +640,14 @@ CONTAINS
          EFRC3D(i,k,j) = EFRC(k)
          EFRI3D(i,k,j) = EFRI(k)
          EFRS3D(i,k,j) = EFRS(k)
-!         IF ((ZZHR(K)+ZZHI(K)+ZZHS(K)+ZZHG(K)).GE.ZXMIN1) THEN
-            DBZM(K) = MAX(-60.,10.*LOG10(1.E18*(ZZHR(K)+ZZHI(K)+       &
-                      ZZHS(K)+ZZHG(K))))
-            ZDR(K)  = MAX(0.,10.*LOG10((ZZHR(K)+MAX(ZZHI(K),ZZVI(K))+  &
-                      ZZHS(K)+MAX(ZZHG(K),ZZVG(K)))/(ZZVR(K)+MIN(      &
-                      ZZVI(K),ZZHI(K))+ZZVS(K)+MIN(ZZVG(K),ZZHG(K)))))
-            KDP(K)  = MAX(0.,KDPR(K)+KDPI(K)+KDPS(K)+KDPG(K))
-!         ENDIF
+      ENDDO
+
+      CALL REFL10CM_TCWA(qvz,qcz,qiz,qrz,qsz,qgz,TK1D,rhoz,SMLF,GMLF,  &
+           DBZM,ZDR,KDP,ihail,prez,lan1D,kts,kte)
+      DO k = kts,kte
+         DBZM3D(i,k,j) = MAX(-35.,DBZM(k))
+         ZDR3D(i,k,j) = ZDR(k)
+         KDP3D(i,k,j) = KDP(k)
       ENDDO
 
       snowncv(i,j) = pptice+pptsnow
@@ -2327,6 +1921,607 @@ CONTAINS
       END FUNCTION GAMLN
 !  (C) Copr. 1986-92 Numerical Recipes Software 2.02
 !=======================================================================
+!
+!========================================================================
+      SUBROUTINE REFL10CM_TCWA(qv1d,qc1d,qi1d,qr1d,qs1d,qg1d,tk1d,rhoz,&
+                 SMLF,GMLF,DBZM,ZDR,KDP,ihail,prez,lan1D,kts,kte)
+!========================================================================
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: kts,kte,ihail
+      INTEGER, DIMENSION(kts:kte), INTENT(IN) :: lan1D
+      REAL, DIMENSION(kts:kte), INTENT(IN) :: qv1d,qc1d,qi1d,qr1d,qs1d,&
+                                qg1d,tk1d,rhoz,SMLF,GMLF,prez
+      REAL, DIMENSION(kts:kte), INTENT(OUT) :: DBZM,ZDR,KDP
+!..Local variables
+      INTEGER, DIMENSION(kts:kte) :: HID
+      REAL, DIMENSION(kts:kte) :: RHOI,RHOS,RHOG,AFAR,AFAI,AFAS,AFAG,  &
+            NR3D,NI3D,NS3D,NG3D,LAMR,LAMI,LAMS,LAMG,LTK,LTK2,LQR,LQR2, &
+            LQI,LQI2,LQS,LQS2,LQG,LQG2,MVDR,MVDI,MVDS,MVDG,MVDH,EFDR,  &
+            EFDI,EFDS,EFDG,EFDH,KDXR,KDXI,KDXS,KDXG,KDXH,MVG0,DSLL,    &
+            TC1D,INHGR,esw,esi,qsi,ssi,LMDI,LROI,LROI2,LROI3,LMDS,LROS,&
+            LMDG,LROG,LLMI,LLMI2,LLMI3,LAI2,LAI22,LAI23,LMDI2,LMDI3,   &
+            ZETA3,LAR2,LAR22,LAR23,LLMR,LLMR2,LLMR3,LAS2,LLMS,LAG2,    &
+            LLMG,SASPR,GASPR,ADAGR,ZETA,ZETA2,N0R,RADR,N0S,N0G,N0I,    &
+            RADI,LLMG2,LAG5,LAG52
+      REAL, DIMENSION(kts:kte) :: DBZR,DBZI,DBZS,DBZG,ZDRR,ZDRI,ZDRS,  &
+            ZDRG,KDPR,KDPI,KDPS,KDPG,SCAKW,SCAW0,SCAW1,SCAWA,SCAWB,    &
+            EPSIN,EPSS,ALPHE,LAMDZ,NEREL,ORA0,ORAR,ORA1,ORA2,ORA3,ORA4,&
+            SCA0,SCALA,SCALB,SCA2,SCAFA,SCAFB,SCFAA,SCFAB,SCFBB,SMLV,  &
+            GMLV,ZZHR,ZZHI,ZZHS,ZZHG,ZZVR,ZZVI,ZZVS,ZZVG,LMDR,EORA,    &
+            ORZHR,FDBZR,FZDRR,FKDPR,KDPR1,FDBZS,ZHROX,FZDRS,ZDROX,     &
+            ZDASP,LASP,FKDPS,KDROX,KDASP,FDBZG,FZDRG,FKDPG,ZHASP,RHASP,&
+            ORZHI,ZHZET,FDBZI,ZDZET,FZDRI,FKDPI,KDZET,RADS,RADG
+      INTEGER :: i,k,ihail2
+      REAL, PARAMETER :: ZXMIN1 = 1.E-28, DBZWL = 0.11, MLRA = 0.3
+      REAL, PARAMETER :: MIXA = -1.0892332E-2, MIXB = 2.0820143E-2
+      REAL, PARAMETER :: MIXC = 4.8553456E-6,  MIXD = -7.6529057E-5
+      REAL, PARAMETER :: MIXE = -1.1783334E-9, MIXF = -2.9599665E-6
+      REAL, PARAMETER :: MLIMIT = 1.E-2, SLIMIT = 1.E-2
+
+      DO K = kts,kte
+         ZZHR(K) = ZXMIN1;  ZZHI(K) = ZXMIN1;  ZZHS(K) = ZXMIN1
+         ZZHG(K) = ZXMIN1;  ZZVR(K) = ZXMIN1;  ZZVI(K) = ZXMIN1
+         ZZVS(K) = ZXMIN1;  ZZVG(K) = ZXMIN1;  RADS(K) = 0.
+         RADG(K) = 0.; DBZM(K) = -60.; ZDR(K) = 0.; KDP(K) = 0.
+         KDPR(K) = 0.; KDPI(K) = 0.; KDPS(K) = 0.; KDPG(K) = 0.
+         MVG0(K) = 0.
+         TC1D(K)  = tk1d(K)-t0
+         EPSIN(K) = 5.27137+2.16474E-2*TC1D(K)-1.31198E-3*TC1D(K)**2.
+         EPSS(K)  = 78.54*(1.-4.579E-3*(TC1D(K)-25.)+1.19E-5*(TC1D(K)- &
+                    25.)**2.-2.8E-8*(TC1D(K)-25.)**3.)
+         ALPHE(K) = -16.8129/tk1d(K)+6.09265E-2
+         LAMDZ(K) = 3.3836E-4*EXP(2513.98/tk1d(K))*1.E-2
+         NEREL(K) = 1.+2.*(LAMDZ(K)/DBZWL)**(1.-ALPHE(K))*SIN(PI*      &
+                    ALPHE(K)/2.)+(LAMDZ(K)/DBZWL)**(2.-2.*ALPHE(K))
+         SCAWA(K) = EPSIN(K)+((EPSS(K)-EPSIN(K))*((LAMDZ(K)/DBZWL)**(  &
+                    1.-ALPHE(K))*SIN(ALPHE(K)*PI/2.)+1.))/NEREL(K)
+         SCAWB(K) = ((EPSS(K)-EPSIN(K))*((LAMDZ(K)/DBZWL)**(1.-        &
+                    ALPHE(K))*COS(ALPHE(K)*PI/2.)))/NEREL(K)+1.25664*  &
+                    DBZWL/1.88496
+         SCAW0(K) = SCAWA(K)**2.+4.*SCAWA(K)+4.+SCAWB(K)**2.
+         SCAKW(K) = ((SCAWA(K)**2.+SCAWA(K)-2.+SCAWB(K)**2.)/          &
+                    SCAW0(K))**2.+(3.*SCAWB(K)/SCAW0(K))**2.
+         SCAW1(K) = SQRT(((SCAWA(K)-1.)/((SCAWA(K)-1.)**2.+SCAWB(K)**  &
+                    2.))**2.+(SCAWB(K)/((SCAWA(K)-1.)**2.+SCAWB(K)**   &
+                    2.)**2.))
+         if (qr1d(k).GE.cmin2) then
+            LTK(k)  = LOG(tk1d(k))
+            LQR(k)  = -1.*LOG(rhoz(k)*qr1d(k))
+            LTK2(k) = LTK(k)*LTK(k)
+            LQR2(k) = LQR(k)*LQR(k)
+            MVDR(k) = EXP(MDR1+MDR2*LTK(k)+MDR3*LQR(k)+MDR4*LTK2(k)+   &
+                      MDR5*LQR2(k)+MDR6*LTK(k)*LQR(k))
+            EFDR(k) = EXP(EFD1+EFD2*LOG(MVDR(k))+EFD3*LOG(1.E3)+EFD4*  &
+                      LOG(MVDR(k))**2.+EFD5*LOG(1.E3)**2.+EFD6*        &
+                      LOG(MVDR(k))*LOG(1.E3))
+            EFDR(k) = MAX(MIN(EFDR(k),MVDR(k)/KMIN**THRD),MVDR(k)/     &
+                      KMAX**THRD)
+            KDXR(k) = MAX(KMIN,MIN(KMAX,(MVDR(k)/EFDR(k))**3.))
+            AFAR(k) = MAX(0.,(6.*KDXR(k)-3.+SQRT(8.*KDXR(k)+1.))/(2.-  &
+                      2.*KDXR(k)))
+            LAMR(k) = (AFAR(k)+3.)/EFDR(k)*1.E6
+            NR3D(k) = 6.*qr1d(k)*rhoz(k)*EXP(3.*LOG(LAMR(k))+          &
+                      GAMLN(AFAR(k)+1.)-GAMLN(AFAR(k)+4.))/PI/1.E3
+            ORA0(K) = 10.
+            ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+            LLMR(K) = LOG(LAMR(K))
+            LAR2(K) = LOG(AFAR(K)+2.)
+            LLMR2(K) = LLMR(K)*LLMR(K)
+            LLMR3(K) = LLMR2(K)*LLMR(K)
+            LAR22(K) = LAR2(K)*LAR2(K)
+            LAR23(K) = LAR22(K)*LAR2(K)
+            LMDR(K) = LOG(MVDR(K))
+            EORA(K) = EXP(ORA0(K)*PI/180.)
+            ORZHR(K) = 0.90655197-0.22828439*LMDR(K)+0.72204255*       &
+                       EORA(K)+0.038145645*LMDR(K)**2.-0.55980115*     &
+                       EORA(K)**2.+0.10191288*LMDR(K)*EORA(K)-         &
+                       1.1570334E-3*LMDR(K)**3.+0.1019446*EORA(K)**3.+ &
+                       0.010382487*LMDR(K)*EORA(K)**2.-0.01654166*     &
+                       LMDR(K)**2.*EORA(K)
+            FDBZR(K) = 1950.2082+29.685692*LAR2(K)-17.761215*          &
+                       SQRT(LAR2(K))+328.61414*LOG(LLMR(K))**2.-       &
+                       1122.8963*SQRT(LLMR(K))
+            ZZHR(K) = NR3D(K)*10.**((FDBZR(K)-200.)/10.-18.)*ORZHR(K)
+            DBZR(K) = 10.*LOG10(1.E18*ZZHR(K))
+            IF (AFAR(K).GE.1.) THEN
+               FZDRR(K) = EXP(10.243103+0.46561642*LAR2(K)+1.7270962*  &
+                          LLMR(K)+5.8974032E-3*LAR22(K)-0.34268382*    &
+                          LLMR2(K)+0.10193409*LAR2(K)*LLMR(K)-         &
+                          0.11005788*LAR23(K)+0.015622039*LLMR3(K)-    &
+                          0.038623263*LAR2(K)*LLMR2(K)+0.10413007*     &
+                          LAR22(K)*LLMR(K))/1.E4*ORAR(K)/0.9409
+            ELSE
+               FZDRR(K) = EXP(19.61943+2.743765*LAR2(K)-2.1913656*     &
+                          LLMR(K)+0.067589745*LAR22(K)+0.0588952*      &
+                          LLMR2(K)-0.15553337*LAR2(K)*LLMR(K))/1.E4*   &
+                          ORAR(K)/0.9409
+            ENDIF
+            ZZVR(K)  = 10.**(DBZR(K)/10.-18.-FZDRR(K)/10.)
+            IF (MVDR(K).LT.1.E-4) THEN
+               FKDPR(K) = 1.E-15
+            ELSEIF (MVDR(K).GE.1.E-4.AND.MVDR(K).LT.5.E-4) THEN
+               FKDPR(K) = EXP(35.450715+2.4505311*LAR2(K)-1.4651261*   &
+                          LLMR(K)-0.22974058*LAR2(K)-0.22139098*       &
+                          LLMR(K)**2.+0.29382343*LAR2(K)*LLMR(K))/1.E10
+            ELSE
+               IF (AFAR(K).LE.6.) THEN
+                  FKDPR(K) = EXP(35.450715+2.4505311*LAR2(K)-1.4651261*&
+                             LLMR(K)-0.22974058*LAR2(K)-0.22139098*    &
+                             LLMR(K)**2.+0.29382343*LAR2(K)*LLMR(K))/  &
+                             1.E10
+               ELSE
+                  FKDPR(K) = EXP((38.35738+8.8170679*LAR2(K)-8.971269* &
+                             LLMR(K)+0.49634922*LAR2(K)**2.+0.51897478*&
+                             LLMR(K)**2.-1.0162854*LAR2(K)*LLMR(K))/(  &
+                             1.+0.16321213*LAR2(K)-0.1676006*LLMR(K)+  &
+                             4.0072333E-3*LAR2(K)**2.+4.9701831E-3*    &
+                             LLMR(K)**2.-9.1512549E-3*LAR2(K)*         &
+                             LLMR(K)))/1.E10
+               ENDIF
+            ENDIF
+            KDPR(K) = NR3D(K)*FKDPR(K)*0.11/DBZWL*ORAR(K)/0.9409
+            IF (ZZVR(K).GT.ZZHR(K)) ZZVR(K) = 0.9999*ZZHR(K)
+            ZDRR(K) = 10.*LOG10(ZZHR(K)/ZZVR(K))
+         else
+            AFAR(k) = 0.
+            LAMR(k) = 0.
+         endif
+         if (qi1d(k).GE.cmin2) then
+            esw(k) = MIN(0.99*prez(k),POLYSVP(tk1d(k),0))
+            esi(k) = MIN(0.99*prez(k),POLYSVP(tk1d(k),1))
+            IF (esi(k).GT.esw(k)) esi(k) = esw(k)
+            qsi(k) = 0.622*esi(k)/(prez(k)-esi(k))
+            IF (TC1D(k).GE.-40.) THEN
+               HID(k)  = MAX(MIN(NINT(ABS(TC1D(k))/0.25),120),0)
+               INHGR(k) = ITBLE(HID(k))
+               RHOI(k) = 900.*EXP(-3.*MAX((qv1d(k)-qsi(k))-5.E-5,0.)/  &
+                         INHGR(k))
+            ELSE
+               ssi(k) = qv1d(k)/qsi(k)-1.
+               IF (ssi(k).GT.0.267) THEN
+                  RHOI(k) = -1027.456*ssi(k)+1185.834
+               ELSE
+                  RHOI(k) = -32.332*ssi(k)+900.
+               ENDIF
+            ENDIF
+            ADAGR(k) = INHGR(k)**THRD
+            ZETA(k) = (ADAGR(k)-1.)/(ADAGR(k)+2.)
+            LTK(k)  = LOG(tk1d(k))
+            LQI(k)  = -1.*LOG(rhoz(k)*qi1d(k))
+            LTK2(k) = LTK(k)*LTK(k)
+            LQI2(k) = LQI(k)*LQI(k)
+            if (lan1D(k).eq.1) then     ! land
+               MVDI(k) = EXP(154.88767-0.25772005*LQI(k)+3.75543E-4*   &
+                         LQI2(k)-54.560357*LTK(k)+5.1248879*LTK2(k))/10.
+            else  ! ocean
+               MVDI(k) = EXP(155.33396-0.25772005*LQI(k)+3.75543E-4*   &
+                         LQI2(k)-54.560357*LTK(k)+5.1248879*LTK2(k))/10.
+            endif
+            EFDI(k) = EXP(EFD1+EFD2*LOG(MVDI(k))+EFD3*LOG(RHOI(k))+    &
+                      EFD4*LOG(MVDI(k))**2.+EFD5*LOG(RHOI(k))**2.+     &
+                      EFD6*LOG(MVDI(k))*LOG(RHOI(k)))
+            EFDI(k) = MAX(MIN(EFDI(k),MVDI(k)/KMIN**THRD),MVDI(k)/     &
+                      KMAX**THRD)
+            KDXI(k) = MAX(KMIN,MIN(KMAX,(MVDI(k)/EFDI(k))**3.))
+            AFAI(k) = MAX(0.,(6.*KDXI(k)-3.+SQRT(8.*KDXI(k)+1.))/(2.-  &
+                      2.*KDXI(k)))
+            LAMI(k) = (AFAI(k)+3.)/EFDI(k)*1.E6
+            NI3D(k) = 6.*qi1d(k)*rhoz(k)*EXP(3.*LOG(LAMI(k))+          &
+                      GAMLN(AFAI(k)+1.)-GAMLN(AFAI(k)+4.))/PI/RHOI(k)
+            LLMI(K) = LOG(LAMI(K))
+            LAI2(K) = LOG(AFAI(K)+2.)
+            LROI(K) = LOG(RHOI(K))
+            LMDI(K) = LOG(MVDI(K))
+            LLMI2(K) = LLMI(K)*LLMI(K)
+            LLMI3(K) = LLMI2(K)*LLMI(K)
+            LAI22(K) = LAI2(K)*LAI2(K)
+            LAI23(K) = LAI22(K)*LAI2(K)
+            LMDI2(K) = LMDI(K)*LMDI(K)
+            LMDI3(K) = LMDI2(K)*LMDI(K)
+            LROI2(K) = LROI(K)*LROI(K)
+            LROI3(K) = LROI2(K)*LROI(K)
+            ZETA2(K) = ZETA(K)*ZETA(K)
+            ZETA3(K) = ZETA2(K)*ZETA(K)
+            IF ((ADAGR(K)-1.).GE.SLIMIT.AND.MVDI(K).GE.6.) THEN
+               ORA0(K)  = 30.
+               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               FDBZI(K) = 389.04082+18.161704*LAI2(K)+1.3401764*       &
+                          LAI22(K)-0.07360894*LAI23(K)-26.137103*LLMI(K)
+               ZHROX(K) = 1.9382E-6*EXP(1.9260732373*LROI(K))
+               EORA(K)  = EXP(ORA0(K)*PI/180.)
+               ORZHI(K) = 1.0455067-0.078843114*LMDI(K)+0.010633945*   &
+                          EORA(K)+4.5711471E-5*LMDI2(K)-0.03498671*    &
+                          EORA(K)**2.+0.059252519*LMDI(K)*EORA(K)-     &
+                          1.6814661E-6*LMDI3(K)+0.0078095037*          &
+                          EORA(K)**3.-0.0076692047*LMDI(K)*            &
+                          EORA(K)**2.+2.020532E-5*LMDI2(K)*EORA(K)
+               ZHZET(K) = 1.
+               ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*      &
+                          ZHROX(K)*ZHZET(K)*ORZHI(K)
+               DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
+               ZDROX(K) = 0.0585053*LROI3(K)-0.80223023*LROI2(K)+      &
+                          3.75756297*LROI(K)-5.86526003
+               ZDZET(K) = MAX(0.,-0.01644484+0.010454643*LMDI(K)+      &
+                          9.4367973*ZETA(K)-0.0026137203*LMDI2(K)+     &
+                          5.7453232*ZETA2(K)+0.3234453*LMDI(K)*ZETA(K)+&
+                          2.0622912E-4*LMDI3(K)-1.3945604*ZETA3(K)-    &
+                          2.2879493*LMDI(K)*ZETA2(K)-0.013856582*      &
+                          LMDI2(K)*ZETA(K))
+               FZDRI(K) = EXP((15.181145+0.34794935*LAI2(K)+0.11677701*&
+                          LAI22(K)-6.3942628E-3*LAI23(K)-1.0984758*    &
+                          LLMI(K))/(1.+0.022930408*LAI2(K)+            &
+                          7.5639466E-3*LAI22(K)-4.146688E-4*LAI23(K)-  &
+                          0.071648235*LLMI(K)))/1.E6*ORAR(K)/0.5779*   &
+                          ZDZET(K)*ZDROX(K)
+               ZZVI(K)  = 10.**(DBZI(K)/10.-18.+FZDRI(K)/10.)
+               FKDPI(K) = EXP((54.728473+7.4097498*LAI2(K)-7.5413134*  &
+                          LLMI(K)+0.25580463*LAI22(K)+0.25257362*      &
+                          LLMI2(K)-0.50222586*LAI2(K)*LLMI(K))/(1.+    &
+                          0.081702748*LAI2(K)-0.085895343*LLMI(K)+     &
+                          7.6712618E-4*LAI22(K)+4.5412963E-4*LLMI2(K)- &
+                          9.3521894E-4*LAI2(K)*LLMI(K)))/2.E18
+               KDROX(K) = 1.75E-6*EXP(1.93990711*LROI(K))
+               KDZET(K) = MAX(0.,-0.0067191022+0.030489666*LMDI(K)+    &
+                          7.6470878*ZETA(K)-0.01097138*LMDI2(K)+       &
+                          9.8497711*ZETA2(K)+0.83287327*LMDI(K)*       &
+                          ZETA(K)+9.1590015E-4*LMDI3(K)-7.2917335*     &
+                          ZETA3(K)-2.2235781*LMDI(K)*ZETA2(K)-         &
+                          0.053116593*LMDI2(K)*ZETA(K))
+               KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*DBZWL/    &
+                          0.11*ORAR(K)/0.5779
+               IF (ZZVI(K).LT.ZZHI(K)) ZZVI(K) = 1.0001*ZZHI(K)
+               ZDRI(K) = 10.*LOG10(ZZVI(K)/ZZHI(K))
+            ELSEIF ((1.-ADAGR(K)).GE.SLIMIT.AND.MVDI(K).GE.6.) THEN
+               ORA0(K)  = 10.
+               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               FDBZI(K) = 390.47265+18.157805*LAI2(K)+1.3558212*       &
+                          LAI22(K)-0.074452587*LAI23(K)-26.228751*     &
+                          LLMI(K)
+               ZHROX(K) = 1.4172E-6*EXP(1.9687416987*LROI(K))
+               EORA(K)  = EXP(ORA0(K)*PI/180.)
+               ORZHI(K) = 0.67789527-9.5992589E-5*LMDI(K)+0.7382078*   &
+                          EORA(K)-0.0010254973*LMDI2(K)-0.57079919*    &
+                          EORA(K)**2.+0.025474344*LMDI(K)*EORA(K)+     &
+                          5.146872E-7*LMDI3(K)+0.15025366*EORA(K)**3.- &
+                          0.021740747*LMDI(K)*EORA(K)**2.+9.0541117E-4*&
+                          LMDI2(K)*EORA(K)
+               ZHZET(K) = 1.1531946-0.10474946*LMDI(K)+1.3268439*      &
+                          ZETA(K)+0.013483871*LMDI2(K)+3.0239757*      &
+                          ZETA2(K)-0.53774565*LMDI(K)*ZETA(K)-         &
+                          7.6839476E-4*LMDI3(K)+4.3808336*ZETA3(K)+    &
+                          0.080046674*LMDI(K)*ZETA2(K)+0.015810946*    &
+                          LMDI2(K)*ZETA(K)
+               ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*      &
+                          ZHROX(K)*ZHZET(K)*ORZHI(K)
+               DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
+               ZDROX(K) = 0.05683556*LROI3(K)-0.77585835*LROI2(K)+     &
+                          3.62207807*LROI(K)-5.63826259
+               ZDZET(K) = MAX(0.,0.12567123-0.077409338*LMDI(K)-       &
+                          8.3245922*ZETA(K)+0.013440196*LMDI2(K)+      &
+                          8.7068519*ZETA2(K)-0.53878869*LMDI(K)*       &
+                          ZETA(K)-7.0609359E-4*LMDI3(K)+6.371616*      &
+                          ZETA3(K)-1.6563927*LMDI(K)*ZETA2(K)+         &
+                          0.032682807*LMDI2(K)*ZETA(K))
+               FZDRI(K) = EXP((15.587817+0.23578544*LAI2(K)+           &
+                          0.045497555*LAI22(K)-1.0862071*LLMI(K)+      &
+                          3.4688369E-3*LLMI2(K))/(1.+0.015556043*      &
+                          LAI2(K)+2.1779895E-3*LAI22(K)+7.2733931E-5*  &
+                          LAI23(K)-0.064401818*LLMI(K)))/1.E6*ORAR(K)/ &
+                          0.9409*ZDZET(K)*ZDROX(K)
+               ZZVI(K)  = 10.**(DBZI(K)/10.-18.-FZDRI(K)/10.)
+               FKDPI(K) = EXP((55.096057+7.4047265*LAI2(K)-7.6277374*  &
+                          LLMI(K)+0.25324833*LAI22(K)+0.25735457*      &
+                          LLMI2(K)-0.50528828*LAI2(K)*LLMI(K))/(1.+    &
+                          0.078240442*LAI2(K)-0.083742581*LLMI(K)+     &
+                          5.4080817E-4*LAI22(K)+2.9610344E-4*LLMI2(K)- &
+                          5.9621769E-4*LAI2(K)*LLMI(K)))/2.E18
+               KDROX(K) = 1.89E-6*EXP(1.92963337*LROI(K))
+               KDZET(K) = MAX(0.,0.044182106-0.020578987*LMDI(K)-      &
+                          8.8659688*ZETA(K)+0.0022174675*LMDI2(K)+     &
+                          5.2415098*ZETA2(K)-0.40918383*LMDI(K)*       &
+                          ZETA(K)-3.696556E-5*LMDI3(K)+3.5504491*      &
+                          ZETA3(K)-1.4353113*LMDI(K)*ZETA2(K)+         &
+                          0.022796706*LMDI2(K)*ZETA(K))
+               KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*DBZWL/    &
+                          0.11*ORAR(K)/0.9409
+               IF (ZZVI(K).GT.ZZHI(K)) ZZVI(K) = 0.9999*ZZHI(K)
+               ZDRI(K) = 10.*LOG10(ZZHI(K)/ZZVI(K))
+            ELSE
+               ORA0(K)  = 45.
+               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               FDBZI(K) = 390.47265+18.157805*LAI2(K)+1.3558212*       &
+                          LAI22(K)-0.074452587*LAI23(K)-26.228751*     &
+                          LLMI(K)
+               ZHROX(K) = 1.9382E-6*EXP(1.9260732373*LROI(K))
+               ORZHI(K) = 1.
+               ZHZET(K) = 1.
+               ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*      &
+                          ZHROX(K)*ZHZET(K)*ORZHI(K)
+               DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
+               ZZVI(K)  = 10.**(DBZI(K)/10.-18.)
+               KDPI(K)  = 0.
+               ZDRI(K)  = 0.
+            ENDIF
+         else
+            AFAI(k) = 0.
+            LAMI(k) = 0.
+         endif
+         if (qs1d(k).GE.cmin2) then
+            LTK(k) = LOG(tk1d(k))
+            LQS(k) = -1.*LOG(rhoz(k)*qs1d(k))
+            LTK2(k) = LTK(k)*LTK(k)
+            LQS2(k) = LQS(k)*LQS(k)
+            RHOS(k) = MAX(100.,MIN(910.,EXP(ROS1+ROS2*LTK(k)+ROS3*     &
+                      LQS(k)+ROS4*LTK2(k)+ROS5*LQS2(k)+ROS6*LTK(k)*    &
+                      LQS(k))))
+            RHOS(k) = 1.E3*SMLF(k)+(1.-SMLF(k))*RHOS(k)
+            RHOS(k) = MIN(MAX(RHOS(k),100.),910.)
+            MVDS(k) = EXP(MDS1+MDS2*LTK(k)+MDS3*LQS(k)+MDS4*LTK2(k)+   &
+                      MDS5*LQS2(k)+MDS6*LTK(k)*LQS(k))
+            EFDS(k) = EXP(EFD1+EFD2*LOG(MVDS(k))+EFD3*LOG(RHOS(k))+    &
+                      EFD4*LOG(MVDS(k))**2.+EFD5*LOG(RHOS(k))**2.+EFD6*&
+                      LOG(MVDS(k))*LOG(RHOS(k)))
+            EFDS(k) = MAX(MIN(EFDS(k),MVDS(k)/KMIN**THRD),MVDS(k)/     &
+                      KMAX**THRD)
+            KDXS(k) = MAX(KMIN,MIN(KMAX,(MVDS(k)/EFDS(k))**3.))
+            AFAS(k) = MAX(0.,(6.*KDXS(k)-3.+SQRT(8.*KDXS(k)+1.))/(2.-  &
+                      2.*KDXS(k)))
+            LAMS(k) = (AFAS(k)+3.)/EFDS(k)*1.E6
+            NS3D(k) = 6.*qs1d(k)*rhoz(k)*EXP(3.*LOG(LAMS(k))+          &
+                      GAMLN(AFAS(k)+1.)-GAMLN(AFAS(k)+4.))/PI/RHOS(k)
+            LMDS(k) = LOG(MVDS(k))
+            SASPR(k) = MAX(0.01,MIN(1.,-5.598876-4.5087011*LTK(k)+     &
+                       5.1416616*LMDS(k)+1.0361366*LTK2(k)+0.017687308*&
+                       LMDS(k)**2.-0.9649671*LTK(k)*LMDS(k)))
+            IF (SMLF(K).GE.MLIMIT) THEN
+               SASPR(K) = SMLF(K)+(1.-SMLF(K))*SASPR(K)
+               ORA0(K) = 10.*SMLF(K)+(1.-SMLF(K))*40.
+               ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               ORA1(K) = (3.+4.*ORAR(K)+ORAR(K)**4.)/8.
+               ORA2(K) = (3.-4.*ORAR(K)+ORAR(K)**4.)/8.
+               ORA3(K) = (1.-ORAR(K)**4.)/8.
+               SCA0(K)  = MAX(1.E-6,SQRT(SASPR(K)**(-2.)-1.))
+               SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(1.-            &
+                          ATAN(SCA0(K))/SCA0(K))
+               SCALB(K) = (1.-SCALA(K))/2.
+               SMLV(K)  = (RHOS(K)/(1.E3/SMLF(K)-1.E3+RHOS(K)))**MLRA
+               SCAW1(K) = MIXA+MIXB/SMLV(K)+MIXC*RHOS(K)+MIXD/         &
+                          SMLV(K)**2.+MIXE*RHOS(K)**2.+MIXF*RHOS(K)/   &
+                          SMLV(K)
+               SCAFA(K) = 1./(SCALA(K)+SCAW1(K))
+               SCAFB(K) = 1./(SCALB(K)+SCAW1(K))
+               RADS(K) = NS3D(K)*EXP(GAMLN(AFAS(K)+7.)-GAMLN(AFAS(K)+&
+                         1.)-6.*LOG(LAMS(K)))
+               ZZHS(K) = MAX(ZXMIN1,RADS(K)*(ORA1(K)*SCAFB(K)**2.+2.*  &
+                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
+                         SCAFA(K)**2.)/(9.*SCAKW(K)))
+               ZZVS(K) = MAX(ZXMIN1,RADS(K)*(ORA1(K)*SCAFA(K)**2.+2.*  &
+                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
+                         SCAFB(K)**2.)/(9.*SCAKW(K)))
+               DBZS(K) = 10.*LOG10(1.E18*ZZHS(K))
+               KDPS(K) = 3.E4*PI/DBZWL*NS3D(K)*EXP(GAMLN(AFAS(K)+4.)- &
+                         GAMLN(AFAS(K)+1.)-3.*LOG(LAMS(K)))*          &
+                         ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
+               IF (ZZVS(K).GT.ZZHS(K)) ZZVS(K) = 0.9999*ZZHS(K)
+               ZDRS(K) = 10.*LOG10(ZZHS(K)/ZZVS(K))
+            ELSE
+               ORA0(K)  = 40.
+               ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               LLMS(K)  = LOG(LAMS(K))
+               LAS2(K)  = LOG(AFAS(K)+2.)
+               LROS(K)  = LOG(RHOS(K))
+               LASP(K)  = LOG(200.*MAX(0.01,SASPR(K)))
+               FDBZS(K) = 428.62235+18.226687*LAS2(K)+1.299724*        &
+                          LAS2(K)**2.-0.070558679*LAS2(K)**3.-         &
+                          26.070123*LLMS(K)
+               ZHROX(K) = 1.544E-5*EXP(1.95714566*LROS(K))
+               ZZHS(K)  = NS3D(K)*10.**((FDBZS(K)-250.)/10.-18.)*      &
+                          ZHROX(K)
+               DBZS(K)  = 10.*LOG10(1.E18*ZZHS(K))
+               ZDROX(K) = 0.14542522*LROS(K)**3.-1.97576772*           &
+                          LROS(K)**2.+9.33469066*LROS(K)-14.95051206
+               ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-0.10877652*   &
+                          LASP(K)**2.+0.24567081*LASP(K)+3.06007047)
+               FZDRS(K) = 0.384*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
+               ZZVS(K)  = 10.**(DBZS(K)/10.-18.-FZDRS(K)/10.)
+               FKDPS(K) = EXP(44.30884+2.9903578*LAS2(K)-0.25943237/   &
+                          LAS2(K)-3.0036608*LLMS(K))/1.E15
+               KDROX(K) = 1.974E-5*EXP(1.90820312*LROS(K))
+               KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-0.10043861*   &
+                          LASP(K)**2.+0.22095032*LASP(K)+3.06677159)
+               KDPS(K)  = NS3D(K)*FKDPS(K)*KDROX(K)*KDASP(K)*DBZWL/    &
+                          0.11*ORAR(K)/0.37728
+               IF (ZZVS(K).GT.ZZHS(K)) ZZVS(K) = 0.9999*ZZHS(K)
+               ZDRS(K) = 10.*LOG10(ZZHS(K)/ZZVS(K))
+            ENDIF
+         else
+            AFAS(k) = 0.
+            LAMS(k) = 0.
+         endif
+         if (qg1d(k).GE.cmin2) then
+            MVG0(k) = EXP(8.8283+0.25*LOG(rhoz(k)*qg1d(k)))/1.E6
+            DSLL(k) = MAX(1.E-3,MIN(1.,2.*1.E-2*(EXP(MIN(20.,-TC1D(k)/ &
+                      MAX(0.1,(1.1E4*rhoz(k)*(qc1d(k)+qr1d(k))-1.3E3*  &
+                      rhoz(k)*qg1d(k)+1.))))-1.)))
+            if (ihail.eq.2) then
+               IF (MVG0(k).GT.DSLL(k)) THEN
+                  ihail2 = 1
+               ELSE
+                  ihail2 = 0
+               ENDIF
+            ENDIF
+            if (ihail.eq.1.or.ihail2.eq.1) then ! Hail
+               RHOG(k) = rhohail
+               LTK(k) = LOG(tk1d(k))
+               LQG(k) = -1.*LOG(rhoz(k)*qg1d(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQG2(k) = LQG(k)*LQG(k)
+               MVDH(k) = EXP(MDH1+MDH2*LTK(k)+MDH3*LQG(k)+MDH4*LTK2(k)+&
+                         MDH5*LQG2(k)+MDH6*LTK(k)*LQG(k))
+               EFDH(k) = EXP(EFD1+EFD2*LOG(MVDH(k))+EFD3*LOG(9.E2)+    &
+                         EFD4*LOG(MVDH(k))**2.+EFD5*LOG(9.E2)**2.+EFD6*&
+                         LOG(MVDH(k))*LOG(9.E2))
+               EFDH(k) = MAX(MIN(EFDH(k),MVDH(k)/KMIN**THRD),MVDH(k)/  &
+                         KMAX**THRD)
+               KDXH(k) = MAX(KMIN,MIN(KMAX,(MVDH(k)/EFDH(k))**3.))
+               AFAG(k) = MAX(0.,(6.*KDXH(k)-3.+SQRT(8.*KDXH(k)+1.))/(  &
+                         2.-2.*KDXH(k)))
+               LAMG(k) = (AFAG(k)+3.)/EFDH(k)*1.E6
+               NG3D(k) = 6.*qg1d(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
+                         GAMLN(AFAG(k)+1.)-GAMLN(AFAG(k)+4.))/PI/    &
+                         RHOG(k)
+               LLMG(k)  = LOG(LAMG(k))
+               LLMG2(k) = LLMG(k)*LLMG(k)
+               LAG5(k)  = LOG(AFAG(k)+5.)
+               LAG52(K) = LAG5(k)*LAG5(k)
+               GASPR(k) = MIN(1.,((5.6387098+1.5626893*LAG5(k)-        &
+                          1.5481826*LLMG(k)+0.12481435*LAG52(k)+       &
+                          0.11244742*LLMG2(k)-0.2336531*LAG5(k)*       &
+                          LLMG(k))/(1.+0.28272803*LAG5(k)-0.2780308*   &
+                          LLMG(k)+2.1750225E-2*LAG52(k)+1.9960971E-2*  &
+                          LLMG2(k)-4.1317594E-2*LAG5(k)*LLMG(k)))/10.)
+            elseif (ihail.eq.0.or.ihail2.eq.0) then  ! Graupel
+               LTK(k) = LOG(tk1d(k))
+               LQG(k) = -1.*LOG(rhoz(k)*qg1d(k))
+               LTK2(k) = LTK(k)*LTK(k)
+               LQG2(k) = LQG(k)*LQG(k)
+               RHOG(k) = MIN(900.,1.E3*GMLF(k)+(1.-GMLF(k))*MAX(250.,  &
+                         EXP(-0.056433*LQG(k)+6.608048)))
+               MVDG(k) = EXP(MDG1+MDG2*LTK(k)+MDG3*LQG(k)+MDG4*LTK2(k)+&
+                         MDG5*LQG2(k)+MDG6*LTK(k)*LQG(k))
+               EFDG(k) = EXP(EFD1+EFD2*LOG(MVDG(k))+EFD3*LOG(RHOG(k))+ &
+                         EFD4*LOG(MVDG(k))**2.+EFD5*LOG(RHOG(k))**2.+  &
+                         EFD6*LOG(MVDG(k))*LOG(RHOG(k)))
+               EFDG(k) = MAX(MIN(EFDG(k),MVDG(k)/KMIN**THRD),MVDG(k)/  &
+                         KMAX**THRD)
+               KDXG(k) = MAX(KMIN,MIN(KMAX,(MVDG(k)/EFDG(k))**3.))
+               AFAG(k) = MAX(0.,(6.*KDXG(k)-3.+SQRT(8.*KDXG(k)+        &
+                         1.))/(2.-2.*KDXG(k)))
+               LAMG(k) = (AFAG(k)+3.)/EFDG(k)*1.E6
+               NG3D(k) = 6.*qg1d(k)*rhoz(k)*EXP(3.*LOG(LAMG(k))+       &
+                         GAMLN(AFAG(k)+1.)-GAMLN(AFAG(k)+4.))/PI/    &
+                         RHOG(k)
+               LMDG(k) = LOG(MVDG(k))
+               GASPR(k) = MAX(0.01,MIN(1.,0.30882863-5.1821694*LTK(k)+ &
+                          3.6717888*LMDG(k)+0.95308838*LTK2(k)+        &
+                          0.010507446*LMDG(k)**2.-0.67976225*LTK(k)*   &
+                          LMDG(k)))
+            ENDIF
+            IF (GMLF(K).GE.MLIMIT) THEN
+               GASPR(K) = GMLF(K)+(1.-GMLF(K))*GASPR(K)
+               ORA0(K) = 10.*GMLF(K)+(1.-GMLF(K))*40.
+               ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               ORA1(K) = (3.+4.*ORAR(K)+ORAR(K)**4.)/8.
+               ORA2(K) = (3.-4.*ORAR(K)+ORAR(K)**4.)/8.
+               ORA3(K) = (1.-ORAR(K)**4.)/8.
+               IF (GASPR(K).GT.1.01) THEN
+                  SCA0(K)  = SQRT(1.-GASPR(K)**(-2.))
+                  SCALA(K) = (1.-SCA0(K)**2.)/SCA0(K)**2.*(LOG((1.+    &
+                             SCA0(K))/(1.-SCA0(K)))/2./SCA0(K)-1.)
+               ELSEIF (GASPR(K).LT.0.99) THEN
+                  SCA0(K)  = MAX(1.E-6,SQRT(GASPR(K)**(-2.)-1.))
+                  SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(1.-         &
+                             ATAN(SCA0(K))/SCA0(K))
+               ELSE
+                  SCALA(K) = THRD
+               ENDIF
+               SCALB(K) = (1.-SCALA(K))/2.
+               GMLV(K)  = (RHOG(K)/(1.E3/GMLF(K)-1.E3+RHOG(K)))**MLRA
+               SCAW1(K) = MIXA+MIXB/GMLV(K)+MIXC*RHOG(K)+MIXD/         &
+                          GMLV(K)**2.+MIXE*RHOG(K)**2.+MIXF*RHOG(K)/   &
+                          GMLV(K)
+               SCAFA(K) = 1./(SCALA(K)+SCAW1(K))
+               SCAFB(K) = 1./(SCALB(K)+SCAW1(K))
+               RADG(K) = NG3D(K)*EXP(GAMLN(AFAG(K)+7.)-GAMLN(AFAG(K)+&
+                         1.)-6.*LOG(LAMG(K)))
+               ZZHG(K) = MAX(ZXMIN1,RADG(K)*(ORA1(K)*SCAFB(K)**2.+2.*  &
+                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
+                         SCAFA(K)**2.)/(9.*SCAKW(K)))
+               ZZVG(K) = MAX(ZXMIN1,RADG(K)*(ORA1(K)*SCAFA(K)**2.+2.*  &
+                         ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*            &
+                         SCAFB(K)**2.)/(9.*SCAKW(K)))
+               DBZG(K) = 10.*LOG10(1.E18*ZZHG(K))
+               IF (ZZVG(K).LE.ZZHG(K)) THEN
+                  ZDRG(K) = 10.*LOG10(ZZHG(K)/ZZVG(K))
+               ELSE
+                  ZDRG(K) = 10.*LOG10(ZZVG(K)/ZZHG(K))
+               ENDIF
+               KDPG(K) = 3.E4*PI/DBZWL*NG3D(K)*EXP(GAMLN(AFAG(K)+4.)- &
+                         GAMLN(AFAG(K)+1.)-3.*LOG(LAMG(K)))*          &
+                         ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
+            ELSE
+               ORA0(K) = 40.
+               ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
+               LLMG(K) = LOG(LAMG(K))
+               LAG2(K) = LOG(AFAG(K)+2.)
+               LROG(K) = LOG(RHOG(K))
+               IF (GASPR(K).LE.1.) THEN
+                  LASP(K)  = LOG(200.*MAX(0.01,GASPR(K)))
+                  ZHROX(K) = 1.544E-5*EXP(1.95714566*LROG(K))
+                  FDBZG(K) = 428.62235+18.226687*LAG2(K)+1.299724*     &
+                             LAG2(K)**2.-0.070558679*LAG2(K)**3.-      &
+                             26.070123*LLMG(K)
+                  ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-18.)*   &
+                             ZHROX(K)
+                  DBZG(K)  = 10.*LOG10(1.E18*ZZHG(K))
+                  ZDROX(K) = 0.14542522*LROG(K)**3.-1.97576772*        &
+                             LROG(K)**2.+9.33469066*LROG(K)-14.95051206
+                  ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-0.10877652*&
+                             LASP(K)**2.+0.24567081*LASP(K)+3.06007047)
+                  FZDRG(K) = 0.384*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
+                  ZZVG(K)  = 10.**(DBZG(K)/10.-18.-FZDRG(K)/10.)
+                  FKDPG(K) = EXP(44.30884+2.9903578*LAG2(K)-0.25943237/&
+                             LAG2(K)-3.0036608*LLMG(K))/1.E15
+                  KDROX(K) = 1.974E-5*EXP(1.90820312*LROG(K))
+                  KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-0.10043861*&
+                             LASP(K)**2.+0.22095032*LASP(K)+3.06677159)
+                  KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*  &
+                                  DBZWL/0.11*ORAR(K)/0.37728
+                  IF (ZZVG(K).GT.ZZHG(K)) ZZVG(K) = 0.9999*ZZHG(K)
+                  ZDRG(K) = 10.*LOG10(ZZHG(K)/ZZVG(K))
+               ELSE
+                  LASP(K)  = LOG(200.*MIN(1.E2,GASPR(K)))
+                  FDBZG(K) = 428.57273+18.226687*LAG2(K)+1.299724*     &
+                             LAG2(K)**2.-0.070558679*LAG2(K)**3.-      &
+                             26.070123*LLMG(K)
+                  ZHROX(K) = 1.63247E-5*EXP(1.9461111336*LROG(K))
+                  ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-18.)*   &
+                             ZHROX(K)
+                  DBZG(K)  = 10.*LOG10(1.E18*ZZHG(K))
+                  ZDROX(K) = 0.21196364*LROG(K)**3.-2.99793531*        &
+                             LROG(K)**2.+14.49837419*LROG(K)-23.49571954
+                  ZDASP(K) = MAX(0.,0.04602081*LASP(K)**3.-1.22524043* &
+                             LASP(K)**2.+10.864809*LASP(K)-30.01372544)
+                  FZDRG(K) = 0.328*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
+                  ZZVG(K)  = 10.**(DBZG(K)/10.-18.+FZDRG(K)/10.)
+                  FKDPG(K) = EXP(44.18702+2.9903578*LAG2(K)-0.25943237/&
+                             LAG2(K)-3.0036608*LLMG(K))/1.E15
+                  KDROX(K) = 1.424E-5*EXP(1.97240205*LROG(K))
+                  KDASP(K) = MAX(0.,0.043095*LASP(K)**3.-1.16143866*   &
+                             LASP(K)**2.+10.43169617*LASP(K)-          &
+                             29.07639304)
+                  KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*DBZWL/  &
+                            0.11*ORAR(K)/0.37728
+                  IF (ZZVG(K).LT.ZZHG(K)) ZZVG(K) = 1.0001*ZZHG(K)
+                  ZDRG(K) = 10.*LOG10(ZZVG(K)/ZZHG(K))
+               ENDIF
+            ENDIF
+         else
+            AFAG(k) = 0.
+            LAMG(k) = 0.
+         endif
+         IF ((ZZHR(K)+ZZHI(K)+ZZHS(K)+ZZHG(K)).GE.ZXMIN1) THEN
+            DBZM(K) = MAX(-60.,10.*LOG10(1.E18*(ZZHR(K)+ZZHI(K)+       &
+                      ZZHS(K)+ZZHG(K))))
+            ZDR(K)  = MAX(0.,10.*LOG10((ZZHR(K)+MAX(ZZHI(K),ZZVI(K))+  &
+                      ZZHS(K)+MAX(ZZHG(K),ZZVG(K)))/(ZZVR(K)+MIN(      &
+                      ZZVI(K),ZZHI(K))+ZZVS(K)+MIN(ZZVG(K),ZZHG(K)))))
+            KDP(K)  = MAX(0.,KDPR(K)+KDPI(K)+KDPS(K)+KDPG(K))
+         ENDIF
+      ENDDO
+
+      END SUBROUTINE REFL10CM_TCWA
+!======================================================================
 !
 !======================================================================
       END MODULE  module_mp_tcwa1
