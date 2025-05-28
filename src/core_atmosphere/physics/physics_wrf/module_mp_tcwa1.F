@@ -646,7 +646,9 @@ CONTAINS
            DBZM,ZDR,KDP,ihail,prez,lan1D,kts,kte)
       DO k = kts,kte
 
+      IF (ZDR(k).GT.0.) THEN
       PRINT *, 'ZDR1=',ZDR(k),'KDP1=',KDP(k)
+      ENDIF
 
          DBZM3D(i,k,j) = MAX(-35.,DBZM(k))
          ZDR3D(i,k,j) = ZDR(k)
@@ -2521,7 +2523,9 @@ CONTAINS
                       ZZVI(K),ZZHI(K))+ZZVS(K)+MIN(ZZVG(K),ZZHG(K)))))
             KDP(K)  = MAX(0.,KDPR(K)+KDPI(K)+KDPS(K)+KDPG(K))
 
+      IF (ZDR(K).GT.0.) THEN
       PRINT *, 'ZDR0=',ZDR(K),'KDP0=',KDP(K),'ZZVR=',ZZVR(K)
+      ENDIF
 
          ENDIF
       ENDDO
