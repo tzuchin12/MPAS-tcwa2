@@ -782,6 +782,8 @@
                 ns_p(i,k,j) = ns(k,i)
                 ng_p(i,k,j) = ng(k,i)
                 refl10cm_p(i,k,j) = refl10cm(k,i)
+                ZDR_p(i,k,j) = ZDR(k,i)
+                KDP_p(i,k,j) = KDP(k,i)
                 LDR_p(i,k,j) = LDR(k,i)
                 RHV_p(i,k,j) = RHV(k,i)
              enddo
@@ -1161,10 +1163,14 @@
 
          case("mp_tcwa1")
              call mpas_pool_get_array(diag_physics,'refl10cm',refl10cm )
+             call mpas_pool_get_array(diag_physics,'ZDR' ,ZDR )
+             call mpas_pool_get_array(diag_physics,'KDP' ,KDP )
              do j = jts, jte
              do k = kts, kte
              do i = its, ite
                 refl10cm(k,i) = refl10cm_p(i,k,j)
+                ZDR(k,i) = ZDR_p(i,k,j)
+                KDP(k,i) = KDP_p(i,k,j)
              enddo
              enddo
              enddo
