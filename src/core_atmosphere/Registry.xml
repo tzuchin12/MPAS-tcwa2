@@ -627,10 +627,10 @@
 			<var name="re_cloud"/>
 			<var name="re_ice"/>
 			<var name="re_snow"/>
-                        <var name="ZDR"/>
-                        <var name="KDP"/>
-                        <var name="LDR"/>
-                        <var name="RHV"/>			
+                        <var name="zdr"/>
+                        <var name="kdp"/>
+                        <var name="smlf"/>
+                        <var name="gmlf"/>			
 			<var name="nwfa2d"/>
 			<var name="nifa2d"/>
 			<var name="nt_c"/>
@@ -2598,20 +2598,20 @@
                      description="effective radius of snow crystals"
                      packages="mp_thompson_in;mp_thompson_aers_in;mp_wsm6_in;mp_tcwa1_in;mp_tcwa2_in;mp_nssl2m_in"/>
 
-                <var name="ZDR" type="real" dimensions="nVertLevels nCells Time" units="dB"
+                <var name="zdr" type="real" dimensions="nVertLevels nCells Time" units="dB"
                      description="Differential reflectivity"
                      packages="mp_tcwa1_in;mp_tcwa2_in"/>
 
-                <var name="KDP" type="real" dimensions="nVertLevels nCells Time" units="deg/km"
+                <var name="kdp" type="real" dimensions="nVertLevels nCells Time" units="deg/km"
                      description="Specific differential phase"
                      packages="mp_tcwa1_in;mp_tcwa2_in"/>
 
-                <var name="LDR" type="real" dimensions="nVertLevels nCells Time" units="dB"
-                     description="Linear depolarization ratio"
+                <var name="smlf" type="real" dimensions="nVertLevels nCells Time" units="unitless"
+                     description="melted fraction of snow"
                      packages="mp_tcwa2_in"/>
 
-                <var name="RHV" type="real" dimensions="nVertLevels nCells Time" units="unitless"
-                     description="Cross-correlation coefficient"
+                <var name="gmlf" type="real" dimensions="nVertLevels nCells Time" units="unitless"
+                     description="melted fraction of graupel"
                      packages="mp_tcwa2_in"/>
 
                 <var name="nt_c" type="real" dimensions="nCells" units="nb kg^{-1}"

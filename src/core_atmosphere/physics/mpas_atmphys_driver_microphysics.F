@@ -179,8 +179,8 @@
        case("mp_tcwa1")
           if(.not.allocated(xland_p)) allocate(xland_p(ims:ime,jms:jme))
           if(.not.allocated(zmid_p)) allocate(zmid_p(ims:ime,kms:kme,jms:jme))
-          if(.not.allocated(ZDR_p)) allocate(ZDR_p(ims:ime,kms:kme,jms:jme))
-          if(.not.allocated(KDP_p)) allocate(KDP_p(ims:ime,kms:kme,jms:jme))
+          if(.not.allocated(zdr_p)) allocate(zdr_p(ims:ime,kms:kme,jms:jme))
+          if(.not.allocated(kdp_p)) allocate(kdp_p(ims:ime,kms:kme,jms:jme))
 
        case("mp_tcwa2")
           if(.not.allocated(nc_p) ) allocate(nc_p(ims:ime,kms:kme,jms:jme))
@@ -192,10 +192,10 @@
           !height above sea level (terrain height) and land-ocean mask
           if(.not.allocated(xland_p)) allocate(xland_p(ims:ime,jms:jme))
 
-          if(.not.allocated(ZDR_p)) allocate(ZDR_p(ims:ime,kms:kme,jms:jme))
-          if(.not.allocated(KDP_p)) allocate(KDP_p(ims:ime,kms:kme,jms:jme))
-          if(.not.allocated(LDR_p)) allocate(LDR_p(ims:ime,kms:kme,jms:jme))
-          if(.not.allocated(RHV_p)) allocate(RHV_p(ims:ime,kms:kme,jms:jme))
+          if(.not.allocated(zdr_p)) allocate(zdr_p(ims:ime,kms:kme,jms:jme))
+          if(.not.allocated(kdp_p)) allocate(kdp_p(ims:ime,kms:kme,jms:jme))
+          if(.not.allocated(smlf_p)) allocate(smlf_p(ims:ime,kms:kme,jms:jme))
+          if(.not.allocated(gmlf_p)) allocate(gmlf_p(ims:ime,kms:kme,jms:jme))
 
        case("mp_nssl2m")
          ! allocate all possible arrays even if not used since they are always passed to the driver
@@ -309,8 +309,8 @@
        case("mp_tcwa1")
           if(allocated(xland_p)) deallocate(xland_p)
           if(.not.allocated(zmid_p)) allocate(zmid_p(ims:ime,kms:kme,jms:jme))
-          if(allocated(ZDR_p))  deallocate(ZDR_p)
-          if(allocated(KDP_p))  deallocate(KDP_p)
+          if(allocated(zdr_p))  deallocate(zdr_p)
+          if(allocated(kdp_p))  deallocate(kdp_p)
 
        case("mp_tcwa2")
           if(allocated(nc_p) ) deallocate(nc_p )
@@ -322,10 +322,10 @@
           !height above sea level (terrain height) and land-ocean mask
           if(allocated(xland_p)) deallocate(xland_p)
 
-          if(allocated(ZDR_p))  deallocate(ZDR_p)
-          if(allocated(KDP_p))  deallocate(KDP_p)
-          if(allocated(LDR_p))  deallocate(LDR_p)
-          if(allocated(RHV_p))  deallocate(RHV_p)
+          if(allocated(zdr_p))  deallocate(zdr_p)
+          if(allocated(kdp_p))  deallocate(kdp_p)
+          if(allocated(smlf_p))  deallocate(smlf_p)
+          if(allocated(gmlf_p))  deallocate(gmlf_p)
 
        case("mp_nssl2m")
           if(allocated(qh_p)         ) deallocate(qh_p         )
@@ -600,7 +600,7 @@
        call mp_tcwa1(th = th_p, qv = qv_p, qc = qc_p, qr = qr_p, qi = qi_p, qs = qs_p,        &
                      qg = qg_p, rho = rho_p, pii = pi_p, p = pres_p, w = w_p,                 &
                      dt_in = dt_microp, z = zmid_p, ht = z_p(:,1,:), dz8w = dz_p,             &
-                     xland = xland_p, DBZM = refl10cm_p, ZDR = ZDR_p, KDP = KDP_p,            &
+                     xland = xland_p, DBZM = refl10cm_p, ZDR = zdr_p, KDP = kdp_p,            &
                      re_cloud = recloud_p, re_ice = reice_p, re_snow = resnow_p,              &
                      has_reqc = has_reqc, has_reqi = has_reqi, has_reqs = has_reqs, sr = sr_p,&
                      rainnc = rainnc_p, rainncv = rainncv_p, snownc = snownc_p,               &
@@ -617,7 +617,7 @@
                      QG = qg_p, NC = nc_p, NR = nr_p, NI = ni_p, NS = ns_p, NG = ng_p,        &
                      SR = sr_p, RAINNC = rainnc_p, RAINNCV = rainncv_p, SNOWNC = snownc_p,    &
                      SNOWNCV = snowncv_p, GRAPNC = graupelnc_p, GRAPNCV = graupelncv_p,       &
-                     DBZM = refl10cm_p, ZDR = ZDR_p, KDP = KDP_p, LDR = LDR_p, RHV = RHV_p,   &
+                     DBZM = refl10cm_p, ZDR = zdr_p, KDP = kdp_p, SMLF = smlf_p, GMLF = gmlf_p,&
                      re_cloud = recloud_p, re_ice = reice_p, re_snow = resnow_p,              &
                      has_reqc = has_reqc, has_reqi = has_reqi, has_reqs = has_reqs,           &
                      IDS = ids, IDE = ide, JDS = jds, JDE = jde, KDS = kds, KDE = kde,        &
@@ -710,7 +710,7 @@
  character(len=StrKIND),pointer:: microp_scheme
  integer,pointer:: nCellsSolve
  real,dimension(:),pointer:: graupelncv,rainncv,snowncv,sr,hailncv
- real(kind=RKIND),dimension(:,:),pointer  :: ZDR,KDP,LDR,RHV  !for tcwa2
+ real(kind=RKIND),dimension(:,:),pointer  :: zdr,kdp,smlf,gmlf  !for tcwa2
 
 !local variables and arrays:
  integer:: i,j,k
@@ -723,10 +723,10 @@
  call mpas_pool_get_array(diag_physics,'rainncv'   ,rainncv   )
  call mpas_pool_get_array(diag_physics,'snowncv'   ,snowncv   )
  call mpas_pool_get_array(diag_physics,'sr'        ,sr        )
- call mpas_pool_get_array(diag_physics,'ZDR' ,ZDR )
- call mpas_pool_get_array(diag_physics,'KDP' ,KDP )
- call mpas_pool_get_array(diag_physics,'LDR' ,LDR )
- call mpas_pool_get_array(diag_physics,'RHV' ,RHV )
+ call mpas_pool_get_array(diag_physics,'zdr' ,zdr )
+ call mpas_pool_get_array(diag_physics,'kdp' ,kdp )
+ call mpas_pool_get_array(diag_physics,'smlf' ,smlf )
+ call mpas_pool_get_array(diag_physics,'gmlf' ,gmlf )
 
  IF ( microp_scheme == "mp_nssl2m" ) THEN
  call mpas_pool_get_array(diag_physics,'hailncv',hailncv)
@@ -779,15 +779,15 @@
        case("mp_tcwa1")
           do i = its, ite
           do k = kts, kte
-             ZDR(k,i) = 0._RKIND
-             KDP(k,i) = 0._RKIND
+             zdr(k,i) = 0._RKIND
+             kdp(k,i) = 0._RKIND
           enddo
           enddo
           do j = jts, jte
           do k = kts, kte
           do i = its, ite
-             ZDR_p(i,k,j) = 0._RKIND
-             KDP_p(i,k,j) = 0._RKIND
+             zdr_p(i,k,j) = 0._RKIND
+             kdp_p(i,k,j) = 0._RKIND
           enddo
           enddo
           enddo
@@ -795,19 +795,19 @@
        case("mp_tcwa2")
           do i = its, ite
           do k = kts, kte
-             ZDR(k,i) = 0._RKIND
-             KDP(k,i) = 0._RKIND
-             LDR(k,i) = -99.
-             RHV(k,i) = 1.
+             zdr(k,i) = 0._RKIND
+             kdp(k,i) = 0._RKIND
+             smlf(k,i) = 0._RKIND
+             gmlf(k,i) = 0._RKIND
           enddo
           enddo
           do j = jts, jte
           do k = kts, kte
           do i = its, ite
-             ZDR_p(i,k,j) = 0._RKIND
-             KDP_p(i,k,j) = 0._RKIND
-             LDR_p(i,k,j) = -99.
-             RHV_p(i,k,j) = 1.
+             zdr_p(i,k,j) = 0._RKIND
+             kdp_p(i,k,j) = 0._RKIND
+             smlf_p(i,k,j) = 0._RKIND
+             gmlf_p(i,k,j) = 0._RKIND
           enddo
           enddo
           enddo

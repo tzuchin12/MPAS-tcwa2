@@ -302,7 +302,7 @@
 
 !... added for tcwa2 microphysics:
  real(kind=RKIND),dimension(:,:,:),allocatable:: &
-    ZDR_p,KDP_p,LDR_p,RHV_p
+    zdr_p,kdp_p,smlf_p,gmlf_p
 
 !... for Thompson cloud microphysics parameterization, including aerosol-aware option:
  real(kind=RKIND),dimension(:,:),allocatable:: &

@@ -32,6 +32,7 @@
       INTEGER, PRIVATE, PARAMETER :: SSAT = 2                           ! 0. ADJUST QC; 1. ADJUST QC+QI; 2. PREDICTION SATURATION
       INTEGER, PRIVATE, PARAMETER :: SATW = 1                           ! 0. WITHOUT; 1. WITH W EFFECT ON SATURATION
       INTEGER, PRIVATE, PARAMETER :: IACT = 1                           ! 1. RY89; 2. WC20-power law
+      INTEGER, PRIVATE, PARAMETER :: EVSB = 2                           ! 0. None; 1. Mean; 2. Theoretical
 !----------------- FOR MICROPHYSICAL PROCESSES -------------------------
       REAL, PRIVATE, PARAMETER :: PI = 3.1415926535897932384626434
       REAL, PRIVATE, PARAMETER :: THRD = 1./3.,     C4PI3 = 4.*PI/3.
@@ -60,8 +61,7 @@
       REAL, PRIVATE, PARAMETER :: VENC1 = 3.09E-2,  VENC2 = 1.447E-1
       REAL, PRIVATE, PARAMETER :: VENP1 = 1.05E-2,  VENP2 = 2.28E-2
       REAL, PRIVATE, PARAMETER :: VENH1 = 0.22385,  VENH2 = 0.00101
-      REAL, PRIVATE, PARAMETER :: SCATF0 = 1.89E-1, ZXMIN1 = 1.E-28     ! 0.189 = 0.176/0.93
-      REAL, PRIVATE, PARAMETER :: ZXMIN2 = 1.E-10
+      REAL, PRIVATE, PARAMETER :: SCATF0 = 1.89E-1, ZXMIN = 1.E-21     ! 0.189 = 0.176/0.93
       REAL, PRIVATE, PARAMETER :: DBZWL = 0.11,     MLIMIT = 1.E-2      ! S = 0.11; C = 0.053; X = 0.032m
       REAL, PRIVATE, PARAMETER :: NSMALL = 1.E-2,   NSMAL1 = 1.E2
       REAL, PRIVATE, PARAMETER :: RLIMIT = 1.E-32,  SLIMIT = 1.E-2
@@ -85,15 +85,15 @@
       REAL, PRIVATE, PARAMETER :: AFAC0 = 0.,       AFAR0 = 0.
       REAL, PRIVATE, PARAMETER :: AFAI0 = 3.,       AFAS0 = 0.
       REAL, PRIVATE, PARAMETER :: SASMAX = 1.,      SASMIN = 1.E-3
-      REAL, PRIVATE, PARAMETER :: KCCMIN = 0.223,   KCCMAX = 0.999
-      REAL, PRIVATE, PARAMETER :: KCRMIN = 0.223,   KCRMAX = 0.999
-      REAL, PRIVATE, PARAMETER :: KCIMIN = 0.556,   KCIMAX = 0.999      ! KC = 0.999, AFAMAX = 2996
-      REAL, PRIVATE, PARAMETER :: KCSMIN = 0.223,   KCSMAX = 0.999      ! KC = 0.995, AFAMAX = 596
-      REAL, PRIVATE, PARAMETER :: KCGMIN = 0.223,   KCGMAX = 0.999      ! KC = 0.99,  AFAMAX = 296
-      REAL, PRIVATE, PARAMETER :: AFAMAX = 3.E4,    AFAMIN = 0.
+      REAL, PRIVATE, PARAMETER :: KCCMIN = 0.223,   KCCMAX = 0.99
+      REAL, PRIVATE, PARAMETER :: KCRMIN = 0.223,   KCRMAX = 0.99
+      REAL, PRIVATE, PARAMETER :: KCIMIN = 0.556,   KCIMAX = 0.99      ! KC = 0.999, AFAMAX = 2996
+      REAL, PRIVATE, PARAMETER :: KCSMIN = 0.223,   KCSMAX = 0.99      ! KC = 0.995, AFAMAX = 596
+      REAL, PRIVATE, PARAMETER :: KCGMIN = 0.223,   KCGMAX = 0.99      ! KC = 0.99,  AFAMAX = 296
+      REAL, PRIVATE, PARAMETER :: AFAMAX = 30.,     AFAMIN = 0.
       REAL, PRIVATE, PARAMETER :: DCMIN = 5.E-7,    DCMAX = 1.E-4
       REAL, PRIVATE, PARAMETER :: DIMIN = 6.E-6,    DIMAX = 5.E-3
-      REAL, PRIVATE, PARAMETER :: DRMIN = 3.E-5,    DRMAX = 6.E-3
+      REAL, PRIVATE, PARAMETER :: DRMIN = 1.E-4,    DRMAX = 6.E-3
       REAL, PRIVATE, PARAMETER :: DSMIN = 2.E-5,    DSMAX = 1.E-2
       REAL, PRIVATE, PARAMETER :: DGMIN = 5.E-5,    DGMAX = 2.E-2
       REAL, PRIVATE, PARAMETER :: RCMIN = DCMIN/2., RCMAX = DCMAX/2.
@@ -125,12 +125,28 @@
       REAL, PRIVATE, PARAMETER :: MDH1 = 12.676969, MDH2 = -2.8835883
       REAL, PRIVATE, PARAMETER :: MDH3 = -3.8803716E-2, MDH4 = 0.43033064
       REAL, PRIVATE, PARAMETER :: MDH5 = 6.53219E-3, MDH6 = -6.4118002E-2
-      REAL, PRIVATE, PARAMETER :: ROS1 = -87.375922, ROS2 = 40.320759
-      REAL, PRIVATE, PARAMETER :: ROS3 = -1.432207, ROS4 = -4.2850883
-      REAL, PRIVATE, PARAMETER :: ROS5 = -4.4996627E-3, ROS6 = 0.29658535
-      REAL, PRIVATE, PARAMETER :: EFD1 = 1.6855156, EFD2 = 0.84147302
-      REAL, PRIVATE, PARAMETER :: EFD3 = -0.46783369, EFD4 = 1.005305E-2
-      REAL, PRIVATE, PARAMETER :: EFD5 = 3.4833332E-2, EFD6 = 1.4727223E-2
+      REAL, PRIVATE, PARAMETER :: ROS1 = 75.401034, ROS2 = -25.730216
+      REAL, PRIVATE, PARAMETER :: ROS3 = 0.81467519, ROS4 = 2.339118
+      REAL, PRIVATE, PARAMETER :: ROS5 = 1.9976667E-3, ROS6 = -0.14086434
+      REAL, PRIVATE, PARAMETER :: ROS7 = -64808.666, ROS8 = 23113.508
+      REAL, PRIVATE, PARAMETER :: ROS9 = -36.46632, ROS10 = -2060.6024
+      REAL, PRIVATE, PARAMETER :: ROS11 = -0.005729458, ROS12 = 6.5057411
+      REAL, PRIVATE, PARAMETER :: ROG1 = -9.57E-5, ROG2 = 3.077E-3
+      REAL, PRIVATE, PARAMETER :: ROG3 = -6.800923E-2, ROG4 = 6.8175231
+      REAL, PRIVATE, PARAMETER :: ISP1 = 0.009207, ISP2 = -0.150212
+      REAL, PRIVATE, PARAMETER :: ISP3 = 0.565632, ISP4 = 0.401116
+      REAL, PRIVATE, PARAMETER :: ASP1 = 1.0207483, ASP2 = -0.40684481
+      REAL, PRIVATE, PARAMETER :: ASP3 = 0.043489251, ASP4 = 0.020462134
+      REAL, PRIVATE, PARAMETER :: ASP5 = 0.014926001, ASP6 = -1.1252149E-3
+      REAL, PRIVATE, PARAMETER :: AFA1 = -0.35897435, AFA2 = 0.010041278
+      REAL, PRIVATE, PARAMETER :: AFA3 = 1.9349749E-3, AFA4 = -0.067453607
+      REAL, PRIVATE, PARAMETER :: AFA5 = -5.5693923E-3, AFA6 = 0.06376154
+      REAL, PRIVATE, PARAMETER :: AFB1 = -6.5100404, AFB2 = 0.039597245
+      REAL, PRIVATE, PARAMETER :: AFB3 = 2.3169628E-3, AFB4 = -0.45856646
+      REAL, PRIVATE, PARAMETER :: AFB5 = -0.04537631, AFB6 = 0.25713479
+      REAL, PRIVATE, PARAMETER :: AFC1 = 0.097215108, AFC2 = -0.31996525
+      REAL, PRIVATE, PARAMETER :: AFC3 = 0.17567938, AFC4 = -0.006966746
+      REAL, PRIVATE, PARAMETER :: AFC5 = -0.007550793, AFC6 = 0.035124851
 
       REAL, DIMENSION(0:120) :: ITBLE
       DATA ITBLE /1.000000,0.979490,0.959401,0.939723,0.920450,        &
@@ -318,38 +334,6 @@
 !======================================================================
 !
 !======================================================================
-!      REAL FUNCTION GAMLN(XX)
-!======================================================================
-!  Returns value of ln(GAMMA(XX)) for XX>0 (modified from "Numerical Recipes")
-!      IMPLICIT NONE
-!      REAL, INTENT(IN) :: XX
-!      INTEGER :: J
-!      DOUBLE PRECISION :: ser,stp,TMP,X,y,cof(6)
-!      SAVE cof,stp
-!      DATA cof,stp/76.18009172947146d0,-86.50532032941677d0,24.01409824083091d0,&
-!                  -1.231739572450155d0,.1208650973866179d-2,-.5395239384953d-5,2.5066282746310005d0/
-
-!      X = DBLE(XX)
-!      y = X
-!      TMP = X+5.5D0
-!      TMP = (X+0.5D0)*LOG(TMP)-TMP
-!      ser = 1.000000000190015d0
-!      DO J = 1,6   !original
-!         y = y+1.D0
-!         ser = ser+cof(J)/y
-!      ENDDO
-!#if (DWORDSIZE == 8 && RWORDSIZE == 8)
-!      GAMLN = TMP+LOG(stp*ser/X)
-!#elif (DWORDSIZE == 8 && RWORDSIZE == 4)
-!      GAMLN = SNGL(TMP+LOG(stp*ser/X))
-!#else
-!!      This is a temporary hack assuming double precision is 8 bytes.
-!#endif
-
-!      END FUNCTION GAMLN
-!======================================================================
-!
-!======================================================================
       REAL FUNCTION GAMLN(XX)
 !======================================================================              
 !     --- RETURNS THE VALUE LN(GAMMA(XX)) FOR XX > 0.
@@ -377,6 +361,95 @@
       END FUNCTION GAMLN
 !  (C) Copr. 1986-92 Numerical Recipes Software 2.02
 !=======================================================================
+!
+!=======================================================================
+      REAL FUNCTION GAMMP(A,X)
+!=======================================================================
+! The fraction of distribution below the limit of A = AFA+1 and X = Db*LAMDA
+      IMPLICIT NONE
+      REAL :: A,X,GAMMCF,GAMSER,GLN
+
+      IF (X.LT.0..OR.A.LE.0.) &
+         CALL wrf_error_fatal('warning : bad arguments in gammq')
+      IF (X.LT.A+1.) THEN
+         CALL GSER(GAMSER,A,X,GLN)
+         GAMMP = GAMSER
+      ELSE
+         CALL CFG(GAMMCF,A,X,GLN)
+         GAMMP = 1.-GAMMCF
+      ENDIF
+      RETURN
+
+      END FUNCTION GAMMP
+!======================================================================
+!
+!======================================================================
+      SUBROUTINE GSER(GAMSER,A,X,GLN)
+!======================================================================
+! USES GAMLN, Returns the incomplete gamma function P(A,X) evaluated by its series representation as GAMSER. Also returns GAMMA(A) as GLN.
+      IMPLICIT NONE
+      INTEGER :: N
+      REAL :: A,GAMSER,GLN,X,AP,de1,summ
+      INTEGER, PARAMETER :: ITMAX = 500
+      REAL, PARAMETER :: EPS = 3.E-7
+
+      GLN = GAMLN(A)
+      IF (X.LE.0.) THEN
+         IF (X.LT.0.) CALL wrf_error_fatal ( 'WARNING: X <0 in GSER' )
+         GAMSER = 0.
+         RETURN
+      ENDIF
+      AP = A
+      summ = 1./A
+      de1 = summ
+      DO N = 1,ITMAX
+         AP = AP+1.
+         de1 = de1*X/AP
+         summ = summ+de1
+         IF (ABS(de1).LT.ABS(summ)*EPS) GOTO 777
+      ENDDO
+      CALL wrf_error_fatal ('Warning : ITMAX too small in GSER')
+ 777  GAMSER = summ*EXP(-X+A*LOG(X)-GLN)
+
+      RETURN
+
+      END SUBROUTINE GSER
+!=======================================================================
+      SUBROUTINE CFG(GAMMCF,A,X,GLN)
+!=======================================================================
+! USES GAMLN, Returns the incomplete gamma function (Q(A,X) evaluated by tis continued fraction
+! representation as GAMMCF.  Also returns ln(GAMMA(A)) as GLN.  ITMAX is the maximum allowed number of iterations;
+! EPS is the relative accuracy; FPMIN is a number near the smallest representable floating-point number.
+      IMPLICIT NONE
+      INTEGER :: I
+      REAL :: A,GAMMCF,GLN,X,AN,b,c,d,de1,h
+      INTEGER, PARAMETER :: ITMAX = 500
+      REAL, PARAMETER :: EPS = 3.E-7
+      REAL, PARAMETER :: fpmin = 1.E-30
+
+      GLN = GAMLN(A)
+      b = X+1.-A
+      c = 1./fpmin
+      d = 1./b
+      h = d
+      DO I = 1,ITMAX
+         AN = -I*(I-A)
+         b = b+2.
+         d = AN*d+b
+         IF (ABS(d).LT.fpmin) d = fpmin
+         c = b+AN/c
+         IF (ABS(c).LT.fpmin) c = fpmin
+         d = 1./d
+         de1 = d*c
+         h = h*de1
+         IF (ABS(de1-1.).LT.EPS) GOTO 888
+      ENDDO
+      CALL wrf_error_fatal ('Warning : ITMAX too small in gcf')
+ 888  GAMMCF = EXP(-X+A*LOG(X)-GLN)*h
+      RETURN
+
+      END SUBROUTINE CFG
+!======================================================================
 !
 !======================================================================
       SUBROUTINE SOLVE_AFAC(TK1D,RHO,QC1D,NC1D,LAMC,MVDC,AFAC,AVC,BVC)
@@ -466,14 +539,14 @@
 !======================================================================
 !
 !======================================================================
-      SUBROUTINE SOLVE_AFAR(TK1D,RHO,QR1D,NR1D,LAMR,MVDR,AFAR,RASPR,   &
-                 AVR,BVR)
+      SUBROUTINE SOLVE_AFAR(TK1D,RHO,QC1D,QR1D,NR1D,LAMR,MVDR,AFAR,    &
+                 RASPR,AVR,BVR)
 !======================================================================
       IMPLICIT NONE
       REAL :: TK1D,RHO,QR1D,NR1D,LAMR,GR1,MVDR,LAMRMIN,LAMRMAX,R3M1D,  &
               AFAR,BDR,MVRR,EFRR,KDX,LTK,LQR,AVR,BVR,LLMR,LLMR2,LLMR3, &
               LAR2,LAR22,LAR23,KINV,BEST0,BEST,C1X2,VTB1,VTA1,RASPR,   &
-              LAR5,MDR
+              LAR5,MDR,QC1D
 
       IF (NR1D.LT.NSMALL) THEN
          LTK  = LOG(TK1D)
@@ -487,19 +560,22 @@
          AFAR = AFAR0
       ELSEIF (AFAR_3M.EQ.1) THEN
          MVRR = MIN(RRMAX,MAX(RRMIN,(QR1D/NR1D/C4PI3W)**THRD))
-!         EFRR = EXP(EFR1+EFR2*LOG(NR1D)+EFR3*LOG(MVRR))
-!         EFRR = EXP(0.60248802-5.9285673E-2*LOG(NR1D)+1.0385685*       &
-!                LOG(MVRR)+1.4000158E-3*LOG(NR1D)**2.+4.1927565E-4*     &
-!                LOG(MVRR)**2.-2.2498841E-3*LOG(NR1D)*LOG(MVRR))
-!         EFRR = EXP(0.85940035-7.6675539E-2*LOG(NR1D)+1.0463454*       &
-!                LOG(MVRR)+1.636384E-3*LOG(NR1D)**2.+5.55445E-4*        &
-!                LOG(MVRR)**2.-2.660869E-3*LOG(NR1D)*LOG(MVRR))
-         EFRR = EXP(1.2279293-0.10100674*LOG(NR1D)+1.071836*           &
-                LOG(MVRR)+2.042647E-3*LOG(NR1D)**2.+1.000161E-3*       &
-                LOG(MVRR)**2.-3.432233E-3*LOG(NR1D)*LOG(MVRR))
-         KDX  = MAX(KCRMIN,MIN(KCRMAX,(MVRR/EFRR)**3.))
-         AFAR = (6.*KDX-3.+SQRT(8.*KDX+1.))/(2.-2.*KDX)
-         AFAR = MIN(MAX(AFAR,AFAMIN),AFAMAX)
+         IF (QC1D.GE.QSMALL.OR.NR1D.LT.0.5) THEN
+            AFAR = MIN(AFAMAX,MAX(AFAMIN,(AFA1+AFA2*LOG(NR1D)+AFA3*    &
+                   LOG(NR1D)**2.+AFA4*LOG(MVRR))/(1.+AFA5*LOG(NR1D)+   &
+                   AFA6*LOG(MVRR))))
+         ELSE
+            AFAR = MIN(AFAMAX,MAX(AFAMIN,(AFB1+AFB2*LOG(NR1D)+AFB3*    &
+                   LOG(NR1D)**2.+AFB4*LOG(MVRR))/(1.+AFB5*LOG(NR1D)+   &
+                   AFB6*LOG(MVRR))))
+         ENDIF
+         IF ((NR1D*MVRR**6.).GE.1.E-16) THEN
+            IF (NR1D.GE.3.8E3) THEN         
+               AFAR = AFAMAX
+            ELSE
+               AFAR = 0.5*AFAR
+            ENDIF
+         ENDIF
       ELSEIF (AFAR_3M.EQ.2) THEN
          BDR  = MIN(MAX((R3M1D/NR1D)**THRD,DRMIN),DRMAX)
          AFAR = MAX(AFAMIN,19.*TANH(0.6*(1.E3*BDR-1.8))+17.)
@@ -561,15 +637,16 @@
 !======================================================================
 
 !======================================================================
-      SUBROUTINE SOLVE_AFAI(TK1D,P1D,RHO,QV1D,QI1D,NI1D,ADAGR,ZETA,    &
-                 LAMI,AFAI,MVDI,RHOI,AMI,BMI,AVI,BVI)
+      SUBROUTINE SOLVE_AFAI(TK1D,P1D,RHO,QV1D,QC1D,QI1D,NI1D,ADAGR,    &
+                 ZETA,LAMI,AFAI,MVDI,RHOI,AMI,BMI,AVI,BVI)
 !======================================================================
       IMPLICIT NONE
       INTEGER :: HID
       REAL :: TK1D,P1D,RHO,QV1D,QI1D,NI1D,ADAGR,ZETA,RHOI,LAMI,AFAI,   &
               AMI,BMI,AVI,BVI,MVDI,GI1,TC1D,ESW,ESI,QVSI,INHGR,LTK,LQI,&
               BDI,FDI,LBDI,MDI,IASPR,LAMIMIN,LAMIMAX,IPF,IPG,KDX,LLMI, &
-              LLMI2,LAI2,LAI22,RHOX,KINV,BEST0,BEST,C1X2,VTB1,VTA1
+              LLMI2,LAI2,LAI22,RHOX,KINV,BEST0,BEST,C1X2,VTB1,VTA1,    &
+              MVRI,QC1D,TTR
 
       IF (ICE_RHOI.EQ.0) THEN
          RHOI = RHOI0
@@ -600,14 +677,16 @@
       IF (AFAI_3M.EQ.0) THEN
          AFAI = AFAI0
       ELSEIF (AFAI_3M.EQ.1) THEN
-         BDI  = (QI1D*V2M3/NI1D/RHOI)**THRD*1.E3
-         BDI  = MAX(MIN(DIMAX*1.E3,BDI),DIMIN*1.E3)
-         FDI  = 7.4015986E-2+7.9866676E-1*BDI-9.4468892E-3*LOG(NI1D)+  &
-                3.8235092E-1*BDI**2.+2.9811542E-4*LOG(NI1D)**2.+       &
-                1.9052614E-2*BDI*LOG(NI1D)
-         KDX  = MAX(KCIMIN,MIN(KCIMAX,(BDI/FDI)**3.))
-         AFAI = (6.*KDX-3.+SQRT(8.*KDX+1.))/(2.-2.*KDX)
-         AFAI = MIN(MAX(AFAI,AFAMIN),AFAMAX)
+         MVRI = MIN(DIMAX/2.,MAX(DIMIN/2.,(QI1D/NI1D/RHOI/C4PI3)**THRD))
+         IF (QC1D.GE.QSMALL.OR.NI1D.LT.0.5) THEN
+            AFAI = MIN(AFAMAX,MAX(AFAMIN,(AFA1+AFA2*LOG(NI1D)+AFA3*    &
+                   LOG(NI1D)**2.+AFA4*LOG(MVRI))/(1.+AFA5*LOG(NI1D)+   &
+                   AFA6*LOG(MVRI))))
+         ELSE
+            AFAI = MIN(AFAMAX,MAX(AFAMIN,(AFB1+AFB2*LOG(NI1D)+AFB3*    &
+                   LOG(NI1D)**2.+AFB4*LOG(MVRI))/(1.+AFB5*LOG(NI1D)+   &
+                   AFB6*LOG(MVRI))))
+         ENDIF
       ENDIF
       GI1  = GAMLN(AFAI+1.)
       LAMI = (EXP(GAMLN(AFAI+4.)-GI1)*PI*RHOI*NI1D/QI1D/6.)**THRD
@@ -626,12 +705,14 @@
       IF (ICE_SHAPE.EQ.0) THEN
          ADAGR = 1.
       ELSEIF (ICE_SHAPE.EQ.1) THEN
-         IF (MVDI.GT.DI0) THEN
-            LTK   = LOG(TK1D)
+         IF (MVDI.GE.DI0) THEN
             LBDI  = LOG(MVDI*1.E6)
-            ADAGR = MIN(1.25,MAX(0.143,831.26148-299.86635*LTK+        &
-                    23.257362/LBDI+27.074238*LTK**2.+0.004494653/      &
-                    LBDI**2.-4.1838773*LTK/LBDI))
+            TC1D  = TK1D-TK0C
+            HID   = MAX(MIN(NINT(ABS(TC1D)/0.25),120),0)
+            INHGR = ITBLE(HID)
+            TTR   = MIN(1.,MAX(0.01,ISP1*LBDI**3.+ISP2*LBDI**2.+ISP3*  &
+                    LBDI+ISP4))
+            ADAGR = INHGR**TTR
          ELSE
             ADAGR = 1.
          ENDIF
@@ -715,7 +796,7 @@
       REAL :: TK1D,RHO,QS1D,QC1D,NS1D,AFAS,RHOS,SASPR,LAMS,AMS,AVS,BVS,&
               MVDS,LAMSMIN,LAMSMAX,S3M1D,KDX,TC1D,BDS,FDS,LTK,LQS,LBDS,&
               MDS,LLMS,LLMS2,LLMS3,LAS2,LAS22,LMDS,LMDS2,LROS,LROS2,   &
-              RHOX,KINV,GS1,BEST0,BEST,C1X2,VTB1,VTA1
+              RHOX,KINV,GS1,BEST0,BEST,C1X2,VTB1,VTA1,MVRS
 
       IF (ICE_RHOS.EQ.0) THEN
          RHOS = RHOS0
@@ -723,13 +804,13 @@
          LTK = LOG(TK1D)
          LQS = -1.*LOG(QS1D)
          IF (TK1D.LT.TK0C) THEN
-            RHOS = EXP(75.401034-25.730216*LTK+0.81467519*LQS+2.339118*&
-                   LTK**2.+1.9976667E-3*LQS**2.-0.14086434*LTK*LQS)
+            RHOS = MIN(900.,EXP(ROS1+ROS2*LTK+ROS3*LQS+ROS4*LTK**2.+   &
+                   ROS5*LQS**2.+ROS6*LTK*LQS))
          ELSE
-            RHOS = EXP(-64808.666+23113.508*LTK-36.46632*LQS-2060.6024*&
-                   LTK**2.-0.005729458*LQS**2.+6.5057411*LTK*LQS)
+            RHOS = MAX(100.,EXP(ROS7+ROS8*LTK+ROS9*LQS+ROS10*LTK**2.+  &
+                   ROS11*LQS**2.+ROS12*LTK*LQS))
          ENDIF
-         RHOS = MIN(MAX(RHOS,RHOIMIN),RHOIMAX)
+         RHOS = MIN(MAX(RHOS,100.),900.)
       ENDIF
       IF (NS1D.LT.NSMALL) THEN
          LTK  = LOG(TK1D)
@@ -743,25 +824,17 @@
       IF (AFAS_3M.EQ.0) THEN
          AFAS  = AFAS0
       ELSEIF (AFAS_3M.EQ.1) THEN
-         BDS = MIN(MAX((S3M1D/NS1D)**THRD*1.E3,DSMIN*1.E3),DSMAX*1.E3)
-         IF (TK1D.GE.TK0C) THEN
-            FDS = -0.21911541+1.2739845*BDS+0.10141003*LOG(NS1D)+      &
-                  0.30063818*BDS**2.-4.3857765E-3*LOG(NS1D)**2.-       &
-                  7.8801732E-2*BDS*LOG(NS1D)
+         MVRS = MIN(DSMAX/2.,MAX(DSMIN/2.,(QS1D/NS1D/RHOS/C4PI3)**THRD))
+         IF (QC1D.GE.QSMALL.OR.NS1D.LT.0.5) THEN
+            AFAS = MIN(AFAMAX,MAX(AFAMIN,(AFA1+AFA2*LOG(NS1D)+AFA3*    &
+                   LOG(NS1D)**2.+AFA4*LOG(MVRS))/(1.+AFA5*LOG(NS1D)+   &
+                   AFA6*LOG(MVRS))))
          ELSE
-            IF (QC1D.GE.1.E-8) THEN
-               FDS = -1.1527014+2.9067645*BDS+0.25316062*LOG(NS1D)-    &
-                     0.17768557*BDS**2.-0.013117292*LOG(NS1D)**2.-     &
-                     0.17020429*BDS*LOG(NS1D)
-            ELSE
-               FDS = -0.2813929+1.7275463*BDS+0.045550156*LOG(NS1D)-   &
-                     0.16526226*BDS**2.-1.7699916E-3*LOG(NS1D)**2.-    &
-                     4.6441257E-2*BDS*LOG(NS1D)
-            ENDIF
+            AFAS = MIN(AFAMAX,MAX(AFAMIN,(AFB1+AFB2*LOG(NS1D)+AFB3*    &
+                   LOG(NS1D)**2.+AFB4*LOG(MVRS))/(1.+AFB5*LOG(NS1D)+   &
+                   AFB6*LOG(MVRS))))
          ENDIF
-         KDX  = MAX(KCSMIN,MIN(KCSMAX,(BDS/FDS)**3.))
-         AFAS = (6.*KDX-3.+SQRT(8.*KDX+1.))/(2.-2.*KDX)
-         AFAS = MIN(MAX(AFAS,AFAMIN),AFAMAX)
+         IF (TK1D.GT.TK0C) AFAS = MIN(AFAMAX,0.01*EXP(-1.*LOG(MVRS)))
       ENDIF
       LAMS = (EXP(GAMLN(AFAS+4.)-GAMLN(AFAS+1.))*NS1D/S3M1D)**THRD
       LAMSMIN = (EXP(GAMLN(AFAS+4.)-GAMLN(AFAS+1.)))**THRD/DSMAX
@@ -777,11 +850,10 @@
       IF (AGG_SHAPE.EQ.0) THEN
          SASPR = 1.
       ELSEIF (AGG_SHAPE.EQ.1) THEN
-         LTK   = LOG(TK1D)
          LBDS  = LOG(MVDS*1.E6)
-         SASPR = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*LTK+        &
-                 5.1416616*LBDS+1.0361366*LTK**2.+0.017687308*         &
-                 LBDS**2.-0.9649671*LTK*LBDS))
+         LROS  = LOG(RHOS)
+         SASPR = MAX(0.2,MIN(SASMAX,ASP1+ASP2*LROS+ASP3*LROS**2.+ASP4* &
+                 LBDS+ASP5*LBDS**2.+ASP6*LBDS**3.))
       ENDIF
       IF (ICE_VTS.EQ.0) THEN
          AVS = AVS0
@@ -837,7 +909,8 @@
               AMG,AVG,BVG,LAMGMIN,LAMGMAX,KDX,MVDG,BDG,FDG,MVDC,MVDR,  &
               MVDL,TC1D,VTQR,VTQG,VTQL,VTQ0,VTQGL,DNRG,LTK,LQG,MDG,    &
               LBDG,LLMG,LLMG2,LMDG,LMDG2,LROG,LROG2,LAG2,LAG22,RHOX,   &
-              KINV,BEST0,BEST,C1X2,VTB1,VTA1,GG1,MVG0,DSLL,LAG5,LAG52
+              KINV,BEST0,BEST,C1X2,VTB1,VTA1,GG1,MVG0,DSLL,LAG5,LAG52, &
+              MVRG
 
       IHAIL = 0
       IF (ICE_RHOG.EQ.0) THEN
@@ -854,8 +927,8 @@
          ELSE
             IHAIL = 0
             LQG  = -1.*LOG(QG1D)
-            RHOG = MIN(900.,MAX(100.,EXP(-9.57E-5*LQG**3.+3.077E-3*    &
-                   LQG**2.-6.800923E-2*LQG+6.8175231)))
+            RHOG = MIN(900.,MAX(400.,EXP(ROG1*LQG**3.+ROG2*LQG**2.+    &
+                   ROG3*LQG+ROG4)))
          ENDIF
       ENDIF
       IF (NG1D.LT.NSMALL) THEN
@@ -875,25 +948,17 @@
       IF (AFAG_3M.EQ.0) THEN
          AFAG  = AFAG0
       ELSEIF (AFAG_3M.EQ.1) THEN
-         BDG = MIN(MAX((G3M1D/NG1D)**THRD*1.E3,DGMIN*1.E3),DGMAX*1.E3)
-         IF (TK1D.GE.TK0C) THEN
-            FDG = 0.58006354+0.79661229*BDG-0.18394382*LOG(NG1D)+      &
-                  0.067371044*BDG**2.+9.832945E-3*LOG(NG1D)**2.+       &
-                  0.12433055*BDG*LOG(NG1D)
+         MVRG = MIN(DGMAX/2.,MAX(DGMIN/2.,(QG1D/NG1D/RHOG/C4PI3)**THRD))
+         IF (QC1D.GE.QSMALL.OR.NG1D.LT.0.5) THEN
+            AFAG = MIN(AFAMAX,MAX(AFAMIN,(AFA1+AFA2*LOG(NG1D)+AFA3*    &
+                   LOG(NG1D)**2.+AFA4*LOG(MVRG))/(1.+AFA5*LOG(NG1D)+   &
+                   AFA6*LOG(MVRG))))
          ELSE
-            IF (QC1D.GE.1.E-8) THEN
-               FDG = 0.17363469+1.5044291*BDG-0.050639722*LOG(NG1D)+   &
-                     0.015101052*BDG**2.+2.5974719E-3*LOG(NG1D)**2.+   &
-                     0.01961464*BDG*LOG(NG1D)
-            ELSE
-               FDG = -4.8667704E-2+1.0504692*BDG+3.1159905E-3*         &
-                     LOG(NG1D)+0.2509613*BDG**2.+1.8369028E-3*         &
-                     LOG(NG1D)**2.-2.0083465E-2*BDG*LOG(NG1D)
-            ENDIF
+            AFAG = MIN(AFAMAX,MAX(AFAMIN,(AFB1+AFB2*LOG(NG1D)+AFB3*    &
+                   LOG(NG1D)**2.+AFB4*LOG(MVRG))/(1.+AFB5*LOG(NG1D)+   &
+                   AFB6*LOG(MVRG))))
          ENDIF
-         KDX   = MAX(KCGMIN,MIN(KCGMAX,(BDG/FDG)**3.))
-         AFAG  = (6.*KDX-3.+SQRT(8.*KDX+1.))/(2.-2.*KDX)
-         AFAG  = MIN(MAX(AFAG,AFAMIN),AFAMAX)
+         IF (TK1D.GT.TK0C) AFAG = MIN(AFAMAX,0.01*EXP(-1.*LOG(MVRG)))
       ENDIF
       LAMG = (EXP(GAMLN(AFAG+4.)-GAMLN(AFAG+1.))*NG1D/G3M1D)**THRD
       LAMGMIN = (EXP(GAMLN(AFAG+4.)-GAMLN(AFAG+1.)))**THRD/DGMAX
@@ -910,11 +975,10 @@
          GASPR = 1.
       ELSEIF (GRAP_SHAPE.EQ.1) THEN
          IF (IHAIL.EQ.0) THEN
-            LTK   = LOG(TK1D)
             LBDG  = LOG(MVDG*1.E6)
-            GASPR = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*LTK+     &
-                    5.1416616*LBDG+1.0361366*LTK**2.+0.017687308*      &
-                    LBDG**2.-0.9649671*LTK*LBDG))
+            LROG  = LOG(RHOG)
+            GASPR = MAX(0.2,MIN(SASMAX,ASP1+ASP2*LROG+ASP3*LROG**2.+   &
+                    ASP4*LBDG+ASP5*LBDG**2.+ASP6*LBDG**3.))
          ELSEIF (IHAIL.EQ.1) THEN
             LLMG  = LOG(LAMG)
             LLMG2 = LLMG*LLMG
@@ -1488,7 +1552,7 @@
 !=======================================================================
       SUBROUTINE mp_tcwa2(TH,P,DZ,W,PII,DT_MP,XLAND,QV,QC,QR,QI,QS,QG, &
                  NC,NR,NI,NS,NG,SR,RAINNC,RAINNCV,SNOWNC,SNOWNCV,      &
-                 GRAPNC,GRAPNCV,DBZM,ZDR,KDP,LDR,RHV,re_cloud,re_ice,  &
+                 GRAPNC,GRAPNCV,DBZM,ZDR,KDP,SMLF,GMLF,re_cloud,re_ice,&
                  re_snow,has_reqc,has_reqi,has_reqs,IDS,IDE,JDS,JDE,   &
                  KDS,KDE,IMS,IME,JMS,JME,KMS,KME,ITS,ITE,JTS,JTE,KTS,  &
                  KTE)
@@ -1504,12 +1568,12 @@
       REAL, DIMENSION(IMS:IME,KMS:KME,JMS:JME), INTENT(INOUT) :: TH,QV,&
             QC,QR,QI,QS,QG,NC,NR,NI,NS,NG
       REAL, DIMENSION(IMS:IME,KMS:KME,JMS:JME), INTENT(INOUT) :: DBZM, &
-            ZDR,KDP,LDR,RHV,re_cloud,re_ice,re_snow
+            ZDR,KDP,SMLF,GMLF,re_cloud,re_ice,re_snow
       INTEGER :: I,K,J,NK,ITF,JTF
       REAL :: DT,DTMN
       REAL, DIMENSION(KTS:KTE) :: TK1D,P1D,Z1D,W1D,DZ1D,QV1D,QC1D,QR1D,&
             QI1D,QS1D,QG1D,NC1D,NR1D,NI1D,NS1D,NG1D,DBZM1D,ZDR1D,KDP1D,&
-            LDR1D,RHV1D,EFRC1D,EFRI1D,EFRS1D
+            SMLF1D,GMLF1D,EFRC1D,EFRI1D,EFRS1D
       REAL, DIMENSION(ITS:ITE,JTS:JTE) :: CLODNCV,ICENCV
       REAL, DIMENSION(ITS:ITE,KTS:KTE,JTS:JTE) :: TK
       INTEGER, INTENT(IN) :: has_reqc,has_reqi,has_reqs
@@ -1541,13 +1605,15 @@
             NS1D(K) = NS(I,NK,J)
             NG1D(K) = NG(I,NK,J)
             EFRC1D(K) = 2.5E-6; EFRI1D(K) = 5.E-6; EFRS1D(K) = 1.E-5
+            DBZM1D(K) = 0.; ZDR1D(K) = 0.; KDP1D(K) = 0.
+            SMLF1D(K) = 0.; GMLF1D(K) = 0.
          ENDDO
 
          CALL NTU_MICRO(TK1D,QV1D,DZ1D,P1D,W1D,XLAND(I,J),SR(I,J),     &
               ICENCV(I,J),CLODNCV(I,J),RAINNC(I,J),RAINNCV(I,J),       &
               SNOWNC(I,J),SNOWNCV(I,J),GRAPNC(I,J),GRAPNCV(I,J),DT,    &
               DTMN,QC1D,QR1D,QI1D,QS1D,QG1D,NC1D,NR1D,NI1D,NS1D,NG1D,  &
-              KTS,KTE,DBZM1D,ZDR1D,KDP1D,LDR1D,RHV1D,EFRC1D,EFRI1D,    &
+              KTS,KTE,DBZM1D,ZDR1D,KDP1D,SMLF1D,GMLF1D,EFRC1D,EFRI1D,  &
               EFRS1D)
 
          DO K = KTS,KTE
@@ -1564,11 +1630,11 @@
             NI(I,NK,J) = MAX(0.,NI1D(K))
             NS(I,NK,J) = MAX(0.,NS1D(K))
             NG(I,NK,J) = MAX(0.,NG1D(K))
-            DBZM(I,NK,J) = DBZM1D(K)
-            ZDR(I,NK,J)  = ZDR1D(K)
-            KDP(I,NK,J)  = KDP1D(K)
-            LDR(I,NK,J)  = LDR1D(K)
-            RHV(I,NK,J)  = RHV1D(K)
+            DBZM(I,NK,J) = MAX(0.,DBZM1D(K))
+            ZDR(I,NK,J)  = MAX(0.,ZDR1D(K))
+            KDP(I,NK,J)  = MAX(0.,KDP1D(K))
+            SMLF(I,NK,J) = MAX(0.,SMLF1D(K))
+            GMLF(I,NK,J) = MAX(0.,GMLF1D(K))
             re_cloud(I,NK,J) = MAX(2.5E-6,MIN(EFRC1D(K),5.E-5))
             re_ice(I,NK,J)   = MAX(5.E-6,MIN(EFRI1D(K),5.E-4))
             re_snow(I,NK,J)  = MAX(1.E-5,MIN(EFRS1D(K),1.E-3))
@@ -1583,7 +1649,7 @@
       SUBROUTINE NTU_MICRO(TK3D,QV3D,DZ3D,P3D,W3D,LAND,SR,ICENCV,      &
                  CLODNCV,RAINNC,RAINNCV,SNOWNC,SNOWNCV,GRAPNC,GRAPNCV, &
                  DT,DTMN,QC3D,QR3D,QI3D,QS3D,QG3D,NC3D,NR3D,NI3D,NS3D, &
-                 NG3D,KTS,KTE,DBZM,ZDR,KDP,LDR,RHV,EFRC,EFRI,EFRS)
+                 NG3D,KTS,KTE,DBZM,ZDR,KDP,SMLF,GMLF,EFRC,EFRI,EFRS)
 !======================================================================
       IMPLICIT NONE 
       INTEGER, INTENT(IN) :: KTS,KTE
@@ -1607,18 +1673,16 @@
             A3,RACT,CND,DEP,ABW,ABI,QVS,RSUB,Y1,Y2,Y4,Y5,LMDI,LROI,    &
             LROI2,LROI3,LMDS,LROS,LMDG,LROG,LLMI2,LLMI3,LAI22,LAI23,   &
             LMDI2,LMDI3,ZETA3,LAR22,LAR23,LLMR2,LLMR3,EFRI,EFRS,DSMM,  &
-            DGMM
+            DGMM,MVRI,MVRS,MVRG,TTR,LAMSMAX,LAMSMIN,LAMGMAX,LAMGMIN
       REAL, DIMENSION(KTS:KTE) :: DBZM,DBZ1,DBZR,DBZI,DBZS,DBZG,ZDR,   &
-            ZDRR,ZDRI,ZDRS,ZDRG,KDP,KDPR,KDPI,KDPS,KDPG,LDR,LDRR,LDRI, &
-            LDRS,LDRG,RHV,RHVR,RHVI,RHVS,RHVG,SCAKW,SCAW0,SCAW1,SCAWA, &
-            SCAWB,EPSIN,EPSS,ALPHE,LAMDZ,NEREL,ORA0,ORAR,ORA1,ORA2,    &
-            ORA3,ORA4,SCA0,SCALA,SCALB,SCA2,SCAFA,SCAFB,SCFAA,SCFAB,   &
-            SCFBB,SMLV,GMLV,ZZHR,ZZHI,ZZHS,ZZHG,ZZVR,ZZVI,ZZVS,ZZVG,   &
-            ZZHVR,ZZHVI,ZZHVS,ZZHVG,LDR1,LDR2,LDR3,LDR4,LDR5,LMDR,EORA,&
-            ORZHR,FDBZR,FZDRR,FKDPR,FRHVR,KDPR1,FDBZS,ZHROX,FZDRS,     &
-            ZDROX,ZDASP,LASP,FKDPS,KDROX,KDASP,LDROX,LDASP,FDBZG,FZDRG,&
-            FKDPG,ZHASP,RHASP,ORZHI,ZHZET,FDBZI,ZDZET,FZDRI,FRHVI,     &
-            FKDPI,KDZET,LDZET,RADS,RADG
+            ZDRR,ZDRI,ZDRS,ZDRG,KDP,KDPR,KDPI,KDPS,KDPG,SCAKW,SCAW0,   &
+            SCAW1,SCAWA,SCAWB,EPSIN,EPSS,ALPHE,LAMDZ,NEREL,ORA0,ORAR,  &
+            ORA1,ORA2,ORA3,ORA4,SCA0,SCALA,SCALB,SCA2,SCAFA,SCAFB,     &
+            SCFAA,SCFAB,SCFBB,SMLV,GMLV,ZZHR,ZZHI,ZZHS,ZZHG,ZZVR,ZZVI, &
+            ZZVS,ZZVG,ZZHVR,ZZHVI,ZZHVS,ZZHVG,LMDR,EORA,ORZHR,FDBZR,   &
+            FZDRR,FKDPR,KDPR1,FDBZS,ZHROX,FZDRS,ZDROX,ZDASP,LASP,FKDPS,&
+            KDROX,KDASP,FDBZG,FZDRG,FKDPG,ZHASP,RHASP,ORZHI,ZHZET,     &
+            FDBZI,ZDZET,FZDRI,FKDPI,KDZET,LDZET,RADS,RADG
       REAL :: SR,ICENCV,CLODNCV,RAINNC,RAINNCV,SNOWNC,SNOWNCV,GRAPNC,  &
               GRAPNCV,DT,DTMN,K1,C1,ZCMAX
       REAL, PARAMETER :: MIXA = -1.0892332E-2, MIXB = 2.0820143E-2
@@ -1638,6 +1702,7 @@
          XXLF(K)   = 2836310.8-(3.1484E6-2370.*TK3D(K))
          CPM(K)    = CP*(1.+0.887*QV3D(K))
          HID(K)    = MAX(MIN(NINT(ABS(TC3D(K))/0.25),120),0)
+         RHO(K)    = P3D(K)/(TK3D(K)*(1.+0.61*QV3D(K)))/R
          IF (QC3D(K).GE.QSMALL.AND.NC3D(K).LT.NSMALL) THEN
             LTK(K)  = LOG(TK3D(K))
             LQC(K)  = -1.*LOG(QC3D(K))
@@ -1672,20 +1737,24 @@
             ELSEIF (AFAR_3M.EQ.1) THEN
                MVRR(K) = (QR3D(K)/NR3D(K)/C4PI3W)**THRD
                MVRR(K) = MIN(RRMAX,MAX(RRMIN,MVRR(K)))
-!               EFRR(K) = EXP(EFR1+EFR2*LOG(NR3D(K))+EFR3*LOG(MVRR(K)))
-!               EFRR = EXP(0.60248802-5.9285673E-2*LOG(NR3D(K))+        &
-!                      1.0385685*LOG(MVRR(K))+1.4000158E-3*             &
-!                      LOG(NR3D(K))**2.+4.1927565E-4*LOG(MVRR(K))**2.-  &
-!                      2.2498841E-3*LOG(NR3D(K))*LOG(MVRR(K)))
-               EFRR(K) = EXP(1.2279293-0.10100674*LOG(NR3D(K))+        &
-                         1.071836*LOG(MVRR(K))+2.042647E-3*            &
-                         LOG(NR3D(K))**2.+1.000161E-3*LOG(MVRR(K))**2.-&
-                         3.432233E-3*LOG(NR3D(K))*LOG(MVRR(K)))
-               KDX(K)  = MAX(KCRMIN,MIN(KCRMAX,(MVRR(K)/EFRR(K))**3.))
-               KDX(K)  = MIN(KCRMAX,MAX(KCRMIN,KDX(K)))
-               AFAR(K) = (6.*KDX(K)-3.+SQRT(8.*KDX(K)+1.))/(2.-2.*     &
-                         KDX(K))
-               AFAR(K) = MIN(MAX(AFAR(K),AFAMIN),AFAMAX)
+               IF (QC3D(K).GE.QSMALL.OR.NR3D(K).LT.0.5) THEN
+                  AFAR(K) = MIN(AFAMAX,MAX(AFAMIN,(AFA1+AFA2*          &
+                            LOG(NR3D(K))+AFA3*LOG(NR3D(K))**2.+AFA4*   &
+                            LOG(MVRR(K)))/(1.+AFA5*LOG(NR3D(K))+AFA6*  &
+                            LOG(MVRR(K)))))
+               ELSE
+                  AFAR(K) = MIN(AFAMAX,MAX(AFAMIN,(AFB1+AFB2*          &
+                            LOG(NR3D(K))+AFB3*LOG(NR3D(K))**2.+AFB4*   &
+                            LOG(MVRR(K)))/(1.+AFB5*LOG(NR3D(K))+AFB6*  &
+                            LOG(MVRR(K)))))
+               ENDIF
+               IF ((NR3D(K)*MVRR(K)**6.).GE.1.E-16) THEN
+                  IF (NR3D(K).GE.3.8E3) THEN
+                     AFAR(K) = AFAMAX
+                  ELSE
+                     AFAR(K) = AFAR(K)*0.5
+                  ENDIF
+               ENDIF
             ELSEIF (AFAR_3M.EQ.2) THEN
                BDR(K)  = (QR3D(K)*V2M3/RHOW/NR3D(K))**THRD
                BDR(K)  = MIN(MAX(BDR(K),DRMIN),DRMAX)
@@ -1711,13 +1780,12 @@
             ELSEIF (ICE_SHAPE.EQ.1) THEN
                BDI(K) = (QI3D(K)*V2M3/RHOI(K)/NI3D(K))**THRD*1.E3
                BDI(K) = MIN(MAX(BDI(K),DIMIN*1.E3),DIMAX*1.E3)
-               IF (BDI(K).GT.(DI0*1.E3)) THEN
-                  LTK(K)  = LOG(TK3D(K))
-                  LBDI(K) = LOG(BDI(K)*1.E3)
-                  ADAGR(K) = MIN(1.25,MAX(0.143,831.26148-299.86635*   &
-                             LTK(K)+23.257362/LBDI(K)+27.074238*       &
-                             LTK(K)**2.+0.004494653/LBDI(K)**2.-       &
-                             4.1838773*LTK(K)/LBDI(K)))
+               IF (BDI(K).GE.(DI0*1.E3)) THEN
+                  LBDI(K)  = LOG(BDI(K)*1.E3)
+                  INHGR(K) = ITBLE(HID(K))
+                  TTR(K)   = MIN(1.,MAX(0.01,ISP1*LBDI(K)**3.+ISP2*    &
+                             LBDI(K)**2.+ISP3*LBDI(K)+ISP4))
+                  ADAGR(K) = INHGR(K)**TTR(K)
                ELSE
                   ADAGR(K) = 1.
                ENDIF
@@ -1726,16 +1794,19 @@
             IF (AFAI_3M.EQ.0) THEN
                AFAI(K) = AFAI0
             ELSEIF (AFAI_3M.EQ.1) THEN
-               BDI(K)  = (QI3D(K)*V2M3/RHOI(K)/NI3D(K))**THRD*1.E3
-               BDI(K)  = MIN(MAX(BDI(K),DIMIN*1.E3),DIMAX*1.E3)
-               FDI(K)  = 7.4015986E-2+0.79866676*BDI(K)-9.4468892E-3*  &
-                         LOG(NI3D(K))+0.38235092*BDI(K)**2.+           &
-                         2.9811542E-4*LOG(NI3D(K))**2.+1.9052614E-2*   &
-                         BDI(K)*LOG(NI3D(K))
-               KDX(K)  = MAX(KCIMIN,MIN(KCIMAX,(BDI(K)/FDI(K))**3.))
-               AFAI(K) = (6.*KDX(K)-3.+SQRT(8.*KDX(K)+1.))/(2.-2.*     &
-                         KDX(K))
-               AFAI(K) = MIN(MAX(AFAI(K),AFAMIN),AFAMAX)
+               MVRI(K) = MIN(DIMAX/2.,MAX(DIMIN/2.,(QI3D(K)/NI3D(K)/   &
+                         RHOI(K)/C4PI3)**THRD))
+               IF (QC3D(K).GE.QSMALL.OR.NI3D(K).LT.0.5) THEN
+                  AFAI(K) = MIN(AFAMAX,MAX(AFAMIN,(AFA1+AFA2*          &
+                            LOG(NI3D(K))+AFA3*LOG(NI3D(K))**2.+AFA4*   &
+                            LOG(MVRI(K)))/(1.+AFA5*LOG(NI3D(K))+AFA6*  &
+                            LOG(MVRI(K)))))
+               ELSE
+                  AFAI(K) = MIN(AFAMAX,MAX(AFAMIN,(AFB1+AFB2*          &
+                            LOG(NI3D(K))+AFB3*LOG(NI3D(K))**2.+AFB4*   &
+                            LOG(MVRI(K)))/(1.+AFB5*LOG(NI3D(K))+AFB6*  &
+                            LOG(MVRI(K)))))
+               ENDIF
             ENDIF
          ENDIF
          IF (QS3D(K).GE.QSMALL.AND.NS3D(K).LT.NSMALL) THEN
@@ -1745,15 +1816,15 @@
                LTK(K) = LOG(TK3D(K))
                LQS(K) = -1.*LOG(QS3D(K))
                IF (TK3D(K).LT.TK0C) THEN
-                  RHOS(K) = 15740.702-6098.0087*LTK(K)+503.33089*      &
-                            LQS(K)+594.29913*LTK(K)**2.+1.9033961*     &
-                            LQS(K)**2.-94.950429*LTK(K)*LQS(K)
+                  RHOS(K) = MIN(900.,EXP(ROS1+ROS2*LTK(K)+ROS3*LQS(K)+ &
+                            ROS4*LTK(K)**2.+ROS5*LQS(K)**2.+ROS6*      &
+                            LTK(K)*LQS(K)))
                ELSE
-                  RHOS(K) = EXP(-64808.666+23113.508*LTK(K)-36.46632*  &
-                            LQS(K)-2060.6024*LTK(K)**2.-0.005729458*   &
-                            LQS(K)**2.+6.5057411*LTK(K)*LQS(K))
+                  RHOS(K) = MAX(100.,EXP(ROS7+ROS8*LTK(K)+ROS9*LQS(K)+ &
+                            ROS10*LTK(K)**2.+ROS11*LQS(K)**2.+ROS12*   &
+                            LTK(K)*LQS(K)))
                ENDIF
-               RHOS(K) = MIN(RHOIMAX,MAX(RHOIMIN,RHOS(K)))
+               RHOS(K) = MIN(900.,MAX(100.,RHOS(K)))
             ENDIF
             LTK(K) = LOG(TK3D(K))
             LQS(K) = -1.*LOG(QS3D(K))
@@ -1768,38 +1839,29 @@
                BDS(K)   = (S3M3D(K)/NS3D(K))**THRD*1.E3
                BDS(K)   = MIN(MAX(BDS(K),DSMIN*1.E3),DSMAX*1.E3)
                LBDS(K)  = LOG(BDS(K)*1.E3)
-               SASPR(K) = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*   &
-                          LTK(K)+5.1416616*LBDS(K)+1.0361366*LTK(K)**  &
-                          2.+0.017687308*LBDS(K)**2.-0.9649671*LTK(K)* &
-                          LBDS(K)))
+               LROS(K)  = LOG(RHOS(K))
+               SASPR(K) = MAX(0.2,MIN(SASMAX,ASP1+ASP2*LROS(K)+ASP3*   &
+                          LROS(K)**2.+ASP4*LBDS(K)+ASP5*LBDS(K)**2.+   &
+                          ASP6*LBDS(K)**3.))
             ENDIF
             IF (AFAS_3M.EQ.0) THEN
                AFAS(K) = AFAS0
             ELSEIF (AFAS_3M.EQ.1) THEN
-               BDS(K) = (S3M3D(K)/NS3D(K))**THRD*1.E3
-               BDS(K) = MIN(MAX(BDS(K),DSMIN*1.E3),DSMAX*1.E3)
-               IF (TK3D(K).GE.TK0C) THEN
-                  FDS(K) = -0.21911541+1.2739845*BDS(K)+0.10141003*    &
-                           LOG(NS3D(K))+0.30063818*BDS(K)**2.-         &
-                           4.3857765E-3*LOG(NS3D(K))**2.-0.078801732*  &
-                           BDS(K)*LOG(NS3D(K))
+               MVRS(K) = MIN(DSMAX/2.,MAX(DSMIN/2.,(QS3D(K)/NS3D(K)/   &
+                         RHOS(K)/C4PI3)**THRD))
+               IF (QC3D(K).GE.QSMALL.OR.NS3D(K).LT.0.5) THEN
+                  AFAS(K) = MIN(AFAMAX,MAX(AFAMIN,(AFA1+AFA2*          &
+                            LOG(NS3D(K))+AFA3*LOG(NS3D(K))**2.+        &
+                            AFA4*LOG(MVRS(K)))/(1.+AFA5*               &
+                            LOG(NS3D(K))+AFA6*LOG(MVRS(K)))))
                ELSE
-                  IF (QC3D(K).GE.1.E-8) THEN
-                     FDS(K) = -1.1527014+2.9067645*BDS(K)+0.25316062*  &
-                              LOG(NS3D(K))-0.17768557*BDS(K)**2.-      &
-                              0.013117292*LOG(NS3D(K))**2.-0.17020429* &
-                              BDS(K)*LOG(NS3D(K))
-                  ELSE
-                     FDS(K) = -0.2813929+1.7275463*BDS(K)+0.045550156* &
-                              LOG(NS3D(K))-0.16526226*BDS(K)**2.-      &
-                              1.7699916E-3*LOG(NS3D(K))**2.-           &
-                              4.6441257E-2*BDS(K)*LOG(NS3D(K))
-                  ENDIF
+                  AFAS(K) = MIN(AFAMAX,MAX(AFAMIN,(AFB1+AFB2*          &
+                            LOG(NS3D(K))+AFB3*LOG(NS3D(K))**2.+        &
+                            AFB4*LOG(MVRS(K)))/(1.+AFB5*               &
+                            LOG(NS3D(K))+AFB6*LOG(MVRS(K)))))
                ENDIF
-               KDX(K)  = MAX(KCSMIN,MIN(KCSMAX,(BDS(K)/FDS(K))**3.))
-               AFAS(K) = (6.*KDX(K)-3.+SQRT(8.*KDX(K)+1.))/(2.-2.*     &
-                         KDX(K))
-               AFAS(K) = MIN(MAX(AFAS(K),AFAMIN),AFAMAX)
+               IF (TK3D(K).GT.TK0C) AFAS(K) = MIN(AFAMAX,0.01*EXP(-1.* &
+               LOG(MVRS(K))))
             ENDIF
          ENDIF
          IF (QG3D(K).GE.QSMALL.AND.NG3D(K).LT.NSMALL) THEN
@@ -1819,9 +1881,8 @@
                ELSE
                   IHAIL(K) = 0
                   LQG(K)  = -1.*LOG(QG3D(K))
-                  RHOG(K) = MIN(900.,MAX(100.,EXP(-9.57E-5*LQG(K)**3.+ &
-                            3.077E-3*LQG(K)**2.-6.800923E-2*LQG(K)+    &
-                            6.8175231)))
+                  RHOG(K) = MIN(900.,MAX(400.,EXP(ROG1*LQG(K)**3.+ROG2*&
+                            LQG(K)**2.+ROG3*LQG(K)+ROG4)))
                ENDIF
             ENDIF
             LTK(K)  = LOG(TK3D(K))
@@ -1840,38 +1901,29 @@
             ELSEIF (GRAP_SHAPE.EQ.1) THEN
                LTK(K)   = LOG(TK3D(K))
                LBDG(K)  = LOG(MDG(K)*1.E3)
-               GASPR(K) = MAX(SASMIN,MIN(SASMAX,-5.598876-4.5087011*   &
-                          LTK(K)+5.1416616*LBDG(K)+1.0361366*          &
-                          LTK(K)**2.+0.017687308*LBDG(K)**2.-0.9649671*&
-                          LTK(K)*LBDG(K)))
+               LROG(K)  = LOG(RHOG(K))
+               GASPR(K) = MAX(0.2,MIN(SASMAX,ASP1+ASP2*LROG(K)+ASP3*   &
+                          LROG(K)**2.+ASP4*LBDG(K)+ASP5*LBDG(K)**2.+   &
+                          ASP6*LBDG(K)**3.))
             ENDIF
             IF (AFAG_3M.EQ.0) THEN
                AFAG(K) = AFAG0
             ELSEIF (AFAG_3M.EQ.1) THEN
-               BDG(K) = (G3M3D(K)/NG3D(K))**THRD*1.E3
-               BDG(K) = MIN(MAX(BDG(K),DGMIN*1.E3),DGMAX*1.E3)
-               IF (TK3D(K).GE.TK0C) THEN
-                  FDG(K) = 0.58006354+0.79661229*BDG(K)-0.18394382*    &
-                           LOG(NG3D(K))+6.7371044E-2*BDG(K)**2.+       &
-                           9.832945E-3*LOG(NG3D(K))**2.+0.12433055*    &
-                           BDG(K)*LOG(NG3D(K))
+               MVRG(K) = MIN(DGMAX/2.,MAX(DGMIN/2.,(QG3D(K)/NG3D(K)/   &
+                         RHOG(K)/C4PI3)**THRD))
+               IF (QC3D(K).GE.QSMALL.OR.NG3D(K).LT.0.5) THEN
+                  AFAG(K) = MIN(AFAMAX,MAX(AFAMIN,(AFA1+AFA2*          &
+                            LOG(NG3D(K))+AFA3*LOG(NG3D(K))**2.+        &
+                            AFA4*LOG(MVRG(K)))/(1.+AFA5*               &
+                            LOG(NG3D(K))+AFA6*LOG(MVRG(K)))))
                ELSE
-                  IF (QC3D(K).GE.1.E-8) THEN
-                     FDG(K) = 0.17363469+1.5044291*BDG(K)-0.050639722* &
-                              LOG(NG3D(K))+1.5101052E-2*BDG(K)**2.+    &
-                              2.5974719E-3*LOG(NG3D(K))**2.+0.01961464*&
-                              BDG(K)*LOG(NG3D(K))
-                  ELSE
-                     FDG(K) = 0.59259317-0.89933515*BDG(K)+2.0893032*  &
-                              BDG(K)**2.-0.50305755*BDG(K)**3.-        &
-                              2.2446793E-2*LOG(NG3D(K))+2.7589047E-3*  &
-                              LOG(NG3D(K))**2.
-                  ENDIF
+                  AFAG(K) = MIN(AFAMAX,MAX(AFAMIN,(AFB1+AFB2*          &
+                            LOG(NG3D(K))+AFB3*LOG(NG3D(K))**2.+        &
+                            AFB4*LOG(MVRG(K)))/(1.+AFB5*               &
+                            LOG(NG3D(K))+AFB6*LOG(MVRG(K)))))
                ENDIF
-               KDX(K)  = MAX(KCGMIN,MIN(KCGMAX,(BDG(K)/FDG(K))**3.))
-               AFAG(K) = (6.*KDX(K)-3.+SQRT(8.*KDX(K)+1.))/(2.-2.*     &
-                         KDX(K))
-               AFAG(K) = MIN(MAX(AFAG(K),AFAMIN),AFAMAX)
+               IF (TK3D(K).GT.TK0C) AFAG(K) = MIN(AFAMAX,0.01*EXP(-1.* &
+               LOG(MVRG(K))))
             ENDIF
          ENDIF
 ! AT SUBSATURATION, REMOVE SMALL AMOUNTS OF CLOUD/PRECIP WATER
@@ -1952,8 +2004,9 @@
                QVSW(K)  = 0.622*ESW(K)/(P3D(K)-ESW(K))
                XXLV(K)  = 3.1484E6-2370.*TK3D(K)
                CPM(K)   = CP*(1.+0.887*QV3D(K))
-               QACac(K) = (QV3D(K)-QVSW(K))/(1.+XXLV(K)**2.*QVSW(K)/(  &
-                          CPM(K)*RV*TK3D(K)**2.))
+               QACac(K) = NACac(K)*4.5E-15
+!               QACac(K) = (QV3D(K)-QVSW(K))/(1.+XXLV(K)**2.*QVSW(K)/(  &
+!                          CPM(K)*RV*TK3D(K)**2.))
             ELSEIF (IACT.EQ.2) THEN
                IF (LAND.EQ.1.) THEN                                    ! CONTINENTAL AVERAGED
                   C1 = 1000./RHO(K)*1.E6; K1 = 0.5; ZCMAX = 6.4E9
@@ -2076,7 +2129,7 @@
                  QI3D(K),QS3D(K),QG3D(K),NC3D(K),NR3D(K),NI3D(K),      &
                  NS3D(K),NG3D(K),VT_QC(K),VT_QR(K),VT_QI(K),VT_QS(K),  &
                  VT_QG(K),VT_NC(K),VT_NR(K),VT_NI(K),VT_NS(K),VT_NG(K),&
-                 RHO(K))
+                 RHO(K),SMLF(K),GMLF(K))
          ENDIF
          IF (QC3D(K).GE.QSMALL.AND.NC3D(K).GE.NSMALL) THEN
             MVDC(K) = (QC3D(K)*iAMW/NC3D(K))**THRD
@@ -2204,14 +2257,13 @@
                NI3D(K) = 1.E9*QI3D(K)*V2M3/RHOI(K)/MDI(K)**3.
             ENDIF
          ENDIF   ! SAT
-         ZZHR(K) = ZXMIN1;  ZZHI(K) = ZXMIN1;  ZZHS(K) = ZXMIN1
-         ZZHG(K) = ZXMIN1;  ZZVR(K) = ZXMIN1;  ZZVI(K) = ZXMIN1
-         ZZVS(K) = ZXMIN1;  ZZVG(K) = ZXMIN1;  ZZHVR(K) = ZXMIN1
-         ZZHVI(K) = ZXMIN1; ZZHVS(K) = ZXMIN1; ZZHVG(K) = ZXMIN1
-         LDR1(K) = ZXMIN2;  LDR2(K) = ZXMIN2;  LDR3(K) = ZXMIN2
-         LDR4(K) = ZXMIN2;  RADS(K) = 0.; RADG(K) = 0.; LDR(K) = -99.
-         DBZM(K) = -60.; ZDR(K) = 0.; KDP(K) = 0.; RHV(K) = 1.
-         KDPR(K) = 0.; KDPI(K) = 0.; KDPS(K) = 0.; KDPG(K) = 0.
+         ZZHR(K) = ZXMIN;  ZZHI(K) = ZXMIN;  ZZHS(K) = ZXMIN
+         ZZHG(K) = ZXMIN;  ZZVR(K) = ZXMIN;  ZZVI(K) = ZXMIN
+         ZZVS(K) = ZXMIN;  ZZVG(K) = ZXMIN;  ZZHVR(K) = ZXMIN
+         ZZHVI(K) = ZXMIN; ZZHVS(K) = ZXMIN; ZZHVG(K) = ZXMIN
+         RADS(K) = 0.; RADG(K) = 0.; DBZM(K) = 0.; ZDR(K) = 0.
+         KDP(K) = 0.;  KDPR(K) = 0.; KDPI(K) = 0.; KDPS(K) = 0.
+         KDPG(K) = 0.
          TC3D(K)  = TK3D(K)-TK0C
          EPSIN(K) = 5.27137+2.16474E-2*TC3D(K)-1.31198E-3*TC3D(K)**2.
          EPSS(K)  = 78.54*(1.-4.579E-3*(TC3D(K)-25.)+1.19E-5*(TC3D(K)- &
@@ -2241,9 +2293,9 @@
             QC3D(K) = 0.; NC3D(K) = 0.; EFRC(K) = 0.
          ENDIF
          IF (QR3D(K).GE.QSMALL.AND.NR3D(K).GE.NSMALL) THEN
-            CALL SOLVE_AFAR(TK3D(K),RHO(K),QR3D(K),NR3D(K),LAMR(K),    &
-                 MVDR(K),AFAR(K),RASPR(K),AVR(K),BVR(K))
-            IF (QR3D(K).GE.QSMAL1) THEN
+            CALL SOLVE_AFAR(TK3D(K),RHO(K),QC3D(K),QR3D(K),NR3D(K),    &
+                 LAMR(K),MVDR(K),AFAR(K),RASPR(K),AVR(K),BVR(K))
+            IF (QR3D(K).GE.QLIMIT) THEN
                ORA0(K) = 10.
                ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
                LLMR(K) = LOG(LAMR(K))
@@ -2265,7 +2317,15 @@
                           1122.8963*SQRT(LLMR(K))
                ZZHR(K) = NR3D(K)*10.**((FDBZR(K)-200.)/10.-18.)*ORZHR(K)
                DBZR(K) = 10.*LOG10(1.E18*ZZHR(K))
-               IF (AFAR(K).GE.1.) THEN
+               IF (AFAR(K).GE.3.) THEN
+                  FZDRR(K) = EXP(27.639873+3.7680268*LAR2(K)-4.3382556*&
+                             LLMR(K)+0.36498072*LAR22(K)+0.29286255*   &
+                             LLMR2(K)-0.58159197*LAR2(K)*LLMR(K)+      &
+                             9.968596E-3*LAR23(K)-7.1806791E-3*        &
+                             LLMR3(K)+0.023642573*LAR2(K)*LLMR2(K)-    &
+                             0.028767891*LAR22(K)*LLMR(K))/1.E4*       &
+                             ORAR(K)/0.9409
+               ELSE
                   FZDRR(K) = EXP(10.243103+0.46561642*LAR2(K)+         &
                              1.7270962*LLMR(K)+5.8974032E-3*LAR22(K)-  &
                              0.34268382*LLMR2(K)+0.10193409*LAR2(K)*   &
@@ -2273,79 +2333,44 @@
                              LLMR3(K)-0.038623263*LAR2(K)*LLMR2(K)+    &
                              0.10413007*LAR22(K)*LLMR(K))/1.E4*ORAR(K)/&
                              0.9409
-               ELSE
-                  FZDRR(K) = EXP(19.61943+2.743765*LAR2(K)-2.1913656*  &
-                             LLMR(K)+0.067589745*LAR22(K)+0.0588952*   &
-                             LLMR2(K)-0.15553337*LAR2(K)*LLMR(K))/     &
-                             1.E4*ORAR(K)/0.9409
-!                  FZDRR(K) = EXP(27.639873+3.7680268*LAR2(K)-4.3382556*&
-!                             LLMR(K)+0.36498072*LAR22(K)+0.29286255*   &
-!                             LLMR2(K)-0.58159197*LAR2(K)*LLMR(K)+      &
-!                             9.968596E-3*LAR23(K)-7.1806791E-3*        &
-!                             LLMR3(K)+0.023642573*LAR2(K)*LLMR2(K)-    &
-!                             0.028767891*LAR22(K)*LLMR(K))/1.E4*       &
-!                             ORAR(K)/0.9409
                ENDIF
                ZZVR(K)  = 10.**(DBZR(K)/10.-18.-FZDRR(K)/10.)
-               IF (AFAR(K).LE.10.) THEN
-                  FRHVR(K) = EXP(((77.201757+3.7390736*LAR2(K)-        &
-                             1.6049039*LAR22(K)-24.662427*LLMR(K)+     &
-                             1.8407694*LLMR2(K)+0.017354176*LLMR3(K))/(&
-                             1.+0.037952541*LAR2(K)-0.015861625*       &
-                             LAR22(K)-0.30666749*LLMR(K)+0.023766711*  &
-                             LLMR2(K))+2.2E3)/1.E3)/10.
-               ELSE
-                  FRHVR(K) = EXP((381.64648-44.398378*LAR2(K)-8416.23/ &
-                             LLMR(K)+2.3248835*LAR22(K)+83424.365/     &
-                             LLMR2(K)+900.31413*LAR2(K)/LLMR(K)-       &
-                             0.039087208*LAR23(K)-272229.26/LLMR3(K)-  &
-                             4485.5289*LAR2(K)/LLMR2(K)-23.984364*     &
-                             LAR22(K)/LLMR(K)+2.2E3)/1.E3)/10.
-               ENDIF
-               ZZHVR(K) = FRHVR(K)*10.**(DBZR(K)/10.-18.-FZDRR(K)/20.)
-               IF (MVDR(K).LT.1.E-4) THEN
-                  FKDPR(K) = 1.E-15
-               ELSEIF (MVDR(K).GE.1.E-4.AND.MVDR(K).LT.5.E-4) THEN
-                  FKDPR(K) = EXP(35.450715+2.4505311*LAR2(K)-1.4651261*&
-                             LLMR(K)-0.22974058*LAR2(K)-0.22139098*    &
-                             LLMR(K)**2.+0.29382343*LAR2(K)*LLMR(K))/  &
-                             1.E10
+               IF (MVDR(K).LT.7.E-4) THEN
+                  FKDPR(K) = MIN(1.5/MAX(1.,NR3D(K)),EXP(14.837602-    &
+                             18.786496/LAR2(K)+72.211021/LAR22(K)-     &
+                             124.16879/LAR23(K)+98.39131/LAR2(K)**4.-  &
+                             28.355229/LAR2(K)**5.-0.092813834*        &
+                             LLMR(K))/1.E10)
                ELSE
                   IF (AFAR(K).LE.3.) THEN
                      FKDPR(K) = EXP(35.450715+2.4505311*LAR2(K)-       &
-                                1.4651261*LLMR(K)-0.22974058*LAR2(K)-  &
-                                0.22139098*LLMR(K)**2.+0.29382343*     &
-                                LAR2(K)*LLMR(K))/1.E10
+                                1.4651261*LLMR(K)-0.22974058*LAR22(K)- &
+                                0.22139098*LLMR2(K)+0.29382343*LAR2(K)*&
+                                LLMR(K))/1.E10
                   ELSE
                      FKDPR(K) = EXP((38.35738+8.8170679*LAR2(K)-       &
-                                8.971269*LLMR(K)+0.49634922*LAR2(K)**  &
-                                2.+0.51897478*LLMR(K)**2.-1.0162854*   &
-                                LAR2(K)*LLMR(K))/(1.+0.16321213*       &
-                                LAR2(K)-0.1676006*LLMR(K)+4.0072333E-3*&
-                                LAR2(K)**2.+4.9701831E-3*LLMR(K)**2.-  &
+                                8.971269*LLMR(K)+0.49634922*LAR22(K)+  &
+                                0.51897478*LLMR2(K)-1.0162854*LAR2(K)* &
+                                LLMR(K))/(1.+0.16321213*LAR2(K)-       &
+                                0.1676006*LLMR(K)+4.0072333E-3*        &
+                                LAR22(K)+4.9701831E-3*LLMR2(K)-        &
                                 9.1512549E-3*LAR2(K)*LLMR(K)))/1.E10
                   ENDIF
+                  FKDPR(K) = MIN(10./MAX(1.,NR3D(K)),FKDPR(K))
                ENDIF
                KDPR(K) = NR3D(K)*FKDPR(K)*0.11/DBZWL*ORAR(K)/0.9409
-               LDR1(K) = MAX(ZXMIN2,EXP(36.733525+2.5433219*LAR2(K)-   &
-                         2.3369878*LLMR(K)-0.065597591*LAR2(K)**2.-    &
-                         0.05051982*LLMR(K)**2.+0.098642307*LAR2(K)*   &
-                         LLMR(K))/1.E11)
                IF (ZZVR(K).GT.ZZHR(K)) ZZVR(K) = 0.9999*ZZHR(K)
                ZDRR(K) = 10.*LOG10(ZZHR(K)/ZZVR(K))
-               RHVR(K) = MIN(1.,ZZHVR(K)/EXP(LOG(ZZHR(K))/2.+          &
-                         LOG(ZZVR(K))/2.))
-               LDRR(K) = 10.*LOG10(MAX(ZXMIN2,MIN(1.,LDR1(K))))
             ENDIF
          ELSE
             QR3D(K) = 0.; NR3D(K) = 0.; AFAR(K) = 0.; LAMR(K) = 0.
          ENDIF
          IF (QI3D(K).GE.QSMALL.AND.NI3D(K).GE.NSMALL) THEN
-            CALL SOLVE_AFAI(TK3D(K),P3D(K),RHO(K),QV3D(K),QI3D(K),     &
-                 NI3D(K),ADAGR(K),ZETA(K),LAMI(K),AFAI(K),MVDI(K),     &
-                 RHOI(K),AMI(K),BMI(K),AVI(K),BVI(K))
+            CALL SOLVE_AFAI(TK3D(K),P3D(K),RHO(K),QV3D(K),QC3D(K),     &
+                 QI3D(K),NI3D(K),ADAGR(K),ZETA(K),LAMI(K),AFAI(K),     &
+                 MVDI(K),RHOI(K),AMI(K),BMI(K),AVI(K),BVI(K))
             EFRI(K) = (AFAI(K)+3.)/LAMI(K)
-            IF (QI3D(K).GE.QSMAL1) THEN
+            IF (QI3D(K).GE.QLIMIT) THEN
                LLMI(K) = LOG(LAMI(K))
                LAI2(K) = LOG(AFAI(K)+2.)
                LROI(K) = LOG(RHOI(K))
@@ -2394,15 +2419,6 @@
                              LAI23(K)-0.071648235*LLMI(K)))/1.E6*      &
                              ORAR(K)/0.5779*ZDZET(K)*ZDROX(K)
                   ZZVI(K)  = 10.**(DBZI(K)/10.-18.+FZDRI(K)/10.)
-                  FRHVI(K) = MIN(1.,EXP(((181.5319+50.416965*       &
-                                LAI2(K)-54.764609*LLMI(K)+3.8546086*   &
-                                LAI22(K)+6.5423519*LLMI2(K)-11.046246* &
-                                LAI2(K)*LLMI(K)+0.24027599*LAI23(K)-   &
-                                0.21821866*LLMI3(K)+0.56931573*LAI2(K)*&
-                                LLMI2(K)-0.53303076*LAI22(K)*LLMI(K))+ &
-                                2200.)/1.E3)/10.)
-                  ZZHVI(K) = FRHVI(K)*10.**(DBZI(K)/10.-18.+FZDRI(K)/  &
-                             20.)
                   FKDPI(K) = EXP((54.728473+7.4097498*LAI2(K)-         &
                              7.5413134*LLMI(K)+0.25580463*LAI22(K)+    &
                              0.25257362*LLMI2(K)-0.50222586*LAI2(K)*   &
@@ -2417,25 +2433,8 @@
                              ZETA(K)+9.1590015E-4*LMDI3(K)-7.2917335*  &
                              ZETA3(K)-2.2235781*LMDI(K)*ZETA2(K)-      &
                              0.053116593*LMDI2(K)*ZETA(K))
-                  KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*DBZWL/ &
-                             0.11*ORAR(K)/0.5779
-                  LDROX(K) = (-0.0083857093+1.2010256E-4*LMDI(K)+      &
-                             0.0022085165*LROI(K))/(1.+9.6359927E-5*   &
-                             LMDI(K)-0.28491732*LROI(K)+0.020422209*   &
-                             LROI2(K))
-                  LDZET(K) = MAX(0.,(-0.015973944-0.028834423*LMDI(K)+ &
-                             0.004885681*LMDI2(K)+2.3108211*ZETA(K)+   &
-                             85.177603*ZETA2(K)-190.86575*ZETA3(K))/(  &
-                             1.-0.017918301*LMDI(K)+2.3684107E-3*      &
-                             LMDI2(K)+3.3160184E-4*LMDI3(K)-2.0907744* &
-                             ZETA(K)))
-                  LDR2(K) = MAX(ZXMIN2,EXP((25.359618+1.6023631*       &
-                            LAI2(K)+0.028744098*LAI22(K)-1.5091537E-3* &
-                            LAI23(K)-1.987224*LLMI(K)+2.1918906E-3*    &
-                            LLMI2(K))/(1.+0.054108077*LAI2(K)+         &
-                            2.5501839E-3*LAI22(K)-1.4299494E-4*        &
-                            LAI23(K)-0.074782309*LLMI(K)))/1.E11*      &
-                            LDROX(K)*LDZET(K))
+                  KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*0.11/  &
+                             DBZWL*ORAR(K)/0.5779
                   IF (ZZVI(K).LT.ZZHI(K)) ZZVI(K) = 1.0001*ZZHI(K)
                   ZDRI(K) = 10.*LOG10(ZZVI(K)/ZZHI(K))
                ELSEIF ((1.-ADAGR(K)).GE.SLIMIT) THEN
@@ -2447,31 +2446,29 @@
                   ZHROX(K) = 1.4172E-6*EXP(1.9687416987*LROI(K))
                   LMDI(K)  = LOG(1.E6*MVDI(K))
                   EORA(K)  = EXP(ORA0(K)*PI/180.)
-                  ORZHI(K) = 0.67789527-9.5992589E-5*LMDI(K)+       &
-                                0.7382078*EORA(K)-0.0010254973*        &
-                                LMDI2(K)-0.57079919*EORA(K)**2.+       &
-                                0.025474344*LMDI(K)*EORA(K)+           &
-                                5.146872E-7*LMDI3(K)+0.15025366*       &
-                                EORA(K)**3.-0.021740747*LMDI(K)*       &
-                                EORA(K)**2.+9.0541117E-4*LMDI2(K)*     &
-                                EORA(K)
-                  ZHZET(K) = 1.1531946-0.10474946*LMDI(K)+1.3268439*&
-                                ZETA(K)+0.013483871*LMDI2(K)+3.0239757*&
-                                ZETA2(K)-0.53774565*LMDI(K)*ZETA(K)-   &
-                                7.6839476E-4*LMDI3(K)+4.3808336*       &
-                                ZETA3(K)+0.080046674*LMDI(K)*ZETA2(K)+ &
-                                0.015810946*LMDI2(K)*ZETA(K)
-                  ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*&
-                                ZHROX(K)*ZHZET(K)*ORZHI(K)
+                  ORZHI(K) = 0.67789527-9.5992589E-5*LMDI(K)+0.7382078*&
+                             EORA(K)-0.0010254973*LMDI2(K)-0.57079919* &
+                             EORA(K)**2.+0.025474344*LMDI(K)*EORA(K)+  &
+                             5.146872E-7*LMDI3(K)+0.15025366*          &
+                             EORA(K)**3.-0.021740747*LMDI(K)*          &
+                             EORA(K)**2.+9.0541117E-4*LMDI2(K)*EORA(K)
+                  ZHZET(K) = 1.1531946-0.10474946*LMDI(K)+1.3268439*   &
+                             ZETA(K)+0.013483871*LMDI2(K)+3.0239757*   &
+                             ZETA2(K)-0.53774565*LMDI(K)*ZETA(K)-      &
+                             7.6839476E-4*LMDI3(K)+4.3808336*ZETA3(K)+ &
+                             0.080046674*LMDI(K)*ZETA2(K)+0.015810946* &
+                             LMDI2(K)*ZETA(K)
+                  ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*   &
+                             ZHROX(K)*ZHZET(K)*ORZHI(K)
                   DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
-                  ZDROX(K) = 0.05683556*LROI3(K)-0.77585835*        &
-                                LROI2(K)+3.62207807*LROI(K)-5.63826259
-                  ZDZET(K) = MAX(0.,0.12567123-0.077409338*LMDI(K)- &
-                                8.3245922*ZETA(K)+0.013440196*LMDI2(K)+&
-                                8.7068519*ZETA2(K)-0.53878869*LMDI(K)* &
-                                ZETA(K)-7.0609359E-4*LMDI3(K)+6.371616*&
-                                ZETA3(K)-1.6563927*LMDI(K)*ZETA2(K)+   &
-                                0.032682807*LMDI2(K)*ZETA(K))
+                  ZDROX(K) = 0.05683556*LROI3(K)-0.77585835*LROI2(K)+  &
+                             3.62207807*LROI(K)-5.63826259
+                  ZDZET(K) = MAX(0.,0.12567123-0.077409338*LMDI(K)-    &
+                             8.3245922*ZETA(K)+0.013440196*LMDI2(K)+   &
+                             8.7068519*ZETA2(K)-0.53878869*LMDI(K)*    &
+                             ZETA(K)-7.0609359E-4*LMDI3(K)+6.371616*   &
+                             ZETA3(K)-1.6563927*LMDI(K)*ZETA2(K)+      &
+                             0.032682807*LMDI2(K)*ZETA(K))
                   FZDRI(K) = EXP((15.587817+0.23578544*LAI2(K)+        &
                              0.045497555*LAI22(K)-1.0862071*LLMI(K)+   &
                              3.4688369E-3*LLMI2(K))/(1.+0.015556043*   &
@@ -2480,44 +2477,22 @@
                              LLMI(K)))/1.E6*ORAR(K)/0.9409*ZDZET(K)*   &
                              ZDROX(K)
                   ZZVI(K)  = 10.**(DBZI(K)/10.-18.-FZDRI(K)/10.)
-                  FRHVI(K) = MIN(1.,EXP((0.94675371-0.091335663*       &
-                             LAI2(K)+0.21299061*LLMI(K)-0.014472724*   &
-                             LAI22(K)-8.172669E-3*LLMI2(K)+0.014261686*&
-                             LAI2(K)*LLMI(K)+2300.)/1.E3)/10.)
-                  ZZHVI(K) = FRHVI(K)*10.**(DBZI(K)/10.-18.-FZDRI(K)/  &
-                             20.)
-                  FKDPI(K) = EXP((55.096057+7.4047265*LAI2(K)-      &
-                                7.6277374*LLMI(K)+0.25324833*LAI22(K)+ &
-                                0.25735457*LLMI2(K)-0.50528828*LAI2(K)*&
-                                LLMI(K))/(1.+0.078240442*LAI2(K)-      &
-                                0.083742581*LLMI(K)+5.4080817E-4*      &
-                                LAI22(K)+2.9610344E-4*LLMI2(K)-        &
-                                5.9621769E-4*LAI2(K)*LLMI(K)))/2.E18
+                  FKDPI(K) = EXP((55.096057+7.4047265*LAI2(K)-         &
+                             7.6277374*LLMI(K)+0.25324833*LAI22(K)+    &
+                             0.25735457*LLMI2(K)-0.50528828*LAI2(K)*   &
+                             LLMI(K))/(1.+0.078240442*LAI2(K)-         &
+                             0.083742581*LLMI(K)+5.4080817E-4*         &
+                             LAI22(K)+2.9610344E-4*LLMI2(K)-           &
+                             5.9621769E-4*LAI2(K)*LLMI(K)))/2.E18
                   KDROX(K) = 1.89E-6*EXP(1.92963337*LROI(K))
-                  KDZET(K) = MAX(0.,0.044182106-0.020578987*LMDI(K)-&
-                                8.8659688*ZETA(K)+0.0022174675*        &
-                                LMDI2(K)+5.2415098*ZETA2(K)-0.40918383*&
-                                LMDI(K)*ZETA(K)-3.696556E-5*LMDI3(K)+  &
-                                3.5504491*ZETA3(K)-1.4353113*LMDI(K)*  &
-                                ZETA2(K)+0.022796706*LMDI2(K)*ZETA(K))
-                  KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*    &
-                                DBZWL/0.11*ORAR(K)/0.9409
-                  LDROX(K) = (-8.3857093E-3+1.2010256E-4*LMDI(K)+   &
-                                2.2085165E-3*LROI(K))/(1.+9.6359927E-5*&
-                                LMDI(K)-0.28491732*LROI(K)+0.020422209*&
-                                LROI2(K))
-                  LDZET(K) = MAX(0.,-0.71538233+0.52279887*LMDI(K)+ &
-                                6.2024297*ZETA(K)-0.10262185*LMDI2(K)+ &
-                                167.85761*ZETA2(K)-0.88821665*LMDI(K)* &
-                                ZETA(K)+5.8672596E-3*LMDI3(K)+         &
-                                91.779328*ZETA3(K)-14.497613*LMDI(K)*  &
-                                ZETA2(K)-0.10912419*LMDI2(K)*ZETA(K))
-                  LDR2(K) = MAX(ZXMIN2,EXP((23.627979+1.3778261*    &
-                               LAI2(K)-0.0196297*LAI22(K)+0.0024921608*&
-                               LAI23(K)-1.8353995*LLMI(K)+0.0056115612*&
-                               LLMI2(K))/(1.+0.043987761*LAI2(K)+      &
-                               0.0011963129*LAI22(K)-0.070210514*      &
-                               LLMI(K)))/1.E11*LDROX(K)*LDZET(K))
+                  KDZET(K) = MAX(0.,0.044182106-0.020578987*LMDI(K)-   &
+                             8.8659688*ZETA(K)+0.0022174675*LMDI2(K)+  &
+                             5.2415098*ZETA2(K)-0.40918383*LMDI(K)*    &
+                             ZETA(K)-3.696556E-5*LMDI3(K)+3.5504491*   &
+                             ZETA3(K)-1.4353113*LMDI(K)*ZETA2(K)+      &
+                             0.022796706*LMDI2(K)*ZETA(K))
+                  KDPI(K)  = NI3D(K)*FKDPI(K)*KDROX(K)*KDZET(K)*0.11/  &
+                             DBZWL*ORAR(K)/0.9409
                   IF (ZZVI(K).GT.ZZHI(K)) ZZVI(K) = 0.9999*ZZHI(K)
                   ZDRI(K) = 10.*LOG10(ZZHI(K)/ZZVI(K))
                ELSEIF (ABS(ADAGR(K)-1.).LT.SLIMIT) THEN
@@ -2529,18 +2504,13 @@
                   ZHROX(K) = 1.9382E-6*EXP(1.9260732373*LROI(K))
                   ORZHI(K) = 1.
                   ZHZET(K) = 1.
-                  ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*&
-                                ZHROX(K)*ZHZET(K)*ORZHI(K)
+                  ZZHI(K)  = NI3D(K)*10.**((FDBZI(K)-200.)/10.-18.)*   &
+                             ZHROX(K)*ZHZET(K)*ORZHI(K)
                   DBZI(K)  = 10.*LOG10(1.E18*ZZHI(K))
                   ZZVI(K)  = 10.**(DBZI(K)/10.-18.)
-                  ZZHVI(K) = 1.*10.**(DBZI(K)/10.-18.)
                   KDPI(K)  = 0.
-                  LDR2(K)  = ZXMIN2
                   ZDRI(K)  = 0.
                ENDIF
-               RHVI(K) = MIN(1.,ZZHVI(K)/EXP(LOG(ZZHI(K))/2.+       &
-                            LOG(ZZVI(K))/2.))
-               LDRI(K) = 10.*LOG10(MIN(1.,LDR2(K)))
             ENDIF
          ELSE
             QI3D(K) = 0.; NI3D(K) = 0.; EFRI(K) = 0.
@@ -2550,13 +2520,35 @@
                  AFAS(K),LAMS(K),MVDS(K),RHOS(K),SASPR(K),AMS(K),      &
                  AVS(K),BVS(K))
             EFRS(K) = (AFAS(K)+3.)/LAMS(K)
-            IF (QS3D(K).GE.QSMAL1) THEN
+            IF (QS3D(K).GE.QLIMIT) THEN
                IF (SMLF(K).GE.MLIMIT) THEN
+
+                  S3M3D(K) = QS3D(K)*V2M3/RHOS(K)
+                  MVRS(K) = MIN(DSMAX/2.,MAX(DSMIN/2.,(QS3D(K)/NS3D(K)/&
+                            RHOS(K)/C4PI3)**THRD))
+                  AFAS(K) = MIN(AFAMAX,MAX(AFAMIN,EXP(-18.420681-0.5*  &
+                            LOG(NS3D(K))-2.94*LOG(MVRS(K)))))
+                  LAMS(K) = (EXP(GAMLN(AFAS(K)+4.)-GAMLN(AFAS(K)+1.))* &
+                            NS3D(K)/S3M3D(K))**THRD
+                  LAMSMIN(K) = (EXP(GAMLN(AFAS(K)+4.)-GAMLN(AFAS(K)+   &
+                               1.)))**THRD/DSMAX
+                  LAMSMAX(K) = (EXP(GAMLN(AFAS(K)+4.)-GAMLN(AFAS(K)+   &
+                               1.)))**THRD/DSMIN
+                  IF (LAMS(K).LT.LAMSMIN(K)) THEN
+                     LAMS(K) = LAMSMIN(K)
+                     NS3D(K) = S3M3D(K)*EXP(GAMLN(AFAS(K)+1.)-         &
+                               GAMLN(AFAS(K)+4.)+3.*LOG(LAMS(K)))
+                  ELSEIF (LAMS(K).GT.LAMSMAX(K)) THEN
+                     LAMS(K) = LAMSMAX(K)
+                     NS3D(K) = S3M3D(K)*EXP(GAMLN(AFAS(K)+1.)-         &
+                               GAMLN(AFAS(K)+4.)+3.*LOG(LAMS(K)))
+                  ENDIF
+
                   SMLV(K) = (RHOS(K)/(RHOW/SMLF(K)-RHOW+RHOS(K)))**MLRA
                   DSMM(K)  = MVDS(K)*1.E3
-                  SASPR(K) = SMLF(K)*(0.9951+2.51E-2*DSMM(K)-3.644E-2* &
-                             DSMM(K)**2.+5.303E-3*DSMM(K)**3.-2.492E-4*&
-                             DSMM(K)**4.)+(1.-SMLF(K))*SASPR(K)
+                  SASPR(K) = SMLF(K)*MAX(0.4,0.9951+2.51E-2*DSMM(K)-   &
+                             3.644E-2*DSMM(K)**2.+5.303E-3*DSMM(K)**3.-&
+                             2.492E-4*DSMM(K)**4.)+(1.-SMLF(K))*SASPR(K)
                   RHOS(K) = MIN(RHOIMAX,MAX(RHOIMIN,SMLF(K)*RHOW+(1.-  &
                             SMLF(K))*RHOS(K)))
                   ORA0(K) = 10.*SMLF(K)+(1.-SMLF(K))*40.
@@ -2568,39 +2560,31 @@
                      SCALA(K) = THRD
                   ELSEIF (AGG_SHAPE.EQ.1.OR.AGG_SHAPE.EQ.2) THEN
                      SCA0(K)  = MAX(1.E-6,SQRT(SASPR(K)**(-2.)-1.))
-                     SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(1.-   &
-                                   ATAN(SCA0(K))/SCA0(K))
+                     SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(1.-      &
+                                ATAN(SCA0(K))/SCA0(K))
                   ENDIF
                   SCALB(K) = (1.-SCALA(K))/2.
-                  SCAW1(K) = MIXA+MIXB/SMLV(K)+MIXC*RHOS(K)+MIXD/   &
-                             SMLV(K)**2.+MIXE*RHOS(K)**2.+MIXF*     &
-                             RHOS(K)/SMLV(K)
+                  SCAW1(K) = MIXA+MIXB/SMLV(K)+MIXC*RHOS(K)+MIXD/      &
+                             SMLV(K)**2.+MIXE*RHOS(K)**2.+MIXF*RHOS(K)/&
+                             SMLV(K)
                   SCAFA(K) = 1./(SCALA(K)+SCAW1(K))
                   SCAFB(K) = 1./(SCALB(K)+SCAW1(K))
-                  RADS(K) = NS3D(K)*EXP(GAMLN(AFAS(K)+7.)-GAMLN(    &
-                            AFAS(K)+1.)-6.*LOG(LAMS(K)))
-                  ZZHS(K) = MAX(ZXMIN1,RADS(K)*(ORA1(K)*SCAFB(K)**  &
-                               2.+2.*ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*&
-                               SCAFA(K)**2.)/(9.*SCAKW(K)))
-                  ZZVS(K) = MAX(ZXMIN1,RADS(K)*(ORA1(K)*SCAFA(K)**  &
-                               2.+2.*ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*&
-                               SCAFB(K)**2.)/(9.*SCAKW(K)))
-                  ZZHVS(K) = MAX(ZXMIN1,RADS(K)*(ORA3(K)*(SCAFA(K)**&
-                                2.+SCAFB(K)**2.)+ORA1(K)*SCAFA(K)*     &
-                                SCAFB(K)+ORA2(K)*SCAFB(K)*SCAFA(K))/(  &
-                                9.*SCAKW(K)))
+                  RADS(K) = NS3D(K)*EXP(GAMLN(AFAS(K)+7.)-             &
+                            GAMLN(AFAS(K)+1.)-6.*LOG(LAMS(K)))
+                  ZZHS(K) = MAX(ZXMIN,RADS(K)*(ORA1(K)*SCAFB(K)**2.+   &
+                            2.*ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*      &
+                            SCAFA(K)**2.)/(9.*SCAKW(K)))
+                  ZZHS(K) = ZZHS(K)*(MAX(0.,-0.1*AFAS(K)+0.5)*SMLF(K)+ &
+                            1.)
+                  ZZVS(K) = MAX(ZXMIN,RADS(K)*(ORA1(K)*SCAFA(K)**2.+   &
+                            2.*ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*      &
+                            SCAFB(K)**2.)/(9.*SCAKW(K)))
                   DBZS(K) = 10.*LOG10(1.E18*ZZHS(K))
-                  KDPS(K) = 3.E4*PI/DBZWL*NS3D(K)*EXP(GAMLN(AFAS(K)+&
-                               4.)-GAMLN(AFAS(K)+1.)-3.*LOG(LAMS(K)))* &
-                               ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
-                  LDRS(K) = 10.*LOG10(MAX(ZXMIN2,RADS(K)*((SCAFB(K)-&
-                               SCAFA(K)))**2./(9.*SCAKW(K)*ZZHS(K))))
-                  LDR3(K) = MAX(ZXMIN2,MIN(1.,RADS(K)*((SCAFB(K)-   &
-                               SCAFA(K)))**2./(9.*SCAKW(K)*ZZHS(K))))
+                  KDPS(K) = 3.E4*PI/DBZWL*NS3D(K)*EXP(GAMLN(AFAS(K)+   &
+                            4.)-GAMLN(AFAS(K)+1.)-3.*LOG(LAMS(K)))*    &
+                            ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
                   IF (ZZVS(K).GT.ZZHS(K)) ZZVS(K) = 0.9999*ZZHS(K)
                   ZDRS(K) = 10.*LOG10(ZZHS(K)/ZZVS(K))
-                  RHVS(K) = MIN(1.,ZZHVS(K)/EXP(LOG(ZZHS(K))/2.+    &
-                               LOG(ZZVS(K))/2.))
                ELSE
                   ORA0(K)  = 40.
                   ORAR(K)  = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
@@ -2612,38 +2596,25 @@
                              LAS2(K)**2.-0.070558679*LAS2(K)**3.-      &
                              26.070123*LLMS(K)
                   ZHROX(K) = 1.544E-5*EXP(1.95714566*LROS(K))
-                  ZZHS(K)  = NS3D(K)*10.**((FDBZS(K)-250.)/10.-18.)*&
-                                ZHROX(K)
+                  ZZHS(K)  = NS3D(K)*10.**((FDBZS(K)-250.)/10.-18.)*   &
+                             ZHROX(K)
                   DBZS(K)  = 10.*LOG10(1.E18*ZZHS(K))
-                  ZDROX(K) = 0.14542522*LROS(K)**3.-1.97576772*     &
-                                LROS(K)**2.+9.33469066*LROS(K)-        &
-                                14.95051206
-                  ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-        &
-                                0.10877652*LASP(K)**2.+0.24567081*     &
-                                LASP(K)+3.06007047)
+                  ZDROX(K) = 0.14542522*LROS(K)**3.-1.97576772*        &
+                             LROS(K)**2.+9.33469066*LROS(K)-14.95051206
+                  ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-0.10877652*&
+                             LASP(K)**2.+0.24567081*LASP(K)+3.06007047)
                   FZDRS(K) = 0.384*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
                   ZZVS(K)  = 10.**(DBZS(K)/10.-18.-FZDRS(K)/10.)
-                  ZZHVS(K) = 0.9975*10.**(DBZS(K)/10.-18.-FZDRS(K)/ &
-                                20.)
-                  FKDPS(K) = EXP(44.30884+2.9903578*LAS2(K)-        &
-                                0.25943237/LAS2(K)-3.0036608*LLMS(K))/ &
-                                1.E15
+                  ZZHVS(K) = 0.9975*10.**(DBZS(K)/10.-18.-FZDRS(K)/20.)
+                  FKDPS(K) = EXP(44.30884+2.9903578*LAS2(K)-0.25943237/&
+                             LAS2(K)-3.0036608*LLMS(K))/1.E15
                   KDROX(K) = 1.974E-5*EXP(1.90820312*LROS(K))
-                  KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-        &
-                                0.10043861*LASP(K)**2.+0.22095032*     &
-                                LASP(K)+3.06677159)
-                  KDPS(K)  = NS3D(K)*FKDPS(K)*KDROX(K)*KDASP(K)*    &
-                                DBZWL/0.11*ORAR(K)/0.37728
-                  LDROX(K) = 2.523E-5*EXP(1.85938203*LROS(K))
-                  LDASP(K) = MAX(0.,0.21569664*LASP(K)**3.-         &
-                                2.22788473*LASP(K)**2.+4.36738614*     &
-                                LASP(K)+7.24157329)
-                  LDR3(K)  = MAX(ZXMIN2,1.31E-2*LDROX(K)*LDASP(K))
+                  KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-0.10043861*&
+                             LASP(K)**2.+0.22095032*LASP(K)+3.06677159)
+                  KDPS(K)  = NS3D(K)*FKDPS(K)*KDROX(K)*KDASP(K)*0.11/  &
+                             DBZWL*ORAR(K)/0.37728
                   IF (ZZVS(K).GT.ZZHS(K)) ZZVS(K) = 0.9999*ZZHS(K)
                   ZDRS(K) = 10.*LOG10(ZZHS(K)/ZZVS(K))
-                  RHVS(K) = MIN(1.,ZZHVS(K)/EXP(LOG(ZZHS(K))/2.+    &
-                               LOG(ZZVS(K))/2.))
-                  LDRS(K) = 10.*LOG10(MAX(ZXMIN2,MIN(1.,LDR3(K))))
                ENDIF
             ENDIF        
          ELSE
@@ -2653,13 +2624,35 @@
             CALL SOLVE_AFAG(TK3D(K),RHO(K),QG3D(K),QC3D(K),QR3D(K),    &
                  NG3D(K),LAMG(K),AFAG(K),MVDG(K),RHOG(K),GASPR(K),     &
                  AMG(K),AVG(K),BVG(K))
-            IF (QG3D(K).GE.QSMAL1) THEN
+            IF (QG3D(K).GE.QLIMIT) THEN
                IF (GMLF(K).GE.MLIMIT) THEN
+
+                  G3M3D(K) = QG3D(K)*V2M3/RHOG(K)
+                  MVRG(K) = MIN(DGMAX/2.,MAX(DGMIN/2.,(QG3D(K)/NG3D(K)/&
+                            RHOG(K)/C4PI3)**THRD))
+                  AFAG(K) = MIN(AFAMAX,MAX(AFAMIN,EXP(-18.420681-0.5*  &
+                            LOG(NG3D(K))-2.94*LOG(MVRG(K)))))
+                  LAMG(K) = (EXP(GAMLN(AFAG(K)+4.)-GAMLN(AFAG(K)+1.))* &
+                            NG3D(K)/G3M3D(K))**THRD
+                  LAMGMIN(K) = (EXP(GAMLN(AFAG(K)+4.)-GAMLN(AFAG(K)+   &
+                               1.)))**THRD/DGMAX
+                  LAMGMAX(K) = (EXP(GAMLN(AFAG(K)+4.)-GAMLN(AFAG(K)+   &
+                               1.)))**THRD/DGMIN
+                  IF (LAMG(K).LT.LAMGMIN(K)) THEN
+                     LAMG(K) = LAMGMIN(K)
+                     NG3D(K) = G3M3D(K)*EXP(GAMLN(AFAG(K)+1.)-         &
+                               GAMLN(AFAG(K)+4.)+3.*LOG(LAMG(K)))
+                  ELSEIF (LAMG(K).GT.LAMGMAX(K)) THEN
+                     LAMG(K) = LAMGMAX(K)
+                     NG3D(K) = G3M3D(K)*EXP(GAMLN(AFAG(K)+1.)-         &
+                               GAMLN(AFAG(K)+4.)+3.*LOG(LAMG(K)))
+                  ENDIF
+
                   GMLV(K) = (RHOG(K)/(RHOW/GMLF(K)-RHOW+RHOG(K)))**MLRA
                   DGMM(K)  = MVDG(K)*1.E3
-                  GASPR(K) = GMLF(K)*(0.9951+2.51E-2*DGMM(K)-3.644E-2* &
-                             DGMM(K)**2.+5.303E-3*DGMM(K)**3.-2.492E-4*&
-                             DGMM(K)**4.)+(1.-GMLF(K))*GASPR(K)
+                  GASPR(K) = GMLF(K)*MAX(0.4,0.9951+2.51E-2*DGMM(K)-   &
+                             3.644E-2*DGMM(K)**2.+5.303E-3*DGMM(K)**3.-&
+                             2.492E-4*DGMM(K)**4.)+(1.-GMLF(K))*GASPR(K)
                   RHOG(K) = MIN(900.,MAX(100.,GMLF(K)*RHOW+(1.-        &
                             GMLF(K))*RHOG(K)))
                   ORA0(K) = 10.*GMLF(K)+(1.-GMLF(K))*40.
@@ -2670,54 +2663,35 @@
                   IF (GRAP_SHAPE.EQ.0) THEN
                      SCALA(K) = THRD
                   ELSEIF (GRAP_SHAPE.EQ.1.OR.GRAP_SHAPE.EQ.2) THEN
-                     IF (GASPR(K).GT.1.01) THEN
-                        SCA0(K)  = SQRT(1.-GASPR(K)**(-2.))
-                        SCALA(K) = (1.-SCA0(K)**2.)/SCA0(K)**2.*(   &
-                                   LOG((1.+SCA0(K))/(1.-SCA0(K)))/  &
-                                   2./SCA0(K)-1.)
-                     ELSEIF (GASPR(K).LT.0.99) THEN
-                        SCA0(K)  = MAX(1.E-6,SQRT(GASPR(K)**(-2.)-  &
-                                   1.))
-                        SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(   &
-                                   1.-ATAN(SCA0(K))/SCA0(K))
-                     ELSE
-                        SCALA(K) = THRD
-                     ENDIF
+                     SCA0(K)  = MAX(1.E-6,SQRT(GASPR(K)**(-2.)-1.))
+                     SCALA(K) = (1.+SCA0(K)**2.)/SCA0(K)**2.*(1.-      &
+                                ATAN(SCA0(K))/SCA0(K))
                   ENDIF
                   SCALB(K) = (1.-SCALA(K))/2.
-                  SCAW1(K) = MIXA+MIXB/GMLV(K)+MIXC*RHOG(K)+MIXD/   &
-                                GMLV(K)**2.+MIXE*RHOG(K)**2.+MIXF*     &
-                                RHOG(K)/GMLV(K)
+                  SCAW1(K) = MIXA+MIXB/GMLV(K)+MIXC*RHOG(K)+MIXD/      &
+                             GMLV(K)**2.+MIXE*RHOG(K)**2.+MIXF*RHOG(K)/&
+                             GMLV(K)
                   SCAFA(K) = 1./(SCALA(K)+SCAW1(K))
                   SCAFB(K) = 1./(SCALB(K)+SCAW1(K))
-                  RADG(K) = NG3D(K)*EXP(GAMLN(AFAG(K)+7.)-GAMLN(       &
-                            AFAG(K)+1.)-6.*LOG(LAMG(K)))
-                  ZZHG(K) = MAX(ZXMIN1,RADG(K)*(ORA1(K)*SCAFB(K)**  &
-                               2.+2.*ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*&
-                               SCAFA(K)**2.)/(9.*SCAKW(K)))
-                  ZZVG(K) = MAX(ZXMIN1,RADG(K)*(ORA1(K)*SCAFA(K)**  &
-                               2.+2.*ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*&
-                               SCAFB(K)**2.)/(9.*SCAKW(K)))
-                  ZZHVG(K) = MAX(ZXMIN1,RADG(K)*(ORA3(K)*(SCAFA(K)**&
-                                2.+SCAFB(K)**2.)+ORA1(K)*SCAFA(K)*     &
-                                SCAFB(K)+ORA2(K)*SCAFB(K)*SCAFA(K))/(  &
-                                9.*SCAKW(K)))
+                  RADG(K) = NG3D(K)*EXP(GAMLN(AFAG(K)+7.)-             &
+                            GAMLN(AFAG(K)+1.)-6.*LOG(LAMG(K)))
+                  ZZHG(K) = MAX(ZXMIN,RADG(K)*(ORA1(K)*SCAFB(K)**2.+   &
+                            2.*ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*      &
+                            SCAFA(K)**2.)/(9.*SCAKW(K)))
+                  ZZHG(K) = ZZHG(K)*(MAX(0.,-0.1*AFAG(K)+0.5)*GMLF(K)+ &
+                            1.)
+                  ZZVG(K) = MAX(ZXMIN,RADG(K)*(ORA1(K)*SCAFA(K)**2.+   &
+                            2.*ORA3(K)*SCAFA(K)*SCAFB(K)+ORA2(K)*      &
+                            SCAFB(K)**2.)/(9.*SCAKW(K)))
                   DBZG(K) = 10.*LOG10(1.E18*ZZHG(K))
                   IF (ZZVG(K).LE.ZZHG(K)) THEN
                      ZDRG(K) = 10.*LOG10(ZZHG(K)/ZZVG(K))
                   ELSE
                      ZDRG(K) = 10.*LOG10(ZZVG(K)/ZZHG(K))
                   ENDIF
-                  KDPG(K) = 3.E4*PI/DBZWL*NG3D(K)*EXP(GAMLN(AFAG(K)+&
-                               4.)-GAMLN(AFAG(K)+1.)-3.*LOG(LAMG(K)))* &
-                               ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
-                  LDRG(K) = 10.*LOG10(MIN(1.,MAX(ZXMIN2,RADG(K)*((  &
-                               SCAFB(K)-SCAFA(K)))**2./(9.*SCAKW(K)*   &
-                               ZZHG(K)))))
-                  LDR4(K) = MAX(ZXMIN2,MIN(1.,RADG(K)*((SCAFB(K)-   &
-                               SCAFA(K)))**2./(9.*SCAKW(K)*ZZHG(K))))
-                  RHVG(K) = MIN(1.,ZZHVG(K)/EXP(LOG(ZZHG(K))/2.+    &
-                               LOG(ZZVG(K))/2.))
+                  KDPG(K) = 3.E4*PI/DBZWL*NG3D(K)*EXP(GAMLN(AFAG(K)+   &
+                            4.)-GAMLN(AFAG(K)+1.)-3.*LOG(LAMG(K)))*    &
+                            ABS(SCAFA(K)-SCAFB(K))*ORAR(K)
                ELSE
                   ORA0(K) = 40.
                   ORAR(K) = EXP(-2.*(ORA0(K)*PI/1.8E2)**2.)
@@ -2730,34 +2704,28 @@
                      FDBZG(K) = 428.62235+18.226687*LAG2(K)+1.299724*  &
                                 LAG2(K)**2.-0.070558679*LAG2(K)**3.-   &
                                 26.070123*LLMG(K)
-                     ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-  &
-                                   18.)*ZHROX(K)
+                     ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-18.)*&
+                                ZHROX(K)
                      DBZG(K)  = 10.*LOG10(1.E18*ZZHG(K))
-                     ZDROX(K) = 0.14542522*LROG(K)**3.-1.97576772*  &
-                                   LROG(K)**2.+9.33469066*LROG(K)-     &
-                                   14.95051206
-                     ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-     &
-                                   0.10877652*LASP(K)**2.+0.24567081*  &
-                                   LASP(K)+3.06007047)
-                     FZDRG(K) = 0.384*ZDROX(K)*ZDASP(K)*ORAR(K)/    &
-                                   0.37728
+                     ZDROX(K) = 0.14542522*LROG(K)**3.-1.97576772*     &
+                                LROG(K)**2.+9.33469066*LROG(K)-        &
+                                14.95051206
+                     ZDASP(K) = MAX(0.,-8.85535E-3*LASP(K)**3.-        &
+                                0.10877652*LASP(K)**2.+0.24567081*     &
+                                LASP(K)+3.06007047)
+                     FZDRG(K) = 0.384*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
                      ZZVG(K)  = 10.**(DBZG(K)/10.-18.-FZDRG(K)/10.)
-                     ZZHVG(K) = 0.9975*10.**(DBZG(K)/10.-18.-       &
-                                   FZDRG(K)/20.)
-                     FKDPG(K) = EXP(44.30884+2.9903578*LAG2(K)-     &
-                                   0.25943237/LAG2(K)-3.0036608*       &
-                                   LLMG(K))/1.E15
+                     ZZHVG(K) = 0.9975*10.**(DBZG(K)/10.-18.-FZDRG(K)/ &
+                                20.)
+                     FKDPG(K) = EXP(44.30884+2.9903578*LAG2(K)-        &
+                                0.25943237/LAG2(K)-3.0036608*LLMG(K))/ &
+                                1.E15
                      KDROX(K) = 1.974E-5*EXP(1.90820312*LROG(K))
-                     KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-     &
-                                   0.10043861*LASP(K)**2.+0.22095032*  &
-                                   LASP(K)+3.06677159)
-                     KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*  &
-                                  DBZWL/0.11*ORAR(K)/0.37728
-                     LDROX(K) = 2.523E-5*EXP(1.85938203*LROG(K))
-                     LDASP(K) = MAX(0.,0.21569664*LASP(K)**3.-      &
-                                   2.22788473*LASP(K)**2.+4.36738614*  &
-                                   LASP(K)+7.24157329)
-                     LDR4(K) = MAX(ZXMIN2,1.31E-2*LDROX(K)*LDASP(K))
+                     KDASP(K) = MAX(0.,-0.00958782*LASP(K)**3.-        &
+                                0.10043861*LASP(K)**2.+0.22095032*     &
+                                LASP(K)+3.06677159)
+                     KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*0.11/&
+                               DBZWL*ORAR(K)/0.37728
                      IF (ZZVG(K).GT.ZZHG(K)) ZZVG(K) = 0.9999*ZZHG(K)
                      ZDRG(K) = 10.*LOG10(ZZHG(K)/ZZVG(K))
                   ELSE
@@ -2766,57 +2734,43 @@
                                 LAG2(K)**2.-0.070558679*LAG2(K)**3.-   &
                                 26.070123*LLMG(K)
                      ZHROX(K) = 1.63247E-5*EXP(1.9461111336*LROG(K))
-                     ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-  &
-                                   18.)*ZHROX(K)
+                     ZZHG(K)  = NG3D(K)*10.**((FDBZG(K)-250.)/10.-18.)*&
+                                ZHROX(K)
                      DBZG(K)  = 10.*LOG10(1.E18*ZZHG(K))
-                     ZDROX(K) = 0.21196364*LROG(K)**3.-2.99793531*  &
-                                   LROG(K)**2.+14.49837419*LROG(K)-    &
-                                   23.49571954
-                     ZDASP(K) = MAX(0.,0.04602081*LASP(K)**3.-      &
-                                   1.22524043*LASP(K)**2.+10.864809*   &
-                                   LASP(K)-30.01372544)
-                     FZDRG(K) = 0.328*ZDROX(K)*ZDASP(K)*ORAR(K)/    &
-                                   0.37728
+                     ZDROX(K) = 0.21196364*LROG(K)**3.-2.99793531*     &
+                                LROG(K)**2.+14.49837419*LROG(K)-       &
+                                23.49571954
+                     ZDASP(K) = MAX(0.,0.04602081*LASP(K)**3.-         &
+                                1.22524043*LASP(K)**2.+10.864809*      &
+                                LASP(K)-30.01372544)
+                     FZDRG(K) = 0.328*ZDROX(K)*ZDASP(K)*ORAR(K)/0.37728
                      ZZVG(K)  = 10.**(DBZG(K)/10.-18.+FZDRG(K)/10.)
-                     ZZHVG(K) = 0.9982*10.**(DBZG(K)/10.-18.-       &
-                                   FZDRG(K)/20.)
-                     FKDPG(K) = EXP(44.18702+2.9903578*LAG2(K)-     &
-                                   0.25943237/LAG2(K)-3.0036608*       &
-                                   LLMG(K))/1.E15
+                     ZZHVG(K) = 0.9982*10.**(DBZG(K)/10.-18.-FZDRG(K)/ &
+                                20.)
+                     FKDPG(K) = EXP(44.18702+2.9903578*LAG2(K)-        &
+                                0.25943237/LAG2(K)-3.0036608*LLMG(K))/ &
+                                1.E15
                      KDROX(K) = 1.424E-5*EXP(1.97240205*LROG(K))
-                     KDASP(K) = MAX(0.,0.043095*LASP(K)**3.-        &
-                                   1.16143866*LASP(K)**2.+10.43169617* &
-                                   LASP(K)-29.07639304)
-                     KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*  &
-                                  DBZWL/0.11*ORAR(K)/0.37728
-                     LDROX(K) = 1.242E-5*EXP(1.99881383*LROG(K))
-                     LDASP(K) = MAX(0.,-0.07152882*LDASP(K)**3.+    &
-                                   1.33485112*LDASP(K)**2.-6.48833025* &
-                                   LDASP(K)+7.48032545)
-                     LDR4(K) = MAX(ZXMIN2,1.04E-2*LDROX(K)*LDASP(K))
+                     KDASP(K) = MAX(0.,0.043095*LASP(K)**3.-1.16143866*&
+                                LASP(K)**2.+10.43169617*LASP(K)-       &
+                                29.07639304)
+                     KDPG(K) = NG3D(K)*FKDPG(K)*KDROX(K)*KDASP(K)*0.11/&
+                               DBZWL*ORAR(K)/0.37728
                      IF (ZZVG(K).LT.ZZHG(K)) ZZVG(K) = 1.0001*ZZHG(K)
                      ZDRG(K) = 10.*LOG10(ZZVG(K)/ZZHG(K))
                   ENDIF
-                  RHVG(K) = MIN(1.,ZZHVG(K)/EXP(LOG(ZZHG(K))/2.+    &
-                               LOG(ZZVG(K))/2.))
-                  LDRG(K) = 10.*LOG10(MIN(1.,LDR4(K)))
                ENDIF
             ENDIF
          ELSE
             QG3D(K) = 0.; NG3D(K) = 0.
          ENDIF
-         IF ((ZZHR(K)+ZZHI(K)+ZZHS(K)+ZZHG(K)).GE.ZXMIN1) THEN
-            DBZM(K) = MAX(-60.,10.*LOG10(1.E18*(ZZHR(K)+ZZHI(K)+       &
-                      ZZHS(K)+ZZHG(K))))
+         IF ((ZZHR(K)+ZZHI(K)+ZZHS(K)+ZZHG(K)).GE.ZXMIN) THEN
+            DBZM(K) = MAX(0.,10.*LOG10(1.E18*(ZZHR(K)+ZZHI(K)+ZZHS(K)+ &
+                      ZZHG(K))))
             ZDR(K)  = MAX(0.,10.*LOG10((ZZHR(K)+MAX(ZZHI(K),ZZVI(K))+  &
                       ZZHS(K)+MAX(ZZHG(K),ZZVG(K)))/(ZZVR(K)+MIN(      &
                       ZZVI(K),ZZHI(K))+ZZVS(K)+MIN(ZZVG(K),ZZHG(K)))))
             KDP(K)  = MAX(0.,KDPR(K)+KDPI(K)+KDPS(K)+KDPG(K))
-            LDR(K)  = MAX(-99.,MIN(0.,10.*LOG10(LDR1(K)+LDR2(K)+       &
-                      LDR3(K)+LDR4(K))))
-            RHV(K)  = MIN(1.,ABS(ZZHVR(K)+ZZHVI(K)+ZZHVS(K)+ZZHVG(K))/ &
-                      EXP(LOG(ZZHR(K)+ZZHI(K)+ZZHS(K)+ZZHG(K))/2.+     &
-                      LOG(ZZVR(K)+ZZVI(K)+ZZVS(K)+ZZVG(K))/2.))
          ENDIF
       ENDDO 
 
@@ -2886,7 +2840,7 @@
 !======================================================================
       SUBROUTINE SEDI_FALL(TK1D,P1D,QV1D,QC1D,QR1D,QI1D,QS1D,QG1D,NC1D,&
                  NR1D,NI1D,NS1D,NG1D,VTQC,VTQR,VTQI,VTQS,VTQG,VTNC,    &
-                 VTNR,VTNI,VTNS,VTNG,RHO)
+                 VTNR,VTNI,VTNS,VTNG,RHO,SMLF,GMLF)
 !======================================================================
       IMPLICIT NONE
       REAL :: TK1D,P1D,QV1D,QC1D,QR1D,QI1D,QS1D,QG1D,NC1D,NR1D,NI1D,   &
@@ -2898,7 +2852,7 @@
               MVDI,MVDS,MVDG,BEST,RASPR,SASPR,GASPR,LLMC,LAC2,LAC5,    &
               LLMR,LAR2,LAR5,LLMI,LLMI2,LLMI3,LAI2,LAI5,RHOX,VISHP,    &
               LLMS,LLMS2,LLMS3,LAS2,LAS5,LLMG,LLMG2,LLMG3,LAG2,LAG5,   &
-              AFAZ
+              AFAZ,SMLF,GMLF,DSMM,DGMM
 
       QRHO  = SQRT(RHO)
       RHOAJ = (RHOSU/RHO)**0.54
@@ -2925,8 +2879,8 @@
          VTNC = MIN(VTNC,VTCMAX)
       ENDIF
       IF (QR1D.GE.QSMALL) THEN
-         CALL SOLVE_AFAR(TK1D,RHO,QR1D,NR1D,LAMR,MVDR,AFAR,RASPR,AVR,  &
-              BVR)
+         CALL SOLVE_AFAR(TK1D,RHO,QC1D,QR1D,NR1D,LAMR,MVDR,AFAR,RASPR, &
+              AVR,BVR)
          IF (LIQ_VTR.EQ.0.OR.LIQ_VTR.EQ.2) THEN
             FSQR = EXP(GAMLN(BVR+BMW+AFAR+1.)-GAMLN(BMW+AFAR+1.)-BVR*  &
                    LOG(LAMR))
@@ -2951,8 +2905,8 @@
          VTNR = MIN(VTNR,VTRMAX)
       ENDIF
       IF (QI1D.GE.QSMALL) THEN
-         CALL SOLVE_AFAI(TK1D,P1D,RHO,QV1D,QI1D,NI1D,ADAGR,ZETA,LAMI,  &
-              AFAI,MVDI,RHOI,AMI,BMI,AVI,BVI)
+         CALL SOLVE_AFAI(TK1D,P1D,RHO,QV1D,QC1D,QI1D,NI1D,ADAGR,ZETA,  &
+              LAMI,AFAI,MVDI,RHOI,AMI,BMI,AVI,BVI)
          IF (ICE_VTI.EQ.0.OR.ICE_VTI.EQ.2) THEN
             FSQI = EXP(GAMLN(BVI+BMI+AFAI+1.)-GAMLN(BMI+AFAI+1.)-BVI*  &
                    LOG(LAMI))
@@ -2998,6 +2952,12 @@
       IF (QS1D.GE.QSMALL) THEN
          CALL SOLVE_AFAS(TK1D,RHO,QS1D,QC1D,NS1D,AFAS,LAMS,MVDS,RHOS,  &
               SASPR,AMS,AVS,BVS)
+         IF (SMLF.GE.MLIMIT) THEN
+            DSMM  = MVDS*1.E3
+            SASPR = SMLF*MAX(0.4,0.9951+2.51E-2*DSMM-3.644E-2*DSMM**2.+&
+                    5.303E-3*DSMM**3.-2.492E-4*DSMM**4.)+(1.-SMLF)*SASPR
+            RHOS = MIN(RHOIMAX,MAX(RHOIMIN,SMLF*RHOW+(1.-SMLF)*RHOS))
+         ENDIF
          IF (ICE_VTS.EQ.0.OR.ICE_VTS.EQ.2) THEN
             FSQS = EXP(GAMLN(BVS+BMS+AFAS+1.)-GAMLN(BMS+AFAS+1.)-BVS*  &
                    LOG(LAMS))
@@ -3027,6 +2987,12 @@
       IF (QG1D.GE.QSMALL) THEN
          CALL SOLVE_AFAG(TK1D,RHO,QG1D,QC1D,QR1D,NG1D,LAMG,AFAG,MVDG,  &
               RHOG,GASPR,AMG,AVG,BVG)
+         IF (GMLF.GE.MLIMIT) THEN
+            DGMM  = MVDG*1.E3
+            GASPR = GMLF*MAX(0.4,0.9951+2.51E-2*DGMM-3.644E-2*DGMM**2.+&
+                    5.303E-3*DGMM**3.-2.492E-4*DGMM**4.)+(1.-GMLF)*GASPR
+            RHOG = MIN(RHOIMAX,MAX(RHOIMIN,GMLF*RHOW+(1.-GMLF)*RHOG))
+         ENDIF
          IF (ICE_VTG.EQ.0.OR.ICE_VTG.EQ.2) THEN
             FSQG = EXP(GAMLN(BVG+BMG+AFAG+1.)-GAMLN(BMG+AFAG+1.)-BVG*  &
                    LOG(LAMG))
@@ -3144,7 +3110,7 @@
               AVC,BVC,AVR,BVR,AVI,BVI,AVS,BVS,AVG,BVG,CAPS,SASR1,SASR2,&
               SASR3,SASR4,SASP1,SASP2,SASP3,CAPG,GASR1,GASR2,GASR3,    &
               GASR4,MVDM,RASPR,SMLV,GMLV,MVG0,DSLL,ISEPS,ISEPL,LIM1,   &
-              LIM2,LIM22,LIM23,LIMV,DSLSV
+              LIM2,LIM22,LIM23,LIMV,DSLSV,DTHL,DTHI,VENT
       REAL :: QHOci,QHOrg,QNMci,QNMrg,QNCci,QFZci,QFZrg,QMLir,QMLic,   &
               QMLsr,QMLgr,QIMii,QIMcsi,QIMrsi,QIMcgi,QIMrgi,QBKrc,     &
               QINig,QINsg,QCNcr,QCNis,QRMci,QRMcs,QRMcg,QRMri,QRMrs,   &
@@ -3156,7 +3122,7 @@
               NCNcr,NiCNis,NRMci,NRMcs,NRMcg,NRMri,NRMrs,NRMrg,NCLcc,  &
               NCLcr,NCLrr,NCLir,NCLis,NCLsr,NCLss,NCLgr,NCLirg,NCLsrg, &
               NCLgrg,NsCNis,NACcv,NACrc,NSBiv,NSBsv,NSBgv,QCLig,QCLsg, &
-              NCLig,NCLsg
+              NCLig,NCLsg,NEVcv,NEVrv,NgINig,NgINsg,NrMLir,NrMLsr,NrMLgr
       REAL :: QVSOUR,QVSINK,QCSOUR,QCSINK,QRSOUR,QRSINK,QISOUR,QISINK, &
               QSSOUR,QSSINK,QGSOUR,QGSINK,NCSOUR,NCSINK,NRSOUR,NRSINK, &
               NISOUR,NISINK,NSSOUR,NSSINK,NGSOUR,NGSINK
@@ -3234,6 +3200,8 @@
       NCLss  = 0.; NCLgr  = 0.; NCLirg = 0.; NCLsrg = 0.; NCLgrg = 0.
       NsCNis = 0.; NACcv  = 0.; NACrc  = 0.; NSBiv  = 0.; NSBsv  = 0.
       NSBgv  = 0.; QCLig  = 0.; QCLsg  = 0.; NCLig  = 0.; NCLsg  = 0.
+      NEVcv  = 0.; NEVrv  = 0.; NgINig = 0.; NgINsg = 0.; NrMLir = 0.
+      NrMLsr = 0.; NrMLgr = 0.; DTHL = 0.;   DTHI = 0.; VENT = 0.
       ECI0 = 0.; ECI3 = 0.; ECS0 = 0.; ECS3 = 0.; ECG0 = 0.; ECG3 = 0.
       ERI0 = 0.; ERI3 = 0.; ERS0 = 0.; ERS3 = 0.; ERG0 = 0.; ERG3 = 0.
       ERI0 = 0.; ERI3 = 0.; EIR0 = 0.; EIR3 = 0.; ESR0 = 0.; ESR3 = 0.
@@ -3326,8 +3294,8 @@
          ENDIF
       ENDIF
       IF (QR1D.GE.QSMALL) THEN
-         CALL SOLVE_AFAR(TK1D,RHO,QR1D,NR1D,LAMR,MVDR,AFAR,RASPR,AVR,  &
-              BVR)
+         CALL SOLVE_AFAR(TK1D,RHO,QC1D,QR1D,NR1D,LAMR,MVDR,AFAR,RASPR, &
+              AVR,BVR)
          GR2   = EXP(GAMLN(AFAR+2.)-GAMLN(AFAR+1.)-LOG(LAMR))
          GR3   = EXP(GAMLN(AFAR+3.)-GAMLN(AFAR+1.)-2.*LOG(LAMR))
          GR4   = EXP(GAMLN(AFAR+4.)-GAMLN(AFAR+1.)-3.*LOG(LAMR))
@@ -3375,8 +3343,8 @@
          ENDIF
       ENDIF
       IF (QI1D.GE.QSMALL) THEN
-         CALL SOLVE_AFAI(TK1D,P1D,RHO,QV1D,QI1D,NI1D,ADAGR,ZETA,LAMI,  &
-              AFAI,MVDI,RHOI,AMI,BMI,AVI,BVI)
+         CALL SOLVE_AFAI(TK1D,P1D,RHO,QV1D,QC1D,QI1D,NI1D,ADAGR,ZETA,  &
+              LAMI,AFAI,MVDI,RHOI,AMI,BMI,AVI,BVI)
          IPG    = 3./(ADAGR+2.)
          IPH    = 3.*ADAGR/(ADAGR+2.)
          IPF    = 3.*(ADAGR+1.)/(ADAGR+2.)
@@ -3692,25 +3660,6 @@
       ENDIF
 !----------------- SUPERSATURATION PREDICTION ------------------------
       IF (SSAT.EQ.2) THEN
-!         IF (TK1D.GE.TK0C.AND.ABS(SSRW).GT.RSMALL) THEN
-         IF (TK1D.GE.TK0C.AND.SSRW.LT.(-1.*RSMALL)) THEN
-            IF (QC1D.GE.QSMALL) THEN
-               TAUC = 1.
-            ENDIF
-!            IF (QR1D.GE.QSMALL) THEN
-!               TAUR = 1.
-!            ENDIF
-         ELSEIF (TK1D.LT.TK0C.AND.SSRI.LT.(-1.*RSMALL)) THEN
-            IF (QI1D.GE.QSMALL) THEN
-               TAUI = 1.
-            ENDIF
-!            IF (QS1D.GE.QSMALL) THEN
-!               TAUS = 1.
-!            ENDIF
-!            IF (QG1D.GE.QSMALL) THEN
-!               TAUG = 1.
-!            ENDIF
-         ENDIF
          TAU = 1./(1./TAUC+1./TAUR+(1./TAUI+1./TAUS+1./TAUG)*(1.+      &
                DQSLDT*XXLS/CPM)/ABI1)
          IF (SATW.EQ.0) THEN
@@ -3722,14 +3671,6 @@
                    QVSW*G*W1D/(P1D-ESW)
          ENDIF
       ENDIF
-!      IF (TK1D.GE.TK0C) THEN
-!         TAU  = 1./(1./TAUC+1./TAUR)
-!         ATEM = 0.
-!      ELSE
-!      ENDIF
-!      TAU   = MIN(TAU,DT)
-!      ATEM  = (QVSI-QVSW)/TAUI*(1.+DQSLDT*XXLS/CPM)/ABI1+W1D*G*DQSLDT/ &
-!              CPM-QVSW*G*W1D/(P1D-ESW)
 !----------------- CHEN&LIU WARM CLOUD PROCESSES ----------------------
       IF (QC1D.GE.QSMALL) THEN
          NCLcc = EXP(AN3+BN3*LOG(NC1D)+CN3*LMVRC**3.)*GUC
@@ -3738,9 +3679,11 @@
          NCNcr = MIN(NCNcr,NC1D*iDT)
          QCNcr = MIN(QCNcr,QC1D*iDT)
       ENDIF
-      IF (QR1D.GE.QSMALL) THEN
-         NCLrr = MIN(EXP(AN6+BN6*LOG(NR1D)+CN6/MVRR)*GUR,NR1D*iDT)
+      IF (QR1D.GE.QSMALL) THEN        
+         NCLrr = EXP(AN6+BN6*LOG(NR1D)+CN6/MVRR)*GUR
+         NCLrr = MIN(NCLrr*MAX(1.,-2.*AFAR+3.),NR1D*iDT)
          NBKrr = NCLrr*EXP(AN7+(BN7+CN7*MVRR)*MVRR)
+!         NBKrr = NBKrr*MAX(1.,-4.*AFAR+9.)
          NBKrc = NCLrr*EXP(AN8+(BN8+CN8*MVRR)*MVRR)
          QBKrc = MIN(NBKrc**BQ8*EXP(AQ8+CQ8*LMVRR),QR1D*iDT)
          NBKrc = MIN(NBKrc,NR1D*iDT)
@@ -3842,9 +3785,9 @@
             QHOrg = QR1D*iDT
             NHOrg = NR1D*iDT
          ENDIF
-         IF (TK1D.LT.269.15.AND.QR1D.GE.QSMALL) THEN
-            QNMrg = QFZR1*BIMM*EXP(AIMM*(TK0C-TK1D)-1.)
-            NNMrg = NFZR1*BIMM*EXP(AIMM*(TK0C-TK1D)-1.)
+         IF (TK1D.LT.TK0C.AND.QR1D.GE.QSMALL) THEN
+            QNMrg = QFZR1*3.E2*BIMM*EXP(AIMM*(TK0C-TK1D)-1.)
+            NNMrg = NFZR1*3.E2*BIMM*EXP(AIMM*(TK0C-TK1D)-1.)
             QNMrg = MIN(QNMrg,QR1D*iDT)
             NNMrg = MIN(NNMrg,NR1D*iDT)
          ENDIF
@@ -3885,8 +3828,8 @@
          ENDIF
 !----------------- RIMING OF CLOUD DROPLETS ----------------------------
          IF (QI1D.GE.QSMALL.AND.QC1D.GE.QSMALL) THEN
-!            IF (EXYM.EQ.1.AND.VTQI.GT.VTQC) THEN
-            IF (EXYM.EQ.1.AND.VTQI.GT.VTQC.AND.MVDI.GE.1.E-4) THEN
+!            IF (EXYM.EQ.1.AND.VTQI.GT.VTQC.AND.VTQI.GE.0.1) THEN
+            IF (EXYM.EQ.1.AND.VTQI.GT.VTQC) THEN
                LLMI  = LOG(LAMI)
                LAI2  = LOG(AFAI+2.)
                LAI5  = LOG(AFAI+5.)
@@ -3952,14 +3895,16 @@
             IF (QRMci.GT.0.) THEN
                QINig  = MIN(2.*QRMci,QI1D*iDT)
                NINig  = MIN(QINig*NI1D/QI1D,NI1D*iDT)
+               NgINig = QINig*V2M3/RHOI*EXP(GAMLN(AFAI+1.)-            &
+                        GAMLN(AFAI+4.)+3.*LOG(LAMI))
             ENDIF
          ENDIF
          IF (QS1D.GE.QSMALL.AND.QC1D.GE.QSMALL) THEN
             IF (EXYM.EQ.0.AND.MVDS.GE.1.5E-4) THEN
                ECS0 = MIN(MVDC,3.E-5)*3.333E4*SQRT(MIN(MVDS,1.E-3)*1.E3)! Approximation based on Pruppacher&Klett(1997) Fig.14-11
                ECS3 = ECS0
-!            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC) THEN
-            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC.AND.MVDS.GE.1.5E-4) THEN
+            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC) THEN
+!            ELSEIF (EXYM.EQ.1.AND.VTQS.GT.VTQC.AND.VTQS.GE.0.1) THEN
                LLMS  = LOG(LAMS)
                LAS2  = LOG(AFAS+2.)
                LAS5  = LOG(AFAS+5.)
@@ -3983,6 +3928,8 @@
                QIMcsi = MIN(NIMcsi*MI0,QRMcs)
                QINsg  = MIN(2.*QRMcs,QS1D*iDT)
                NINsg  = MIN(QINsg*NS1D/QS1D,NS1D*iDT)
+               NgINsg = QINsg*V2M3/RHOS*EXP(GAMLN(AFAS+1.)-            &
+                        GAMLN(AFAS+4.)+3.*LOG(LAMS))
             ENDIF
          ENDIF
          IF (QG1D.GE.QSMALL.AND.QC1D.GE.QSMALL) THEN
@@ -4433,11 +4380,13 @@
          IF (QI1D.GE.QSMALL) THEN
             IF (MVDI.GT.DCR) THEN
                QMLir = -1.*QI1D*iDT
+               NMLir = MIN(QMLir*NI1D/QI1D,0.)
+               NrMLir = MIN(QMLir*V2M3/RHOI*EXP(GAMLN(AFAI+1.)-        &
+                        GAMLN(AFAI+4.)+3.*LOG(LAMI)),0.)
             ELSE
                QMLic = -1.*QI1D*iDT
+               NMLic = MIN(QMLic*NI1D/QI1D,0.)
             ENDIF
-            NMLir = MIN(QMLir*NI1D/QI1D,0.)
-            NMLic = MIN(QMLic*NI1D/QI1D,0.)
          ENDIF
          IF (QS1D.GE.QSMALL) THEN
             RMcsq = 0.
@@ -4478,9 +4427,9 @@
                WSAPR = 1.
             ELSEIF (AGG_SHAPE.EQ.1) THEN
                DSMM  = MVDS*1.E3
-               WSAPR = SMLV*(0.9951+2.51E-2*DSMM-3.644E-2*DSMM**2.+    &
-                       5.303E-3*DSMM**3.-2.492E-4*DSMM**4.)+(1.-SMLV)* &
-                       SASPR
+               WSAPR = SMLF*MAX(0.4,0.9951+2.51E-2*DSMM-3.644E-2*      &
+                       DSMM**2.+5.303E-3*DSMM**3.-2.492E-4*DSMM**4.)+( &
+                       1.-SMLF)*SASPR
             ENDIF
             IF (SMLF.GE.MLIMIT) THEN
                LAS2  = LOG(AFAS+2.)
@@ -4518,6 +4467,8 @@
                QMLsr = QMLsr-QEVsv
             ENDIF
             NMLsr = MIN((QMLsr+QEVsv)*NS1D/QS1D,0.)
+            NrMLsr = MIN((QMLsr+QEVsv)*V2M3/RHOWS*EXP(GAMLN(AFAS+1.)-  &
+                     GAMLN(AFAS+4.)+3.*LOG(LAMS)),0.)
          ENDIF
          IF (QG1D.GE.QSMALL) THEN
             RMcgq = 0.
@@ -4558,9 +4509,9 @@
                WGAPR = 1.
             ELSEIF (GRAP_SHAPE.EQ.1) THEN
                DGMM  = MVDG*1.E3
-               WGAPR = GMLV*(0.9951+2.51E-2*DGMM-3.644E-2*DGMM**2.+    &
-                       5.303E-3*DGMM**3.-2.492E-4*DGMM**4.)+(1.-GMLV)* &
-                       GASPR
+               WGAPR = GMLF*MAX(0.4,0.9951+2.51E-2*DGMM-3.644E-2*      &
+                       DGMM**2.+5.303E-3*DGMM**3.-2.492E-4*DGMM**4.)+( &
+                       1.-GMLF)*GASPR
             ENDIF
             IF (GMLF.GE.MLIMIT) THEN
                LAG2  = LOG(AFAG+2.)
@@ -4603,6 +4554,8 @@
                QMLgr = QMLgr-QEVgv
             ENDIF
             NMLgr = MIN((QMLgr+QEVgv)*NG1D/QG1D,0.)
+            NrMLgr = MIN(0.,(QMLgr+QEVgv)*V2M3/RHOWG*                  &
+                     EXP(GAMLN(AFAG+1.)-GAMLN(AFAG+4.)+3.*LOG(LAMG)))
          ENDIF
       ENDIF                                                             ! TEMPERATURE LOOPS
 !----------------- CONSERVATION OF HYDROMETEORS ------------------------
@@ -4625,15 +4578,37 @@
          QCLcr = QCLcr*RATIO; QCNcr = QCNcr*RATIO; QIMcsi = QIMcsi*RATIO
          QIMcgi = QIMcgi*RATIO; QACcv = QACcv*RATIO; QEVcv = QEVcv*RATIO
       ENDIF
+!      IF (SSAT.EQ.2) THEN
+      IF (QC1D.GE.QSMALL) THEN
+         IF (EVSB.EQ.0) THEN
+            NEVcv = 0.
+         ELSEIF (EVSB.EQ.1) THEN
+!            NEVcv = MIN(QEVcv*NC1D/QC1D*MIN(1.5,0.02*AFAC+1.),0.)
+!            NEVcv = MIN(QEVcv*NC1D/QC1D,0.)
+            NEVcv = MIN(0.,QEVcv*NC1D/QC1D*MAX(1.,AFC1+AFC2*LAC2+AFC3* &
+                    LLMC+AFC4*LAC2**2.+AFC5*LLMC**2.+AFC6*LAC2*LLMC))
+         ELSEIF (EVSB.EQ.2) THEN
+!            DTHL = MAX(DCMIN,SQRT(-8.*MIN(0.,(QV1D-QVSW)*DT/ABW1/RHOW)))
+            DTHL  = MAX(DCMIN,SQRT(-8.*MIN(0.,SSRW*DT/ABW/RHOW)))
+            RATIO = MIN(0.9,MAX(0.,ABS(GAMMP(AFAC+1.,DTHL*LAMC))))
+            NEVcv = -1.*NC1D*iDT*RATIO
+            NEVcv = MAX(V2M3*QEVcv/RHOW/DTHL**3.,NEVcv)
+!            RATIO = MIN(0.6,MAX(0.,ABS(GAMMP(AFAC+1.,DTHL*LAMC))))
+!            NEVcv = MIN(0.,QEVcv*NC1D/QC1D*MAX(0.,(1./(1.-RATIO)-1.)))
+         ENDIF
+         NEVcv = MAX(-1.*NC1D*iDT,NEVcv)
+      ENDIF
+!      ENDIF
       NCSOUR = NC1D+(NBKrc-NMLic-NACrc)*DT
       NCSINK = (NHOci+NNMci+NNCci+NRMci+NRMcs+NRMcg+NCLcr+NCLcc+NCNcr+ &
-               NIMcsi+NIMcgi-NACcv)*DT
+               NIMcsi+NIMcgi-NACcv-NEVcv)*DT
       IF (NCSINK.GT.NCSOUR.AND.NCSOUR.GE.NSMALL) THEN
          RATIO = MIN(1.,NCSOUR/(NCSINK+NSMALL))
          NHOci = NHOci*RATIO; NNMci = NNMci*RATIO; NNCci = NNCci*RATIO
          NRMci = NRMci*RATIO; NRMcs = NRMcs*RATIO; NRMcg = NRMcg*RATIO
          NIMcgi = NIMcgi*RATIO; NCLcr = NCLcr*RATIO; NCLcc = NCLcc*RATIO
          NIMcsi = NIMcsi*RATIO; NCNcr = NCNcr*RATIO; NACcv = NACcv*RATIO
+         NEVcv = NEVcv*RATIO
       ENDIF
       QRSOUR = QR1D+(QCLcr+QCNcr-QMLir-QMLsr-QMLgr+QVDvr)*DT
       QRSINK = (QHOrg+QNMrg+QRMri+QRMrs+QRMrg+QBKrc+QIMrsi+QIMrgi-     &
@@ -4645,15 +4620,38 @@
          QIMrsi = QIMrsi*RATIO; QIMrgi = QIMrgi*RATIO
          QACrc = QACrc*RATIO; QEVrv = QEVrv*RATIO
       ENDIF
-      NRSOUR = NR1D+(NCNcr+NBKrr-NMLir-NMLsr-NMLgr+NCLcr+NACrc)*DT
-      NRSINK = (NHOrg+NNMrg+NRMri+NRMrs+NRMrg+NCLrr+NBKrc+NIMrsi+      &
-               NIMrgi)*DT
+!      IF (SSAT.EQ.2) THEN
+      IF (QR1D.GE.QSMALL) THEN
+         IF (EVSB.EQ.0) THEN
+            NEVrv = 0.
+         ELSEIF (EVSB.EQ.1) THEN
+!            NEVrv = MIN(QEVrv*NR1D/QR1D*MIN(1.5,0.02*AFAR+1.),0.)
+!            NEVrv = MIN(QEVrv*NR1D/QR1D,0.)
+            NEVrv = MIN(0.,QEVrv*NR1D/QR1D*MAX(0.,AFC1+AFC2*LAR2+AFC3* &
+                    LLMR+AFC4*LAR2**2.+AFC5*LLMR**2.+AFC6*LAR2*LLMR))
+         ELSEIF (EVSB.EQ.2) THEN
+            VENT = MAX(1.,(AVRH*MVDR+BVRH*BRTMP*MVDR**(1.5+BVR/2.))/   &
+                   MVDR)
+!            DTHL = MAX(DCMIN,SQRT(-8.*MIN(0.,(QV1D-QVSW)*DT*VENT/ABW1/ &
+!                   RHOW)))
+            DTHL  = MAX(DCMIN,SQRT(-8.*MIN(0.,SSRW*DT*VENT/ABW/RHOW)))
+            RATIO = MIN(0.9,MAX(0.,ABS(GAMMP(AFAR+1.,DTHL*LAMR))))
+            NEVrv = -1.*NR1D*iDT*RATIO
+            NEVrv = MAX(V2M3*QEVrv/RHOW/DTHL**3.,NEVrv)
+!            NEVrv = MIN(0.,QEVrv*NR1D/QR1D*MAX(0.,(1./(1.-RATIO)-1.)))
+         ENDIF
+         NEVrv = MAX(-1.*NR1D*iDT,NEVrv)
+      ENDIF
+!      ENDIF
+      NRSOUR = NR1D+(NCNcr+NBKrr-NrMLir-NrMLsr-NrMLgr)*DT
+      NRSINK = (NHOrg+NNMrg+NRMri+NRMrs+NRMrg+NCLrr+NBKrc-NACrc+NIMrsi+&
+               NIMrgi-NEVrv)*DT
       IF (NRSINK.GT.NRSOUR.AND.NRSOUR.GE.NSMALL) THEN
          RATIO = MIN(1.,NRSOUR/(NRSINK+NSMALL))
          NHOrg = NHOrg*RATIO; NNMrg = NNMrg*RATIO; NRMri = NRMri*RATIO
          NRMrs = NRMrs*RATIO; NRMrg = NRMrg*RATIO; NCLrr = NCLrr*RATIO
-         NBKrc = NBKrc*RATIO; NIMrsi = NIMrsi*RATIO
-         NIMrgi = NIMrgi*RATIO
+         NBKrc = NBKrc*RATIO; NIMrsi = NIMrsi*RATIO; NEVrv = NEVrv*RATIO
+         NIMrgi = NIMrgi*RATIO; NACrc = NACrc*RATIO
       ENDIF
       QISOUR = QI1D+(QIMcsi+QIMcgi+QIMrsi+QIMrgi+QHOci+QNMci+QNCci+    &
                QRMci+QVDvi)*DT
@@ -4665,7 +4663,25 @@
          QSBiv = QSBiv*RATIO; QCLig = QCLig*RATIO
       ENDIF
       IF (QI1D.GE.QSMALL) THEN
-         NSBiv = MIN(QSBiv*NI1D/QI1D,0.)
+         IF (EVSB.EQ.0) THEN
+            NSBiv = 0.
+         ELSEIF (EVSB.EQ.1) THEN
+!            NSBiv = MIN(QSBiv*NI1D/QI1D*MIN(1.5,0.02*AFAI+1.),0.)
+!            NSBiv = MIN(QSBiv*NI1D/QI1D,0.)
+            NSBiv = MIN(0.,QSBiv*NI1D/QI1D*MAX(0.,AFC1+AFC2*LAI2+AFC3* &
+                    LLMI+AFC4*LAI2**2.+AFC5*LLMI**2.+AFC6*LAI2*LLMI))
+         ELSEIF (EVSB.EQ.2) THEN
+            VENT  = MAX(1.,(AVSG*MVDI+BVSG*BTMP*MVDI**(1.5+BVI))/MVDI)
+            DTHI  = MAX(DCMIN,SQRT(-8.*MIN(0.,SSRI*DT*VENT/ABI/RHOI)))
+            RATIO = MIN(0.9,MAX(0.,ABS(GAMMP(AFAI+1.,DTHI*LAMI))))
+            NSBiv = -1.*NI1D*iDT*RATIO
+            NSBiv = MAX(V2M3*QSBiv/RHOI/DTHI**3.,NSBiv)
+!            DTHI = MAX(DCMIN,SQRT(-8.*MIN(0.,(QV1D-QVSI)*DT*VENT/ABI1/ &
+!                   RHOI)))
+!            RATIO = MIN(0.6,MAX(0.,ABS(GAMMP(AFAI+1.,DTHI*LAMI))))
+!            NSBiv = MIN(0.,QSBiv*NI1D/QI1D*MAX(0.,(1./(1.-RATIO)-1.)))
+         ENDIF
+         NSBiv = MAX(-1.*NI1D*iDT,NSBiv)
       ENDIF
       NISOUR = NI1D+(NIMcsi+NIMcgi+NIMrsi+NIMrgi+NHOci+NNMci+NNCci)*DT
       NISINK = (-NMLir-NMLic+NCLir+NCLis+NCLig+NINig+NiCNis-NSBiv)*DT
@@ -4683,7 +4699,32 @@
          QSBsv = QSBsv*RATIO; QEVsv = QEVsv*RATIO; QCLsg = QCLsg*RATIO
       ENDIF
       IF (QS1D.GE.QSMALL) THEN
-         NSBsv = MIN(QSBsv*NS1D/QS1D,0.)
+         IF (EVSB.EQ.0) THEN
+            NSBsv = 0.
+         ELSEIF (EVSB.EQ.1) THEN
+!            NSBsv = MIN(QSBsv*NS1D/QS1D*MIN(1.5,0.02*AFAS+1.),0.)
+!            NSBsv = MIN(QSBsv*NS1D/QS1D,0.)
+            NSBsv = MIN(0.,QSBsv*NS1D/QS1D*MAX(0.,AFC1+AFC2*LAS2+AFC3* &
+                    LLMS+AFC4*LAS2**2.+AFC5*LLMS**2.+AFC6*LAS2*LLMS))
+         ELSEIF (EVSB.EQ.2) THEN
+            VENT = MAX(1.,(AVSG*MVDS+BVSG*BSTMP*MVDS**(1.5+BVS/2.))/   &
+                   MVDS)
+            IF (TK1D.LT.TK0C) THEN
+!               DTHI = MAX(DCMIN,SQRT(-8.*MIN(0.,(QV1D-QVSI)*DT*VENT/   &
+!                      ABI1/RHOS)))
+               DTHI = MAX(DCMIN,SQRT(-8.*MIN(0.,SSRI*DT*VENT/ABI/RHOS)))
+            ELSE
+!               DTHI = MAX(DCMIN,SQRT(-8.*MIN(0.,(QV1D-QVSW)*DT*VENT/   &
+!                      ABW1/RHOS)))
+               DTHI = MAX(DCMIN,SQRT(-8.*MIN(0.,SSRW*DT*VENT/ABW/RHOS)))
+            ENDIF
+            RATIO = MIN(0.9,MAX(0.,ABS(GAMMP(AFAS+1.,DTHI*LAMS))))
+            NSBsv = -1.*NS1D*iDT*RATIO
+            NSBsv = MAX(V2M3*QSBsv/RHOS/DTHI**3.,NSBsv)
+!            RATIO = MIN(0.6,MAX(0.,ABS(GAMMP(AFAS+1.,DTHI*LAMS))))
+!            NSBsv = MIN(0.,QSBsv*NS1D/QS1D*MAX(0.,(1./(1.-RATIO)-1.)))
+         ENDIF
+         NSBsv = MAX(-1.*NS1D*iDT,NSBsv)
       ENDIF
       NSSOUR = NS1D+NsCNis*DT
       NSSINK = (-NMLsr+NCLsr+NCLsg-NCLss+NINsg-NSBsv)*DT
@@ -4701,9 +4742,34 @@
          QSBgv = QSBgv*RATIO; QEVgv = QEVgv*RATIO
       ENDIF
       IF (QG1D.GE.QSMALL) THEN
-         NSBgv = MIN(QSBgv*NG1D/QG1D,0.)
+         IF (EVSB.EQ.0) THEN
+            NSBgv = 0.
+         ELSEIF (EVSB.EQ.1) THEN
+!            NSBgv = MIN(QSBgv*NG1D/QG1D*MIN(1.5,0.02*AFAG+1.),0.)
+!            NSBgv = MIN(QSBgv*NG1D/QG1D,0.)
+            NSBgv = MIN(0.,QSBgv*NG1D/QG1D*MAX(0.,AFC1+AFC2*LAG2+AFC3* &
+                    LLMG+AFC4*LAG2**2.+AFC5*LLMG**2.+AFC6*LAG2*LLMG))
+         ELSEIF (EVSB.EQ.2) THEN
+            VENT = MAX(1.,(AVSG*MVDG+BVSG*BGTMP*MVDG**(1.5+BVG/2.))/   &
+                   MVDG)
+            IF (TK1D.LT.TK0C) THEN
+!               DTHI = MAX(DCMIN,SQRT(-8.*MIN(0.,(QV1D-QVSI)*DT*VENT/   &
+!                      ABI1/RHOG)))
+               DTHI = MAX(DCMIN,SQRT(-8.*MIN(0.,SSRI*DT*VENT/ABI/RHOG)))
+            ELSE
+!               DTHI = MAX(DCMIN,SQRT(-8.*MIN(0.,(QV1D-QVSW)*DT*VENT/   &
+!                      ABW1/RHOG)))
+               DTHI = MAX(DCMIN,SQRT(-8.*MIN(0.,SSRW*DT*VENT/ABW/RHOG)))
+            ENDIF
+            RATIO = MIN(0.9,MAX(0.,ABS(GAMMP(AFAG+1.,DTHI*LAMG))))
+            NSBgv = -1.*NG1D*iDT*RATIO
+            NSBgv = MAX(V2M3*QSBgv/RHOG/DTHI**3.,NSBgv)
+!            RATIO = MIN(0.6,MAX(0.,ABS(GAMMP(AFAG+1.,DTHI*LAMG))))
+!            NSBgv = MIN(0.,QSBgv*NG1D/QG1D*MAX(0.,(1./(1.-RATIO)-1.)))
+         ENDIF
+         NSBgv = MAX(-1.*NG1D*iDT,NSBgv)
       ENDIF
-      NGSOUR = NG1D+(NHOrg+NNMrg+NINig+NINsg+NCLirg+NCLsrg+NCLgr-      &
+      NGSOUR = NG1D+(NHOrg+NNMrg+NgINig+NgINsg+NCLirg+NCLsrg+NCLgr-    &
                NSBgv)*DT
       NGSINK = (-NMLgr+NCLgr)*DT
       IF (NGSINK.GT.NGSOUR.AND.NGSOUR.GE.NSMALL) THEN
@@ -4730,15 +4796,15 @@
       QG1D = MAX(0.,QG1D+(QFZrg+QINig+QINsg+QMLgr+QRMcg+QCLig+QCLsg-   &
              QCLgr+QCLirg+QCLsrg+QCLgrg+QVDvg+QSBgv+QEVgv)*DT)
       NC1D = MAX(0.,NC1D+(NBKrc-NCLcr-NCLcc-NCNcr-NFZci-NRMci-NRMcs-   &
-             NRMcg-NMLic-NIMcsi-NIMcgi+NACcv-NACrc)*DT)
+             NRMcg-NMLic-NIMcsi-NIMcgi+NACcv-NACrc+NEVcv)*DT)
       NR1D = MAX(0.,NR1D+(NCNcr+NBKrr-NBKrc-NCLrr-NIMrsi-NIMrgi-NFZrg- &
-             NMLir-NMLsr-NMLgr-NRMri-NRMrs-NRMrg+NACrc)*DT)
+             NrMLir-NrMLsr-NrMLgr-NRMri-NRMrs-NRMrg+NACrc+NEVrv)*DT)
       NI1D = MAX(0.,NI1D+(NIMii-NiCNis-NCLis-NCLig-NINig+NFZci+NMLir+  &
              NMLic-NCLir+NSBiv)*DT)
       NS1D = MAX(0.,NS1D+(NsCNis+NCLss-NINsg+NMLsr-NCLsr-NCLsg+NSBsv)* &
              DT)
-      NG1D = MAX(0.,NG1D+(NFZrg+NINig+NINsg+NMLgr-NCLgr+NCLirg+NCLsrg+ &
-             NCLgrg+NSBgv)*DT)
+      NG1D = MAX(0.,NG1D+(NFZrg+NgINig+NgINsg+NMLgr-NCLgr+NCLirg+      &
+             NCLsrg+NCLgrg+NSBgv)*DT)
       TK1D = TK1D+((QACcv+QACrc+QVDvc+QVDvr+QEVcv+QEVrv+QEVsv+QEVgv)*  &
              XXLV+(QFZci+QFZrg+QMLir+QMLic+QMLsr+QMLgr+QRMci+QRMcs+    &
              QRMcg+QRMri+QRMrs+QRMrg+QIMii)*XXLF+(QVDvi+QVDvs+QVDvg+   &
@@ -4764,58 +4830,6 @@
       END SUBROUTINE MAIN_MP
 !======================================================================
 !
-!========================================================================
-      SUBROUTINE REFL10CM_TCWA(qc1d,qr1d,qs1d,qg1d,tk1d,rhoz,dBZ,kts,  &
-                               kte)
-!========================================================================
-      IMPLICIT NONE
-      INTEGER, INTENT(IN) :: kts,kte
-      REAL, DIMENSION(kts:kte), INTENT(IN) :: qc1d,qr1d,qs1d,qg1d,tk1d,&
-                                              rhoz
-      REAL, DIMENSION(kts:kte), INTENT(INOUT) :: dBZ
-!..Local variables
-      REAL, DIMENSION(kts:kte) :: rr,rs,rg,ze_rain,ze_snow,ze_graupel, &
-            xam_s,xam_g,xmu_r,xmu_s,xmu_g,xocms,xocmg,RHOS,RHOG,AFAR,  &
-            AFAS,AFAG,N0R,N0S,N0G,LAMR,LAMS,LAMG,LTK,LTK2,LQR,LQR2,LQS,&
-            LQS2,LQG,LQG2,MVDR,MVDS,MVDG,MVDH,EFDR,EFDS,EFDG,EFDH,KDXR,&
-            KDXS,KDXG,KDXH,MVG0,DSLL,TC1D
-      DOUBLE PRECISION, DIMENSION(kts:kte) :: ilamr,ilams,ilamg,N0_r,  &
-                                              N0_s,N0_g
-      DOUBLE PRECISION :: fmelt_s,fmelt_g,cback,x,eta,f_d
-      LOGICAL, DIMENSION(kts:kte) :: L_qr,L_qs,L_qg
-      INTEGER :: i,k,k_0,kbot,n
-      LOGICAL :: melti
-      REAL, PARAMETER :: xam_r = 3.14159*1000./6.
-      REAL, PARAMETER :: xbm_r = 3., xbm_s = 3., xbm_g = 3.
-      REAL, PARAMETER :: xobms = 1./3., xobmg = 1./3.
-!+---+
-      INTEGER, PARAMETER :: nrbins = 50
-      DOUBLE PRECISION, DIMENSION(nrbins+1) :: xxDx
-      DOUBLE PRECISION, DIMENSION(nrbins) :: xxDs,xdts,xxDg,xdtg
-      DOUBLE PRECISION, PARAMETER :: lamda_radar = 0.10           ! in meters
-      DOUBLE PRECISION :: K_w,lamda4,PI5
-      COMPLEX*16 :: m_w_0,m_i_0
-      DOUBLE PRECISION, DIMENSION(nrbins+1) :: simpson
-      DOUBLE PRECISION, DIMENSION(3), PARAMETER :: basis = (/1.d0/3.d0,&
-                        4.d0/3.d0,1.d0/3.d0/)
-      INTEGER, PARAMETER :: slen = 20
-      CHARACTER(len=slen) :: mixingrulestring_s,matrixstring_s,        &
-              inclusionstring_s,hoststring_s,hostmatrixstring_s,       &
-              hostinclusionstring_s,mixingrulestring_g,matrixstring_g, &
-              inclusionstring_g,hoststring_g,hostmatrixstring_g,       &
-              hostinclusionstring_g
-!..Single melting snow/graupel particle 90% meltwater on external sfc
-      DOUBLE PRECISION, PARAMETER :: melt_outside_s = 0.9d0
-      DOUBLE PRECISION, PARAMETER :: melt_outside_g = 0.9d0
-!      CHARACTER*256 :: radar_debug
- 
-      do k = kts,kte
-         dBZ(k) = -35.
-      enddo
-  
-      END SUBROUTINE REFL10CM_TCWA
-!=======================================================================      
-! 
 !========================================================================
       END MODULE module_mp_tcwa2
 !======================================================================
